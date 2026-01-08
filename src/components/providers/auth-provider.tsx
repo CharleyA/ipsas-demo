@@ -44,10 +44,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
       console.log("Auth State:", { token: !!token, isLoading, pathname });
       if (!isLoading) {
-        if (!token && !pathname.startsWith("/auth/login") && pathname !== "/") {
+        if (!token && !pathname.startsWith("/login") && pathname !== "/") {
           console.log("Redirecting to login");
-          router.push("/auth/login");
-        } else if (token && pathname.startsWith("/auth/login")) {
+          router.push("/login");
+        } else if (token && pathname.startsWith("/login")) {
           console.log("Redirecting to dashboard");
           router.push("/dashboard");
         }
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth_user");
     toast.info("Logged out");
-    router.push("/auth/login");
+    router.push("/login");
   };
 
   return (
