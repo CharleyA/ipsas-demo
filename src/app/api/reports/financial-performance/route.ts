@@ -6,21 +6,19 @@ import { ReportExporter, ExportFormat, ExportColumn } from "@/lib/report-exporte
 export async function GET(req: NextRequest) {
   return withAuth(req, async (authReq) => {
     const { searchParams } = new URL(authReq.url);
-    const accountId = searchParams.get("accountId");
     const startDateStr = searchParams.get("startDate");
     const endDateStr = searchParams.get("endDate");
     const format = (searchParams.get("format") || "json") as ExportFormat;
 
-    if (!accountId || !startDateStr || !endDateStr) {
+    if (!startDateStr || !endDateStr) {
       return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
     }
 
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
 
-    const report = await ReportService.getGeneralLedger(
+    const report = await ReportService.getFinancialPerformance(
       authReq.user.organisationId,
-      accountId,
       startDate,
       endDate
     );
@@ -30,21 +28,29 @@ export async function GET(req: NextRequest) {
     }
 
     const columns: ExportColumn[] = [
-      { header: "Date", key: "date" },
-      { header: "Entry #", key: "entryNumber" },
-      { header: "Voucher #", key: "voucherNumber" },
-      { header: "Description", key: "description", width: 40 },
-      { header: "Debit", key: "debit" },
-      { header: "Credit", key: "credit" },
-      { header: "Balance", key: "balance" },
+      { header: "Code", key: "code" },
+      { header: "Line Name", key: "name", width: 40 },
+      { header: "Amount", key: "amount" },
     ];
 
-    const content = await ReportExporter.export(
-      format,
-      report.entries,
-      columns,
-      `General Ledger - ${report.account.name}`
-    );
-    return ReportExporter.getResponse(format, content, `General Ledger - ${report.account.name}`);
+    const flattenRows = (rows: any[], level = 0): any[] => {
+      const result: any[] = [];
+      rows.forEach((row) => {
+        result.push({
+          code: row.code,
+          name: "  ".repeat(level) + row.name,
+          amount: row.amount,
+        });
+        if (row.children && row.children.length > 0) {
+          result.push(...flattenRows(row.children, level + 1));
+        }
+      });
+      return result;
+    };
+
+    const data = flattenRows(report.rows);
+
+    const content = await ReportExporter.export(format, data, columns, "Financial Performance");
+    return ReportExporter.getResponse(format, content, "Financial Performance");
   });
 }

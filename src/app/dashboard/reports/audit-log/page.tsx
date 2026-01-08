@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -22,12 +21,12 @@ import { Input } from "@/components/ui/input";
 import { 
   Loader2, 
   Search,
-  ArrowLeft,
-  Calendar
+  ArrowLeft
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
+import { ReportToolbar } from "@/components/reports/report-toolbar";
 
 export default function AuditLogPage() {
   const { token } = useAuth();
@@ -74,6 +73,11 @@ export default function AuditLogPage() {
             </p>
           </div>
         </div>
+        <ReportToolbar 
+          reportName="Audit Log" 
+          endpoint="/api/reports/audit-log" 
+          filters={{}} 
+        />
       </div>
 
       <Card>

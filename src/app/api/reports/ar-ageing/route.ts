@@ -10,22 +10,23 @@ export async function GET(req: NextRequest) {
     const format = (searchParams.get("format") || "json") as ExportFormat;
     const date = dateStr ? new Date(dateStr) : new Date();
 
-    const report = await ReportService.getTrialBalance(authReq.user.organisationId, date);
+    const report = await ReportService.getARAgeing(authReq.user.organisationId, date);
 
     if (format === "json") {
       return NextResponse.json(report);
     }
 
     const columns: ExportColumn[] = [
-      { header: "Code", key: "code" },
-      { header: "Account Name", key: "name", width: 30 },
-      { header: "Type", key: "type" },
-      { header: "Debit", key: "debit" },
-      { header: "Credit", key: "credit" },
-      { header: "Net Balance", key: "balance" },
+      { header: "Student Name", key: "name", width: 30 },
+      { header: "Total", key: "total" },
+      { header: "Current", key: "current" },
+      { header: "31-60 Days", key: "p30" },
+      { header: "61-90 Days", key: "p60" },
+      { header: "91-120 Days", key: "p90" },
+      { header: "121+ Days", key: "p120" },
     ];
 
-    const content = await ReportExporter.export(format, report.rows, columns, "Trial Balance");
-    return ReportExporter.getResponse(format, content, "Trial Balance");
+    const content = await ReportExporter.export(format, report.rows, columns, "AR Ageing Report");
+    return ReportExporter.getResponse(format, content, "AR Ageing Report");
   });
 }

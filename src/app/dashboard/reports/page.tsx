@@ -14,7 +14,10 @@ import {
   PieChart, 
   TrendingUp,
   ChevronRight,
-  FileText
+  FileText,
+  Users,
+  Building2,
+  Coins
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -25,28 +28,49 @@ const reports = [
     description: "Summary of all ledger balances for a period.",
     href: "/dashboard/reports/trial-balance",
     icon: BarChart3,
-    roles: ["ADMIN", "ACCOUNTANT", "BURSAR", "AUDITOR", "VIEWER"],
+    roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"],
   },
   {
     title: "General Ledger",
     description: "Detailed transaction listing by account.",
     href: "/dashboard/reports/general-ledger",
     icon: BookOpen,
-    roles: ["ADMIN", "ACCOUNTANT", "BURSAR", "AUDITOR"],
+    roles: ["ADMIN", "BURSAR", "HEADMASTER", "AUDITOR"],
   },
   {
     title: "Financial Position",
     description: "Balance Sheet (IPSAS 1).",
     href: "/dashboard/reports/financial-position",
     icon: PieChart,
-    roles: ["ADMIN", "BURSAR", "AUDITOR", "VIEWER"],
+    roles: ["ADMIN", "BURSAR", "HEADMASTER", "AUDITOR"],
   },
   {
     title: "Financial Performance",
     description: "Income & Expenditure (IPSAS 1).",
     href: "/dashboard/reports/financial-performance",
     icon: TrendingUp,
-    roles: ["ADMIN", "BURSAR", "AUDITOR", "VIEWER"],
+    roles: ["ADMIN", "BURSAR", "HEADMASTER", "AUDITOR"],
+  },
+  {
+    title: "Cash Flow Statement",
+    description: "Statement of Cash Flows (IPSAS 2).",
+    href: "/dashboard/reports/cash-flow",
+    icon: Coins,
+    roles: ["ADMIN", "BURSAR", "HEADMASTER", "AUDITOR"],
+  },
+  {
+    title: "AR Ageing",
+    description: "Unpaid student invoices by age.",
+    href: "/dashboard/reports/ar-ageing",
+    icon: Users,
+    roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"],
+  },
+  {
+    title: "AP Ageing",
+    description: "Unpaid supplier bills by age.",
+    href: "/dashboard/reports/ap-ageing",
+    icon: Building2,
+    roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"],
   },
   {
     title: "Audit Log",

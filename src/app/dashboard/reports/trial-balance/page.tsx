@@ -4,9 +4,7 @@ import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Table,
@@ -20,15 +18,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   Loader2, 
-  Printer, 
-  Download, 
   Search,
-  Filter,
   ArrowLeft
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
+import { ReportToolbar } from "@/components/reports/report-toolbar";
 
 export default function TrialBalancePage() {
   const { token } = useAuth();
@@ -56,8 +52,8 @@ export default function TrialBalancePage() {
     if (token) fetchReport();
   }, [token, date]);
 
-  const filteredLines = data?.lines?.filter((l: any) => 
-    `${l.accountCode} ${l.accountName}`.toLowerCase().includes(search.toLowerCase())
+  const filteredRows = data?.rows?.filter((r: any) => 
+    `${r.code} ${r.name}`.toLowerCase().includes(search.toLowerCase())
   ) || [];
 
   return (
@@ -76,16 +72,11 @@ export default function TrialBalancePage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline">
-            <Printer className="w-4 h-4 mr-2" />
-            Print PDF
-          </Button>
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export Excel
-          </Button>
-        </div>
+        <ReportToolbar 
+          reportName="Trial Balance" 
+          endpoint="/api/reports/trial-balance" 
+          filters={{ date }} 
+        />
       </div>
 
       <Card>
@@ -132,26 +123,26 @@ export default function TrialBalancePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLines.map((line: any) => (
-                  <TableRow key={line.accountId}>
-                    <TableCell className="font-mono text-sm">{line.accountCode}</TableCell>
-                    <TableCell>{line.accountName}</TableCell>
+                {filteredRows.map((row: any) => (
+                  <TableRow key={row.id}>
+                    <TableCell className="font-mono text-sm">{row.code}</TableCell>
+                    <TableCell>{row.name}</TableCell>
                     <TableCell className="text-right">
-                      {line.balance > 0 ? line.balance.toLocaleString(undefined, { minimumFractionDigits: 2 }) : ""}
+                      {row.debit > 0 ? parseFloat(row.debit).toLocaleString(undefined, { minimumFractionDigits: 2 }) : ""}
                     </TableCell>
                     <TableCell className="text-right text-red-600">
-                      {line.balance < 0 ? Math.abs(line.balance).toLocaleString(undefined, { minimumFractionDigits: 2 }) : ""}
+                      {row.credit > 0 ? parseFloat(row.credit).toLocaleString(undefined, { minimumFractionDigits: 2 }) : ""}
                     </TableCell>
                   </TableRow>
                 ))}
-                {filteredLines.length > 0 && (
+                {filteredRows.length > 0 && (
                   <TableRow className="bg-muted/50 font-bold">
                     <TableCell colSpan={2}>Total</TableCell>
                     <TableCell className="text-right">
-                      {data.totalDebit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      {parseFloat(data.totals.debit).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-right">
-                      {data.totalCredit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      {parseFloat(data.totals.credit).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </TableCell>
                   </TableRow>
                 )}

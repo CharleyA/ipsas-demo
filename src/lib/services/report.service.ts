@@ -1,19 +1,19 @@
 import prisma from "@/lib/db";
 import { Decimal } from "@prisma/client/runtime/library";
+import { ReportType, AccountType } from "@prisma/client";
+import { subDays, startOfDay, endOfDay } from "date-fns";
 
 export class ReportService {
   static async getTrialBalance(organisationId: string, endDate: Date) {
-    // 1. Get all accounts
     const accounts = await prisma.account.findMany({
       where: { organisationId },
       orderBy: { code: "asc" },
     });
 
-    // 2. Aggregate GL entries up to endDate
     const balances = await prisma.glEntry.groupBy({
       by: ["accountId"],
       where: {
-        header: {
+        glHeader: {
           organisationId,
           entryDate: { lte: endDate },
         },
@@ -34,7 +34,6 @@ export class ReportService {
       ])
     );
 
-    // 3. Construct TB rows
     const rows = accounts.map((acc) => {
       const bal = balanceMap.get(acc.id) || {
         debit: new Decimal(0),
@@ -68,11 +67,10 @@ export class ReportService {
     const account = await prisma.account.findUnique({ where: { id: accountId } });
     if (!account) throw new Error("Account not found");
 
-    // 1. Calculate opening balance
     const openingBalAgg = await prisma.glEntry.aggregate({
       where: {
         accountId,
-        header: {
+        glHeader: {
           organisationId,
           entryDate: { lt: startDate },
         },
@@ -87,21 +85,20 @@ export class ReportService {
       openingBalAgg._sum.creditLc || new Decimal(0)
     );
 
-    // 2. Get period entries
     const entries = await prisma.glEntry.findMany({
       where: {
         accountId,
-        header: {
+        glHeader: {
           organisationId,
           entryDate: { gte: startDate, lte: endDate },
         },
       },
       include: {
-        header: {
+        glHeader: {
           include: { voucher: true },
         },
       },
-      orderBy: { header: { entryDate: "asc" } },
+      orderBy: { glHeader: { entryDate: "asc" } },
     });
 
     let runningBalance = openingBalance;
@@ -112,10 +109,10 @@ export class ReportService {
 
       return {
         id: entry.id,
-        date: entry.header.entryDate,
-        entryNumber: entry.header.entryNumber,
-        voucherNumber: entry.header.voucher?.number,
-        description: entry.description || entry.header.description,
+        date: entry.glHeader.entryDate,
+        entryNumber: entry.glHeader.entryNumber,
+        voucherNumber: entry.glHeader.voucher?.number,
+        description: entry.description || entry.glHeader.description,
         debit: dr,
         credit: cr,
         balance: runningBalance,
@@ -157,5 +154,169 @@ export class ReportService {
       include: { user: { select: { firstName: true, lastName: true, email: true } } },
       orderBy: { createdAt: "desc" },
     });
+  }
+
+  static async getFinancialStatement(organisationId: string, type: ReportType, endDate: Date, startDate?: Date) {
+    // 1. Get all statement lines for the report
+    const lines = await prisma.statementLine.findMany({
+      where: { organisationId, reportType: type },
+      include: { 
+        accountMaps: {
+          include: { account: true }
+        }
+      },
+      orderBy: { order: "asc" },
+    });
+
+    // 2. Get balances for all accounts linked to these lines
+    const accountIds = lines.flatMap(l => l.accountMaps.map(m => m.accountId));
+    
+    const balances = await prisma.glEntry.groupBy({
+      by: ["accountId"],
+      where: {
+        glHeader: {
+          organisationId,
+          entryDate: { 
+            lte: endDate,
+            ...(startDate ? { gte: startDate } : {})
+          },
+        },
+        accountId: { in: accountIds }
+      },
+      _sum: {
+        debitLc: true,
+        creditLc: true,
+      },
+    });
+
+    const balanceMap = new Map(
+      balances.map((b) => [
+        b.accountId,
+        (b._sum.debitLc || new Decimal(0)).minus(b._sum.creditLc || new Decimal(0))
+      ])
+    );
+
+    // 3. Recursive function to build tree and calculate totals
+    const buildTree = (parentId: string | null = null): any[] => {
+      return lines
+        .filter(l => l.parentId === parentId)
+        .map(line => {
+          const children = buildTree(line.id);
+          let amount = new Decimal(0);
+
+          // Sum mapped accounts
+          line.accountMaps.forEach(m => {
+            amount = amount.add(balanceMap.get(m.accountId) || new Decimal(0));
+          });
+
+          // Sum children
+          children.forEach(c => {
+            amount = amount.add(c.amount);
+          });
+
+          // For some reports, we might need to flip signs (e.g. Revenue/Liability)
+          // But usually we just keep it as net debit - credit and handle in UI if needed
+
+          return {
+            id: line.id,
+            code: line.code,
+            name: line.name,
+            amount,
+            children
+          };
+        });
+    };
+
+    return {
+      reportType: type,
+      asOf: endDate,
+      startDate,
+      rows: buildTree(null)
+    };
+  }
+
+  static async getFinancialPosition(organisationId: string, date: Date) {
+    return this.getFinancialStatement(organisationId, ReportType.FINANCIAL_POSITION, date);
+  }
+
+  static async getFinancialPerformance(organisationId: string, startDate: Date, endDate: Date) {
+    return this.getFinancialStatement(organisationId, ReportType.FINANCIAL_PERFORMANCE, endDate, startDate);
+  }
+
+  static async getCashflow(organisationId: string, startDate: Date, endDate: Date) {
+    return this.getFinancialStatement(organisationId, ReportType.CASH_FLOW, endDate, startDate);
+  }
+
+  static async getARAgeing(organisationId: string, date: Date) {
+    const invoices = await prisma.aRInvoice.findMany({
+      where: {
+        organisationId,
+        voucher: { status: "POSTED" },
+        balance: { gt: 0 },
+        createdAt: { lte: date }
+      },
+      include: { student: true }
+    });
+
+    return this.calculateAgeing(invoices, date, "student");
+  }
+
+  static async getAPAgeing(organisationId: string, date: Date) {
+    const bills = await prisma.aPBill.findMany({
+      where: {
+        organisationId,
+        voucher: { status: "POSTED" },
+        balance: { gt: 0 },
+        createdAt: { lte: date }
+      },
+      include: { supplier: true }
+    });
+
+    return this.calculateAgeing(bills, date, "supplier");
+  }
+
+  private static calculateAgeing(items: any[], date: Date, entityKey: string) {
+    const ageingRows: any[] = [];
+    const entities = new Map<string, any>();
+
+    items.forEach(item => {
+      const entity = item[entityKey];
+      if (!entities.has(entity.id)) {
+        entities.set(entity.id, {
+          id: entity.id,
+          name: entity.name || `${entity.firstName} ${entity.lastName}`,
+          total: new Decimal(0),
+          current: new Decimal(0),
+          p30: new Decimal(0),
+          p60: new Decimal(0),
+          p90: new Decimal(0),
+          p120: new Decimal(0),
+        });
+      }
+
+      const row = entities.get(entity.id);
+      const amount = item.balance;
+      const days = Math.floor((date.getTime() - item.createdAt.getTime()) / (1000 * 60 * 60 * 24));
+
+      row.total = row.total.add(amount);
+      if (days <= 30) row.current = row.current.add(amount);
+      else if (days <= 60) row.p30 = row.p30.add(amount);
+      else if (days <= 90) row.p60 = row.p60.add(amount);
+      else if (days <= 120) row.p90 = row.p90.add(amount);
+      else row.p120 = row.p120.add(amount);
+    });
+
+    return {
+      asOf: date,
+      rows: Array.from(entities.values()),
+      totals: {
+        total: items.reduce((acc, i) => acc.add(i.balance), new Decimal(0)),
+        current: Array.from(entities.values()).reduce((acc, r) => acc.add(r.current), new Decimal(0)),
+        p30: Array.from(entities.values()).reduce((acc, r) => acc.add(r.p30), new Decimal(0)),
+        p60: Array.from(entities.values()).reduce((acc, r) => acc.add(r.p60), new Decimal(0)),
+        p90: Array.from(entities.values()).reduce((acc, r) => acc.add(r.p90), new Decimal(0)),
+        p120: Array.from(entities.values()).reduce((acc, r) => acc.add(r.p120), new Decimal(0)),
+      }
+    };
   }
 }
