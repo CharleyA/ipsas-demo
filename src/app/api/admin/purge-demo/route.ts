@@ -7,7 +7,7 @@ const CONFIRM_STRING = "I_UNDERSTAND_THIS_DELETES_DATA";
 
 export async function POST(req: NextRequest) {
   try {
-    const authContext = getAuthContext(req);
+    const authContext = await getAuthContext(req);
     if (!authContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

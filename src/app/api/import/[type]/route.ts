@@ -8,7 +8,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ type: string }> }
 ) {
-  const auth = getAuthContext(request);
+  const auth = await getAuthContext(request);
   if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {

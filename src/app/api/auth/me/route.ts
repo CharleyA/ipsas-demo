@@ -4,7 +4,7 @@ import { getAuthContext } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
-    const authContext = getAuthContext(req);
+    const authContext = await getAuthContext(req);
     
     if (!authContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

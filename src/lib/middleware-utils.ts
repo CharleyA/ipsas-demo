@@ -16,7 +16,7 @@ export async function withAuth(
   }
 
   const token = authHeader.split(" ")[1];
-  const decoded = verifyToken(token);
+  const decoded = await verifyToken(token);
 
   if (!decoded) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
