@@ -101,7 +101,47 @@ export async function POST(req: NextRequest) {
         });
     }
 
-    // 2. Create Students
+    // 2. Create Funds
+    const fundData = [
+      { code: "GF", name: "General Fund" },
+      { code: "CF", name: "Capital Fund" },
+      { code: "RF", name: "Restricted Grant Fund" },
+    ];
+    const funds = [];
+    for (const f of fundData) {
+      let fund = await prisma.fund.findUnique({
+        where: { organisationId_code: { organisationId, code: f.code } }
+      });
+      if (!fund) {
+        fund = await prisma.fund.create({
+          data: { organisationId, code: f.code, name: f.name }
+        });
+      }
+      funds.push(fund);
+    }
+    const generalFund = funds.find(f => f.code === "GF")!;
+    const capitalFund = funds.find(f => f.code === "CF")!;
+
+    // 3. Create Projects
+    const projectData = [
+      { code: "LIB-2025", name: "School Library Expansion" },
+      { code: "ICT-UPG", name: "ICT Infrastructure Upgrade" },
+    ];
+    const projects = [];
+    for (const p of projectData) {
+      let project = await prisma.project.findUnique({
+        where: { organisationId_code: { organisationId, code: p.code } }
+      });
+      if (!project) {
+        project = await prisma.project.create({
+          data: { organisationId, code: p.code, name: p.name }
+        });
+      }
+      projects.push(project);
+    }
+    const libraryProject = projects.find(p => p.code === "LIB-2025")!;
+
+    // 4. Create Students
     const studentNames = [
       { first: "John", last: "Doe", num: "ST001", grade: "Grade 1", class: "A" },
       { first: "Jane", last: "Smith", num: "ST002", grade: "Grade 1", class: "B" },
@@ -158,6 +198,7 @@ export async function POST(req: NextRequest) {
         currencyCode: org.baseCurrency,
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         description: "Term 1 School Fees",
+        fundId: generalFund.id,
         lines: [
           { description: "Tuition Fees", quantity: 1, unitPrice: 1200, amount: 1200 },
           { description: "Levy", quantity: 1, unitPrice: 200, amount: 200 }
@@ -201,21 +242,32 @@ export async function POST(req: NextRequest) {
     }
 
     // 6. Create and Post Bills
+    let billCount = 0;
     for (const supplier of suppliers) {
+      const isProjectBill = billCount === 0; // First supplier bill is for a project
       const bill = await APService.createBill({
         organisationId,
         supplierId: supplier.id,
         currencyCode: org.baseCurrency,
         dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        description: "Monthly Supplies",
+        description: isProjectBill ? "Library Expansion Materials" : "Monthly Supplies",
+        fundId: isProjectBill ? capitalFund.id : generalFund.id,
+        projectId: isProjectBill ? libraryProject.id : undefined,
         lines: [
-          { accountId: expenseAcc.id, description: "General Supplies", quantity: 10, unitPrice: 50, amount: 500 }
+          { 
+            accountId: expenseAcc.id, 
+            description: isProjectBill ? "Construction Materials" : "General Supplies", 
+            quantity: 10, 
+            unitPrice: isProjectBill ? 500 : 50, 
+            amount: isProjectBill ? 5000 : 500 
+          }
         ]
       }, actorId);
 
       await VoucherService.submit(bill.voucherId, actorId);
       await VoucherService.approve(bill.voucherId, actorId);
       await VoucherService.post(bill.voucherId, actorId);
+      billCount++;
     }
 
     // 7. Create and Post Payments

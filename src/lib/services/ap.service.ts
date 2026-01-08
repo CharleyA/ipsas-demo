@@ -37,6 +37,8 @@ export class APService {
           fxRate: 1,
           amountLc: totalAmount,
           credit: totalAmount,
+          fundId: data.fundId,
+          projectId: data.projectId,
         }
       ];
 
@@ -51,6 +53,8 @@ export class APService {
           fxRate: 1,
           amountLc: line.amount,
           debit: line.amount,
+          fundId: data.fundId,
+          projectId: data.projectId,
         });
       });
 

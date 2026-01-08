@@ -33,30 +33,35 @@ export class ARService {
         periodId: period.id,
         date: new Date(),
         description: data.description || `Invoice for student ${data.studentId}`,
-        lines: [
-          // DR Fees Receivable
-          {
-            lineNumber: 1,
-            accountId: org.arReceivableAccountId!,
-            description: `Fees Receivable - Student ${data.studentId}`,
-            currencyCode: data.currencyCode,
-            amountFc: totalAmount,
-            fxRate: 1, // Simplified for MVP
-            amountLc: totalAmount,
-            debit: totalAmount,
-          },
-          // CR Fees Revenue (multiple lines if needed, but here we sum)
-          {
-            lineNumber: 2,
-            accountId: org.arRevenueAccountId!,
-            description: `Fees Revenue - Student ${data.studentId}`,
-            currencyCode: data.currencyCode,
-            amountFc: totalAmount,
-            fxRate: 1,
-            amountLc: totalAmount,
-            credit: totalAmount,
-          }
-        ]
+          lines: [
+            // DR Fees Receivable
+            {
+              lineNumber: 1,
+              accountId: org.arReceivableAccountId!,
+              description: `Fees Receivable - Student ${data.studentId}`,
+              currencyCode: data.currencyCode,
+              amountFc: totalAmount,
+              fxRate: 1, // Simplified for MVP
+              amountLc: totalAmount,
+              debit: totalAmount,
+              fundId: data.fundId,
+              projectId: data.projectId,
+            },
+            // CR Fees Revenue (multiple lines if needed, but here we sum)
+            {
+              lineNumber: 2,
+              accountId: org.arRevenueAccountId!,
+              description: `Fees Revenue - Student ${data.studentId}`,
+              currencyCode: data.currencyCode,
+              amountFc: totalAmount,
+              fxRate: 1,
+              amountLc: totalAmount,
+              credit: totalAmount,
+              fundId: data.fundId,
+              projectId: data.projectId,
+            }
+          ]
+
       }, actorId);
 
       // 2. Create ARInvoice

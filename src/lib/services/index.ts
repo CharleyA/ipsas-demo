@@ -8,3 +8,4 @@ export { CurrencyService } from "./currency.service";
 export { StudentService, SupplierService } from "./party.service";
 export { ARService } from "./ar.service";
 export { APService } from "./ap.service";
+export { DimensionService } from "./dimension.service";
