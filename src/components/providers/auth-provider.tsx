@@ -37,6 +37,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
+      // Sync cookie if missing
+      if (!document.cookie.includes("token=")) {
+        document.cookie = `token=${storedToken}; path=/; max-age=86400; SameSite=Lax`;
+      }
     }
     setIsLoading(false);
   }, []);
@@ -59,6 +63,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(newUser);
     localStorage.setItem("auth_token", newToken);
     localStorage.setItem("auth_user", JSON.stringify(newUser));
+    // Set cookie for middleware
+    document.cookie = `token=${newToken}; path=/; max-age=86400; SameSite=Lax`;
     toast.success("Logged in successfully");
     router.push("/dashboard");
   };
@@ -68,6 +74,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth_user");
+    // Remove cookie
+    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     toast.info("Logged out");
     router.push("/login");
   };
