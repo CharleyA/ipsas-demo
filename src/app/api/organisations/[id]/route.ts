@@ -4,11 +4,18 @@ import { updateOrganisationSchema } from "@/lib/validations/schemas";
 import { successResponse, handleApiError, requireAuth, errorResponse } from "@/lib/api-utils";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const sessionOrgId = requireOrganisationId(request);
     const { id } = await params;
+    
+    // In single-organisation mode, user can only access their own organisation
+    if (id !== sessionOrgId) {
+      return errorResponse("Access denied to this organisation", 403);
+    }
+
     const organisation = await OrganisationService.findById(id);
     
     if (!organisation) {
@@ -27,7 +34,14 @@ export async function PATCH(
 ) {
   try {
     const actorId = requireAuth(request);
+    const sessionOrgId = requireOrganisationId(request);
     const { id } = await params;
+    
+    // In single-organisation mode, user can only update their own organisation
+    if (id !== sessionOrgId) {
+      return errorResponse("Access denied to this organisation", 403);
+    }
+
     const body = await request.json();
     const data = updateOrganisationSchema.parse(body);
     

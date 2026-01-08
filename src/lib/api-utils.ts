@@ -36,8 +36,11 @@ export function handleApiError(error: unknown) {
 }
 
 export function getActorId(request: Request): string | null {
-  const userId = request.headers.get("x-user-id");
-  return userId;
+  return request.headers.get("x-user-id");
+}
+
+export function getOrganisationId(request: Request): string | null {
+  return request.headers.get("x-organisation-id");
 }
 
 export function requireAuth(request: Request): string {
@@ -46,4 +49,12 @@ export function requireAuth(request: Request): string {
     throw new Error("Authentication required");
   }
   return userId;
+}
+
+export function requireOrganisationId(request: Request): string {
+  const orgId = getOrganisationId(request);
+  if (!orgId) {
+    throw new Error("Organisation context required");
+  }
+  return orgId;
 }
