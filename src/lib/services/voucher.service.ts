@@ -575,7 +575,7 @@ export class VoucherService {
 
   private static async generateEntryNumber(organisationId: string) {
     const year = new Date().getFullYear();
-    const count = await prisma.glHeader.count({
+    const count = await prisma.gLHeader.count({
       where: {
         organisationId,
         entryNumber: { startsWith: `GL-${year}` },

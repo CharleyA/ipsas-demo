@@ -12,7 +12,7 @@ export class DashboardService {
     const monthStart = startOfMonth(now);
 
     // 1. Cash at bank (Sum of all BANK type accounts)
-    const bankBalances = await prisma.glEntry.groupBy({
+    const bankBalances = await prisma.gLEntry.groupBy({
       by: ["accountId"],
       where: {
         glHeader: { organisationId },
@@ -39,7 +39,7 @@ export class DashboardService {
     });
 
     // 4. Top spending categories (Expenses by Account Type / Name)
-    const expenseEntries = await prisma.glEntry.groupBy({
+    const expenseEntries = await prisma.gLEntry.groupBy({
       by: ["accountId"],
       where: {
         glHeader: { 

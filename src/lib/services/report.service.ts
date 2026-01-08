@@ -21,7 +21,7 @@ export class ReportService {
     if (filters.fundId) where.fundId = filters.fundId;
     if (filters.costCentreId) where.costCentreId = filters.costCentreId;
 
-    const balances = await prisma.glEntry.groupBy({
+    const balances = await prisma.gLEntry.groupBy({
       by: ["accountId"],
       where,
       _sum: {
@@ -73,7 +73,7 @@ export class ReportService {
     const account = await prisma.account.findUnique({ where: { id: accountId } });
     if (!account) throw new Error("Account not found");
 
-    const openingBalAgg = await prisma.glEntry.aggregate({
+    const openingBalAgg = await prisma.gLEntry.aggregate({
       where: {
         accountId,
         glHeader: {
@@ -91,7 +91,7 @@ export class ReportService {
       openingBalAgg._sum.creditLc || new Decimal(0)
     );
 
-    const entries = await prisma.glEntry.findMany({
+    const entries = await prisma.gLEntry.findMany({
       where: {
         accountId,
         glHeader: {
@@ -177,7 +177,7 @@ export class ReportService {
     // 2. Get balances for all accounts linked to these lines
     const accountIds = lines.flatMap(l => l.accountMaps.map(m => m.accountId));
     
-    const balances = await prisma.glEntry.groupBy({
+    const balances = await prisma.gLEntry.groupBy({
       by: ["accountId"],
       where: {
         glHeader: {
