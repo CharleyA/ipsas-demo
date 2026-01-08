@@ -39,12 +39,12 @@ const menuItems = [
   {
     title: "General",
     items: [
-        {
-          title: "Dashboard",
-          href: "/dashboard",
-          icon: LayoutDashboard,
-          roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"],
-        },
+          {
+            title: "Dashboard",
+            href: user?.role === "ADMIN" ? "/dashboard/admin" : "/dashboard",
+            icon: LayoutDashboard,
+            roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"],
+          },
         {
           title: "Approvals",
           href: "/dashboard/approvals",
@@ -155,7 +155,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/dashboard">
+              <Link href={user.role === "ADMIN" ? "/dashboard/admin" : "/dashboard"}>
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Wallet className="size-4" />
                 </div>
@@ -181,20 +181,26 @@ export function AppSidebar() {
               <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {visibleItems.map((item) => (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={pathname === item.href}
-                        tooltip={item.title}
-                      >
-                        <Link href={item.href}>
-                          <item.icon />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                  {visibleItems.map((item) => {
+                    const href = item.href === "/dashboard" && user.role === "ADMIN" 
+                      ? "/dashboard/admin" 
+                      : item.href;
+                    
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={pathname === href}
+                          tooltip={item.title}
+                        >
+                          <Link href={href}>
+                            <item.icon />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

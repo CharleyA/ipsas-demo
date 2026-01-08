@@ -52,11 +52,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log("Redirecting to login");
           router.push("/login");
         } else if (token && pathname.startsWith("/login")) {
-          console.log("Redirecting to dashboard");
-          router.push("/dashboard");
+          console.log("Redirecting to correct dashboard");
+          const redirectPath = user?.role === "ADMIN" ? "/dashboard/admin" : "/dashboard";
+          router.push(redirectPath);
         }
       }
-    }, [token, isLoading, pathname, router]);
+    }, [token, isLoading, pathname, router, user?.role]);
 
   const login = (newToken: string, newUser: User) => {
     setToken(newToken);
@@ -65,7 +66,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("auth_user", JSON.stringify(newUser));
     document.cookie = `token=${newToken}; path=/; max-age=86400; SameSite=Lax`;
     toast.success("Logged in successfully");
-    window.location.href = "/dashboard";
+    
+    const redirectPath = newUser.role === "ADMIN" ? "/dashboard/admin" : "/dashboard";
+    window.location.href = redirectPath;
   };
 
   const logout = () => {
