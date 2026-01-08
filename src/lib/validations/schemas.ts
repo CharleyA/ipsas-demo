@@ -266,8 +266,8 @@ export type CreateStudentInput = z.infer<typeof createStudentSchema>;
 export type UpdateStudentInput = z.infer<typeof updateStudentSchema>;
 
 export const addUserToOrganisationSchema = z.object({
-  userId: z.string(),
-  organisationId: z.string(),
+  userId: z.string().min(1),
+  organisationId: z.string().min(1),
   role: UserRole,
 });
 
