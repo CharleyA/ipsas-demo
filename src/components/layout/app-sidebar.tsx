@@ -12,10 +12,12 @@ import {
   Settings,
   Wallet,
   ArrowRightLeft,
-  ShieldCheck,
-  History,
-  BookOpen,
-} from "lucide-react";
+    ShieldCheck,
+    History,
+    BookOpen,
+    Wrench,
+  } from "lucide-react";
+
 
 import {
   Sidebar,
@@ -111,8 +113,15 @@ const menuItems = [
         icon: ArrowRightLeft,
         roles: ["ADMIN"],
       },
-      {
-        title: "Settings",
+        {
+          title: "Maintenance",
+          href: "/dashboard/admin/maintenance",
+          icon: Wrench,
+          roles: ["ADMIN"],
+        },
+        {
+          title: "Settings",
+
         href: "/dashboard/settings",
         icon: Settings,
         roles: ["ADMIN"],
