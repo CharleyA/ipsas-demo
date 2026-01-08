@@ -36,29 +36,33 @@ import { updateOrganisationSchema, UpdateOrganisationInput } from "@/lib/validat
 import { useAuth } from "@/components/providers/auth-provider";
 
 export default function OrganisationProfilePage() {
-  const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [organisation, setOrganisation] = useState<any>(null);
+    const { token, user } = useAuth();
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [organisation, setOrganisation] = useState<any>(null);
 
-  const form = useForm<UpdateOrganisationInput>({
-    resolver: zodResolver(updateOrganisationSchema),
-    defaultValues: {
-      name: "",
-      baseCurrency: "ZWG",
-      address: "",
-      phone: "",
-      email: "",
-    },
-  });
+    const form = useForm<UpdateOrganisationInput>({
+      resolver: zodResolver(updateOrganisationSchema),
+      defaultValues: {
+        name: "",
+        baseCurrency: "ZWG",
+        address: "",
+        phone: "",
+        email: "",
+      },
+    });
 
-  useEffect(() => {
-    async function fetchOrganisation() {
-      if (!user?.organisationId) return;
+    useEffect(() => {
+      async function fetchOrganisation() {
+        if (!user?.organisationId || !token) return;
 
-      try {
-        const response = await fetch(`/api/organisations/${user.organisationId}`);
-        const result = await response.json();
+        try {
+          const response = await fetch(`/api/organisations/${user.organisationId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const result = await response.json();
 
         if (result.success) {
           setOrganisation(result.data);
@@ -82,18 +86,19 @@ export default function OrganisationProfilePage() {
     fetchOrganisation();
   }, [user?.organisationId, form]);
 
-  async function onSubmit(data: UpdateOrganisationInput) {
-    if (!user?.organisationId) return;
+    async function onSubmit(data: UpdateOrganisationInput) {
+      if (!user?.organisationId || !token) return;
 
-    setIsSaving(true);
-    try {
-      const response = await fetch(`/api/organisations/${user.organisationId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+      setIsSaving(true);
+      try {
+        const response = await fetch(`/api/organisations/${user.organisationId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(data),
+        });
 
       const result = await response.json();
 

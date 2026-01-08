@@ -101,6 +101,31 @@ export class UserService {
     };
   }
 
+  static async listByOrganisation(organisationId: string) {
+    const orgUsers = await prisma.organisationUser.findMany({
+      where: { organisationId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            isActive: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    return orgUsers.map((ou) => ({
+      ...ou.user,
+      role: ou.role,
+      organisationUserId: ou.id,
+      isActive: ou.isActive && ou.user.isActive,
+    }));
+  }
+
   static async addToOrganisation(data: AddUserToOrganisationInput, actorId: string) {
     const orgUser = await prisma.organisationUser.create({
       data: {

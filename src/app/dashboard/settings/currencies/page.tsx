@@ -95,13 +95,16 @@ export default function CurrenciesPage() {
         body: JSON.stringify(newCurrency),
       });
 
-      if (!res.ok) throw new Error("Failed to add currency");
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.error || "Failed to add currency");
+      }
 
       toast.success("Currency added successfully");
       setIsAddingCurrency(false);
       fetchData();
-    } catch (error) {
-      toast.error("Error adding currency");
+    } catch (error: any) {
+      toast.error(error.message || "Error adding currency");
     }
   };
 
@@ -119,13 +122,16 @@ export default function CurrenciesPage() {
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to add exchange rate");
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.error || "Failed to add exchange rate");
+      }
 
       toast.success("Exchange rate added successfully");
       setIsAddingRate(false);
       fetchData();
-    } catch (error) {
-      toast.error("Error adding exchange rate");
+    } catch (error: any) {
+      toast.error(error.message || "Error adding exchange rate");
     }
   };
 

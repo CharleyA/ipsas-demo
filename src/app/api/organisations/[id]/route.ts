@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { OrganisationService } from "@/lib/services";
 import { updateOrganisationSchema } from "@/lib/validations/schemas";
-import { successResponse, handleApiError, requireAuth, errorResponse } from "@/lib/api-utils";
+import { successResponse, handleApiError, requireAuth, errorResponse, requireOrganisationId } from "@/lib/api-utils";
 
 export async function GET(
   request: NextRequest,

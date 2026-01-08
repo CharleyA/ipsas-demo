@@ -46,6 +46,7 @@ export default function AccountsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [isAddingAccount, setIsAddingAccount] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
 
   const [newAccount, setNewAccount] = useState({
     code: "",
@@ -95,6 +96,27 @@ export default function AccountsPage() {
     }
   };
 
+  const handleSeedIPSAS = async () => {
+    setIsSeeding(true);
+    try {
+      const res = await fetch("/api/accounts/seed/ipsas", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Failed to seed IPSAS COA");
+
+      toast.success("IPSAS Chart of Accounts populated successfully");
+      fetchAccounts();
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
   const filteredAccounts = accounts.filter((a) =>
     `${a.code} ${a.name}`.toLowerCase().includes(search.toLowerCase())
   );
@@ -108,13 +130,18 @@ export default function AccountsPage() {
             Manage your organization's general ledger accounts.
           </p>
         </div>
-        <Dialog open={isAddingAccount} onOpenChange={setIsAddingAccount}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Account
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleSeedIPSAS} disabled={isSeeding}>
+              {isSeeding ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <BookOpen className="w-4 h-4 mr-2" />}
+              Populate IPSAS COA
             </Button>
-          </DialogTrigger>
+            <Dialog open={isAddingAccount} onOpenChange={setIsAddingAccount}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Account
+                </Button>
+              </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create New Account</DialogTitle>

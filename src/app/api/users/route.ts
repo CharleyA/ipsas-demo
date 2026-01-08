@@ -1,7 +1,19 @@
 import { NextRequest } from "next/server";
 import { UserService } from "@/lib/services";
 import { createUserSchema } from "@/lib/validations/schemas";
-import { successResponse, handleApiError, errorResponse } from "@/lib/api-utils";
+import { successResponse, handleApiError, errorResponse, requireAuth, requireOrganisationId } from "@/lib/api-utils";
+
+export async function GET(request: NextRequest) {
+  try {
+    requireAuth(request);
+    const organisationId = requireOrganisationId(request);
+    
+    const users = await UserService.listByOrganisation(organisationId);
+    return successResponse(users);
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {

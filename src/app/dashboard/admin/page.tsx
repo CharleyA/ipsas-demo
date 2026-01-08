@@ -42,13 +42,13 @@ export default function AdminDashboardPage() {
       icon: Building2,
       color: "text-blue-500",
     },
-    {
-      title: "User Management",
-      description: "Manage users and their roles (Coming Soon).",
-      href: "/dashboard/settings",
-      icon: Users,
-      color: "text-green-500",
-    },
+      {
+        title: "User Management",
+        description: "Manage users, roles and access permissions.",
+        href: "/dashboard/admin/users",
+        icon: Users,
+        color: "text-green-500",
+      },
     {
       title: "Currency & Exchange",
       description: "Configure multi-currency and rates.",
