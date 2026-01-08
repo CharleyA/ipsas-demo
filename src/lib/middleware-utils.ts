@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AuthService } from "@/lib/services/auth.service";
+import { verifyToken, JWTPayload } from "@/lib/auth";
 
 export interface AuthenticatedRequest extends NextRequest {
-  user: {
-    id: string;
-    email: string;
-    role: string;
-    organisationId: string;
-  };
+  user: JWTPayload;
 }
 
 export async function withAuth(
@@ -21,7 +16,7 @@ export async function withAuth(
   }
 
   const token = authHeader.split(" ")[1];
-  const decoded = AuthService.verifyToken(token);
+  const decoded = verifyToken(token);
 
   if (!decoded) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,6 +26,8 @@ export async function withAuth(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  (req as any).user = decoded;
-  return handler(req as any);
+  const authReq = req as AuthenticatedRequest;
+  authReq.user = decoded;
+  
+  return handler(authReq);
 }
