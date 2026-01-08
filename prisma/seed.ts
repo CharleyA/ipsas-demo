@@ -1,7 +1,10 @@
-import { PrismaClient, UserRole, OrganisationType, VoucherType } from '@prisma/client';
+import { PrismaClient, UserRole, OrganisationType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import 'dotenv/config';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  log: ['info', 'warn', 'error'],
+});
 
 async function main() {
   console.log('Starting seed...');
@@ -21,54 +24,101 @@ async function main() {
   }
   console.log('Currencies seeded.');
 
-  // 2. Create Admin User
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@school.ac.zw';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123';
-  const hashedPassword = await bcrypt.hash(adminPassword, 10);
-
-  const admin = await prisma.user.upsert({
-    where: { email: adminEmail },
-    update: {
-      passwordHash: hashedPassword,
-    },
-    create: {
-      email: adminEmail,
-      passwordHash: hashedPassword,
-      firstName: 'System',
-      lastName: 'Administrator',
-    },
-  });
-  console.log(`Admin user created: ${admin.email}`);
-
-  // 3. Create Default Organisation
+  // 2. Create Organisation: "Demo School"
   const org = await prisma.organisation.upsert({
-    where: { code: 'HQ' },
-    update: {},
+    where: { code: 'DEMO001' },
+    update: {
+      name: 'Demo School',
+    },
     create: {
-      code: 'HQ',
-      name: 'Ministry of Education - HQ',
-      type: OrganisationType.MINISTRY,
+      code: 'DEMO001',
+      name: 'Demo School',
+      type: OrganisationType.COMBINED_SCHOOL,
       baseCurrency: 'ZWG',
     },
   });
-  console.log(`Default organisation created: ${org.name}`);
+  console.log(`Organisation created/updated: ${org.name}`);
 
-  // 4. Link Admin to Organisation
-  await prisma.organisationUser.upsert({
-    where: {
-      organisationId_userId: {
-        organisationId: org.id,
-        userId: admin.id,
-      },
-    },
-    update: { role: UserRole.ADMIN },
-    create: {
-      organisationId: org.id,
-      userId: admin.id,
+  // 3. Define Default Users
+  const defaultUsers = [
+    {
+      email: process.env.ADMIN_EMAIL || 'admin@school.ac.zw',
+      password: process.env.ADMIN_PASSWORD || 'Admin@123',
+      firstName: 'System',
+      lastName: 'Administrator',
       role: UserRole.ADMIN,
     },
-  });
-  console.log('Admin user linked to organisation.');
+    {
+      email: 'clerk@school.ac.zw',
+      password: 'Clerk@123',
+      firstName: 'Data',
+      lastName: 'Clerk',
+      role: UserRole.CLERK,
+    },
+    {
+      email: 'bursar@school.ac.zw',
+      password: 'Bursar@123',
+      firstName: 'Finance',
+      lastName: 'Bursar',
+      role: UserRole.BURSAR,
+    },
+    {
+      email: 'headmaster@school.ac.zw',
+      password: 'Headmaster@123',
+      firstName: 'School',
+      lastName: 'Headmaster',
+      role: UserRole.HEADMASTER,
+    },
+    {
+      email: 'auditor@school.ac.zw',
+      password: 'Auditor@123',
+      firstName: 'Internal',
+      lastName: 'Auditor',
+      role: UserRole.AUDITOR,
+    },
+  ];
+
+  for (const userData of defaultUsers) {
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    
+    // Create or update user
+    const user = await prisma.user.upsert({
+      where: { email: userData.email },
+      update: {
+        passwordHash: hashedPassword,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+      },
+      create: {
+        email: userData.email,
+        passwordHash: hashedPassword,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+      },
+    });
+
+    // Link user to organisation
+    await prisma.organisationUser.upsert({
+      where: {
+        organisationId_userId: {
+          organisationId: org.id,
+          userId: user.id,
+        },
+      },
+      update: {
+        role: userData.role,
+        isActive: true,
+      },
+      create: {
+        organisationId: org.id,
+        userId: user.id,
+        role: userData.role,
+        isActive: true,
+      },
+    });
+
+    console.log(`User seeded: ${userData.email} (${userData.role})`);
+  }
 
   console.log('Seed completed successfully.');
 }
