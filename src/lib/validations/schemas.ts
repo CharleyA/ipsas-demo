@@ -11,17 +11,21 @@ export const OrganisationType = z.enum([
 
 export const UserRole = z.enum(["ADMIN", "ACCOUNTANT", "BURSAR", "AUDITOR", "VIEWER"]);
 
-export const AccountType = z.enum(["ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE"]);
-
-export const FiscalPeriodStatus = z.enum(["OPEN", "CLOSED", "LOCKED"]);
+export const AccountType = z.enum([
+  "ASSET",
+  "LIABILITY",
+  "NET_ASSETS_EQUITY",
+  "REVENUE",
+  "EXPENSE",
+]);
 
 export const VoucherStatus = z.enum([
   "DRAFT",
   "SUBMITTED",
   "APPROVED",
   "POSTED",
-  "REJECTED",
   "REVERSED",
+  "CANCELLED",
 ]);
 
 export const createOrganisationSchema = z.object({
@@ -52,12 +56,6 @@ export const updateUserSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-export const addUserToOrganisationSchema = z.object({
-  userId: z.string().cuid(),
-  organisationId: z.string().cuid(),
-  role: UserRole,
-});
-
 export const createCurrencySchema = z.object({
   code: z.string().length(3),
   name: z.string().min(1).max(100),
@@ -78,22 +76,19 @@ export const createAccountSchema = z.object({
   code: z.string().min(1).max(20),
   name: z.string().min(1).max(200),
   type: AccountType,
-  categoryId: z.string().cuid().optional(),
   parentId: z.string().cuid().optional(),
   description: z.string().max(500).optional(),
   isSystemAccount: z.boolean().default(false),
-  isFxGainLoss: z.boolean().default(false),
 });
 
 export const updateAccountSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   description: z.string().max(500).optional(),
-  categoryId: z.string().cuid().nullable().optional(),
   parentId: z.string().cuid().nullable().optional(),
   isActive: z.boolean().optional(),
 });
 
-export const createFiscalPeriodSchema = z.object({
+export const createAccountingPeriodSchema = z.object({
   organisationId: z.string().cuid(),
   year: z.number().int().min(2000).max(2100),
   period: z.number().int().min(1).max(12),
@@ -105,67 +100,56 @@ export const createFiscalPeriodSchema = z.object({
 export const voucherLineSchema = z.object({
   lineNumber: z.number().int().positive(),
   description: z.string().max(500).optional(),
-  debitAccountId: z.string().cuid().optional(),
-  creditAccountId: z.string().cuid().optional(),
+  accountId: z.string().cuid(),
+  costCentreId: z.string().cuid().optional(),
+  fundId: z.string().cuid().optional(),
+  programmeId: z.string().cuid().optional(),
+  projectId: z.string().cuid().optional(),
   currencyCode: z.string().length(3),
-  amountFc: z.number().nonnegative(),
+  amountFc: z.number(),
   fxRate: z.number().positive(),
-  amountLc: z.number().nonnegative(),
+  amountLc: z.number(),
+  debit: z.number().optional(),
+  credit: z.number().optional(),
 });
 
 export const createVoucherSchema = z.object({
   organisationId: z.string().cuid(),
-  voucherTypeId: z.string().cuid(),
-  fiscalPeriodId: z.string().cuid(),
-  voucherDate: z.string().datetime().or(z.date()),
+  type: z.enum(["JOURNAL", "RECEIPT", "PAYMENT", "INVOICE", "BILL", "CASHBOOK"]),
+  periodId: z.string().cuid(),
+  date: z.string().datetime().or(z.date()),
   description: z.string().min(1).max(500),
   reference: z.string().max(100).optional(),
   lines: z.array(voucherLineSchema).min(1),
 });
 
 export const updateVoucherSchema = z.object({
-  voucherDate: z.string().datetime().or(z.date()).optional(),
+  date: z.string().datetime().or(z.date()).optional(),
   description: z.string().min(1).max(500).optional(),
   reference: z.string().max(100).optional(),
   lines: z.array(voucherLineSchema).min(1).optional(),
 });
 
-export const approveVoucherSchema = z.object({
-  approvalNotes: z.string().max(500).optional(),
-});
-
-export const rejectVoucherSchema = z.object({
-  rejectionReason: z.string().min(1).max(500),
-});
-
-export const createVoucherTypeSchema = z.object({
-  code: z.string().min(1).max(10),
-  name: z.string().min(1).max(100),
-  description: z.string().max(500).optional(),
-  prefix: z.string().min(1).max(10),
-});
-
-export const createAccountCategorySchema = z.object({
-  code: z.string().min(1).max(20),
-  name: z.string().min(1).max(100),
-  type: AccountType,
-  order: z.number().int().default(0),
+export const auditLogSchema = z.object({
+  userId: z.string().cuid(),
+  organisationId: z.string().cuid().optional(),
+  action: z.string(),
+  entityType: z.string(),
+  entityId: z.string(),
+  oldValues: z.any().optional(),
+  newValues: z.any().optional(),
 });
 
 export type CreateOrganisationInput = z.infer<typeof createOrganisationSchema>;
 export type UpdateOrganisationInput = z.infer<typeof updateOrganisationSchema>;
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
-export type AddUserToOrganisationInput = z.infer<typeof addUserToOrganisationSchema>;
 export type CreateCurrencyInput = z.infer<typeof createCurrencySchema>;
 export type CreateExchangeRateInput = z.infer<typeof createExchangeRateSchema>;
 export type CreateAccountInput = z.infer<typeof createAccountSchema>;
 export type UpdateAccountInput = z.infer<typeof updateAccountSchema>;
-export type CreateFiscalPeriodInput = z.infer<typeof createFiscalPeriodSchema>;
+export type CreateAccountingPeriodInput = z.infer<typeof createAccountingPeriodSchema>;
 export type VoucherLineInput = z.infer<typeof voucherLineSchema>;
 export type CreateVoucherInput = z.infer<typeof createVoucherSchema>;
 export type UpdateVoucherInput = z.infer<typeof updateVoucherSchema>;
-export type ApproveVoucherInput = z.infer<typeof approveVoucherSchema>;
-export type RejectVoucherInput = z.infer<typeof rejectVoucherSchema>;
-export type CreateVoucherTypeInput = z.infer<typeof createVoucherTypeSchema>;
-export type CreateAccountCategoryInput = z.infer<typeof createAccountCategorySchema>;
+export type AuditLogInput = z.infer<typeof auditLogSchema>;

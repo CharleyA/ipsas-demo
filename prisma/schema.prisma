@@ -24,13 +24,21 @@ model Organisation {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  users           OrganisationUser[]
-  chartOfAccounts Account[]
-  fiscalPeriods   FiscalPeriod[]
-  vouchers        Voucher[]
-  journalEntries  JournalEntry[]
-  currencies      OrganisationCurrency[]
-  attachments     Attachment[]
+  users              OrganisationUser[]
+  chartOfAccounts    Account[]
+  accountingPeriods  AccountingPeriod[]
+  vouchers           Voucher[]
+  glHeaders          GLHeader[]
+  currencies         OrganisationCurrency[]
+  attachments        FileAttachment[]
+  costCentres        CostCentre[]
+  funds              Fund[]
+  programmes         Programme[]
+  projects           Project[]
+  students           Student[]
+  suppliers          Supplier[]
+  bankAccounts       BankAccount[]
+  statementLines     StatementLine[]
 
   @@map("organisations")
 }
@@ -55,11 +63,10 @@ model User {
   updatedAt     DateTime @updatedAt
 
   organisations     OrganisationUser[]
-  createdVouchers   Voucher[]         @relation("VoucherCreatedBy")
-  submittedVouchers Voucher[]         @relation("VoucherSubmittedBy")
-  approvedVouchers  Voucher[]         @relation("VoucherApprovedBy")
-  postedVouchers    Voucher[]         @relation("VoucherPostedBy")
+  createdVouchers   Voucher[]          @relation("VoucherCreatedBy")
   auditLogs         AuditLog[]
+  approvalTasks     ApprovalTask[]
+  uploadedFiles     FileAttachment[]
 
   @@map("users")
 }
@@ -106,7 +113,11 @@ model Currency {
   exchangeRatesTo   ExchangeRate[]         @relation("ToCurrency")
   organisations     OrganisationCurrency[]
   voucherLines      VoucherLine[]
-  journalLines      JournalLine[]
+  glEntries         GLEntry[]
+  arInvoices        ARInvoice[]
+  arReceipts        ARReceipt[]
+  apBills           APBill[]
+  apPayments        APPayment[]
 
   @@map("currencies")
 }
@@ -146,22 +157,80 @@ model ExchangeRate {
 }
 
 // ============================================================================
-// CHART OF ACCOUNTS (IPSAS-ALIGNED)
+// DIMENSIONS
 // ============================================================================
 
-model AccountCategory {
-  id        String      @id @default(cuid())
-  code      String      @unique
-  name      String
-  type      AccountType
-  order     Int         @default(0)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+model CostCentre {
+  id             String   @id @default(cuid())
+  organisationId String
+  code           String
+  name           String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  accounts Account[]
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  voucherLines VoucherLine[]
+  glEntries    GLEntry[]
 
-  @@map("account_categories")
+  @@unique([organisationId, code])
+  @@map("cost_centres")
 }
+
+model Fund {
+  id             String   @id @default(cuid())
+  organisationId String
+  code           String
+  name           String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  voucherLines VoucherLine[]
+  glEntries    GLEntry[]
+
+  @@unique([organisationId, code])
+  @@map("funds")
+}
+
+model Programme {
+  id             String   @id @default(cuid())
+  organisationId String
+  code           String
+  name           String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  voucherLines VoucherLine[]
+  glEntries    GLEntry[]
+
+  @@unique([organisationId, code])
+  @@map("programmes")
+}
+
+model Project {
+  id             String   @id @default(cuid())
+  organisationId String
+  code           String
+  name           String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  voucherLines VoucherLine[]
+  glEntries    GLEntry[]
+
+  @@unique([organisationId, code])
+  @@map("projects")
+}
+
+// ============================================================================
+// CORE LEDGER
+// ============================================================================
 
 model Account {
   id                String          @id @default(cuid())
@@ -169,7 +238,6 @@ model Account {
   code              String
   name              String
   type              AccountType
-  categoryId        String?
   parentId          String?
   description       String?
   isSystemAccount   Boolean         @default(false)
@@ -178,14 +246,14 @@ model Account {
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
-  organisation Organisation     @relation(fields: [organisationId], references: [id])
-  category     AccountCategory? @relation(fields: [categoryId], references: [id])
-  parent       Account?         @relation("AccountHierarchy", fields: [parentId], references: [id])
-  children     Account[]        @relation("AccountHierarchy")
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  parent       Account?     @relation("AccountHierarchy", fields: [parentId], references: [id])
+  children     Account[]    @relation("AccountHierarchy")
 
-  debitLines   VoucherLine[]  @relation("DebitAccount")
-  creditLines  VoucherLine[]  @relation("CreditAccount")
-  journalLines JournalLine[]
+  voucherLines   VoucherLine[]
+  glEntries      GLEntry[]
+  statementMaps  AccountStatementMap[]
+  bankAccount    BankAccount?
 
   @@unique([organisationId, code])
   @@index([organisationId, type])
@@ -195,70 +263,18 @@ model Account {
 enum AccountType {
   ASSET
   LIABILITY
-  EQUITY
+  NET_ASSETS_EQUITY
   REVENUE
   EXPENSE
-}
-
-// ============================================================================
-// FISCAL PERIODS & PERIOD LOCKS
-// ============================================================================
-
-model FiscalPeriod {
-  id             String            @id @default(cuid())
-  organisationId String
-  year           Int
-  period         Int
-  name           String
-  startDate      DateTime          @db.Date
-  endDate        DateTime          @db.Date
-  status         FiscalPeriodStatus @default(OPEN)
-  lockedAt       DateTime?
-  lockedBy       String?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-
-  organisation   Organisation   @relation(fields: [organisationId], references: [id])
-  vouchers       Voucher[]
-  journalEntries JournalEntry[]
-
-  @@unique([organisationId, year, period])
-  @@index([organisationId, status])
-  @@map("fiscal_periods")
-}
-
-enum FiscalPeriodStatus {
-  OPEN
-  CLOSED
-  LOCKED
-}
-
-// ============================================================================
-// VOUCHERS (SOURCE DOCUMENTS)
-// ============================================================================
-
-model VoucherType {
-  id           String    @id @default(cuid())
-  code         String    @unique
-  name         String
-  description  String?
-  prefix       String
-  isActive     Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  vouchers Voucher[]
-
-  @@map("voucher_types")
 }
 
 model Voucher {
   id              String        @id @default(cuid())
   organisationId  String
-  voucherTypeId   String
-  fiscalPeriodId  String
-  voucherNumber   String
-  voucherDate     DateTime      @db.Date
+  type            VoucherType
+  periodId        String
+  number          String
+  date            DateTime      @db.Date
   description     String
   reference       String?
   status          VoucherStatus @default(DRAFT)
@@ -267,42 +283,34 @@ model Voucher {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   
-  submittedById   String?
-  submittedAt     DateTime?
+  organisation Organisation     @relation(fields: [organisationId], references: [id])
+  period       AccountingPeriod @relation(fields: [periodId], references: [id])
+  createdBy    User             @relation("VoucherCreatedBy", fields: [createdById], references: [id])
   
-  approvedById    String?
-  approvedAt      DateTime?
-  approvalNotes   String?
-  
-  postedById      String?
-  postedAt        DateTime?
-  
-  rejectedAt      DateTime?
-  rejectionReason String?
-  
-  reversalOfId    String?       @unique
-  reversedById    String?
-
-  organisation Organisation @relation(fields: [organisationId], references: [id])
-  voucherType  VoucherType  @relation(fields: [voucherTypeId], references: [id])
-  fiscalPeriod FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id])
-  
-  createdBy    User   @relation("VoucherCreatedBy", fields: [createdById], references: [id])
-  submittedBy  User?  @relation("VoucherSubmittedBy", fields: [submittedById], references: [id])
-  approvedBy   User?  @relation("VoucherApprovedBy", fields: [approvedById], references: [id])
-  postedBy     User?  @relation("VoucherPostedBy", fields: [postedById], references: [id])
-  
-  reversalOf   Voucher?  @relation("VoucherReversal", fields: [reversalOfId], references: [id])
-  reversal     Voucher?  @relation("VoucherReversal")
-
   lines        VoucherLine[]
   attachments  VoucherAttachment[]
-  journalEntry JournalEntry?
+  glHeader     GLHeader?
+  approvals    ApprovalTask[]
 
-  @@unique([organisationId, voucherNumber])
+  // Source relationships
+  arInvoice    ARInvoice?
+  arReceipt    ARReceipt?
+  apBill       APBill?
+  apPayment    APPayment?
+
+  @@unique([organisationId, number])
   @@index([organisationId, status])
-  @@index([organisationId, voucherDate])
+  @@index([organisationId, date])
   @@map("vouchers")
+}
+
+enum VoucherType {
+  JOURNAL
+  RECEIPT
+  PAYMENT
+  INVOICE
+  BILL
+  CASHBOOK
 }
 
 enum VoucherStatus {
@@ -310,8 +318,8 @@ enum VoucherStatus {
   SUBMITTED
   APPROVED
   POSTED
-  REJECTED
   REVERSED
+  CANCELLED
 }
 
 model VoucherLine {
@@ -319,83 +327,429 @@ model VoucherLine {
   voucherId       String
   lineNumber      Int
   description     String?
+  accountId       String
   
-  debitAccountId  String?
-  creditAccountId String?
+  // Dimensions
+  costCentreId    String?
+  fundId          String?
+  programmeId     String?
+  projectId       String?
   
   currencyCode    String
-  amountFc        Decimal  @db.Decimal(18, 4)
-  fxRate          Decimal  @db.Decimal(18, 8)
-  amountLc        Decimal  @db.Decimal(18, 4)
+  amountFc        Decimal  @db.Decimal(18, 4) // Amount in Foreign Currency
+  fxRate          Decimal  @db.Decimal(18, 8) // Exchange Rate to Base Currency
+  amountLc        Decimal  @db.Decimal(18, 4) // Amount in Local (Base) Currency
   
+  debit           Decimal? @db.Decimal(18, 4) // For convenience in UI
+  credit          Decimal? @db.Decimal(18, 4) // For convenience in UI
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  voucher       Voucher  @relation(fields: [voucherId], references: [id], onDelete: Cascade)
-  debitAccount  Account? @relation("DebitAccount", fields: [debitAccountId], references: [id])
-  creditAccount Account? @relation("CreditAccount", fields: [creditAccountId], references: [id])
-  currency      Currency @relation(fields: [currencyCode], references: [code])
+  voucher       Voucher     @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  account       Account     @relation(fields: [accountId], references: [id])
+  costCentre    CostCentre? @relation(fields: [costCentreId], references: [id])
+  fund          Fund?       @relation(fields: [fundId], references: [id])
+  programme     Programme?  @relation(fields: [programmeId], references: [id])
+  project       Project?    @relation(fields: [projectId], references: [id])
+  currency      Currency    @relation(fields: [currencyCode], references: [code])
 
   @@index([voucherId])
   @@map("voucher_lines")
 }
 
 // ============================================================================
-// JOURNAL ENTRIES (POSTED LEDGER - IMMUTABLE)
+// POSTED LEDGER (IMMUTABLE)
 // ============================================================================
 
-model JournalEntry {
+model GLHeader {
   id              String   @id @default(cuid())
   organisationId  String
-  fiscalPeriodId  String
+  periodId        String
   voucherId       String   @unique
   entryNumber     String
   entryDate       DateTime @db.Date
   description     String
   postedAt        DateTime @default(now())
-  postedById      String
 
-  organisation Organisation @relation(fields: [organisationId], references: [id])
-  fiscalPeriod FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id])
-  voucher      Voucher      @relation(fields: [voucherId], references: [id])
+  organisation Organisation     @relation(fields: [organisationId], references: [id])
+  period       AccountingPeriod @relation(fields: [periodId], references: [id])
+  voucher      Voucher          @relation(fields: [voucherId], references: [id])
 
-  lines JournalLine[]
+  entries GLEntry[]
 
   @@unique([organisationId, entryNumber])
   @@index([organisationId, entryDate])
-  @@map("journal_entries")
+  @@map("gl_headers")
 }
 
-model JournalLine {
+model GLEntry {
   id             String         @id @default(cuid())
-  journalEntryId String
+  glHeaderId     String
   lineNumber     Int
   accountId      String
   description    String?
   
+  // Dimensions
+  costCentreId    String?
+  fundId          String?
+  programmeId     String?
+  projectId       String?
+
   currencyCode   String
-  debitFc        Decimal        @db.Decimal(18, 4)
-  creditFc       Decimal        @db.Decimal(18, 4)
+  amountFc       Decimal        @db.Decimal(18, 4)
   fxRate         Decimal        @db.Decimal(18, 8)
-  debitLc        Decimal        @db.Decimal(18, 4)
-  creditLc       Decimal        @db.Decimal(18, 4)
+  amountLc       Decimal        @db.Decimal(18, 4)
+  
+  debitFc        Decimal?       @db.Decimal(18, 4)
+  creditFc       Decimal?       @db.Decimal(18, 4)
+  debitLc        Decimal?       @db.Decimal(18, 4)
+  creditLc       Decimal?       @db.Decimal(18, 4)
   
   createdAt      DateTime       @default(now())
 
-  journalEntry JournalEntry @relation(fields: [journalEntryId], references: [id])
-  account      Account      @relation(fields: [accountId], references: [id])
-  currency     Currency     @relation(fields: [currencyCode], references: [code])
+  glHeader      GLHeader    @relation(fields: [glHeaderId], references: [id])
+  account       Account     @relation(fields: [accountId], references: [id])
+  costCentre    CostCentre? @relation(fields: [costCentreId], references: [id])
+  fund          Fund?       @relation(fields: [fundId], references: [id])
+  programme     Programme?  @relation(fields: [programmeId], references: [id])
+  project       Project?    @relation(fields: [projectId], references: [id])
+  currency      Currency    @relation(fields: [currencyCode], references: [code])
 
-  @@index([journalEntryId])
-  @@index([accountId])
-  @@map("journal_lines")
+  @@index([glHeaderId])
+  @@index([accountId, createdAt])
+  @@index([fundId, createdAt])
+  @@index([costCentreId, createdAt])
+  @@map("gl_entries")
+}
+
+// ============================================================================
+// PERIODS & CONTROLS
+// ============================================================================
+
+model AccountingPeriod {
+  id             String            @id @default(cuid())
+  organisationId String
+  year           Int
+  period         Int
+  name           String
+  startDate      DateTime          @db.Date
+  endDate        DateTime          @db.Date
+  isClosed       Boolean           @default(false)
+  isLocked       Boolean           @default(false)
+  lockedAt       DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  vouchers     Voucher[]
+  glHeaders    GLHeader[]
+
+  @@unique([organisationId, year, period])
+  @@map("accounting_periods")
+}
+
+model ApprovalTask {
+  id             String         @id @default(cuid())
+  voucherId      String
+  userId         String
+  status         ApprovalStatus @default(PENDING)
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  voucher Voucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@index([voucherId])
+  @@map("approval_tasks")
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ============================================================================
+// AR (Student Fees & Customers)
+// ============================================================================
+
+model Student {
+  id             String   @id @default(cuid())
+  organisationId String
+  studentNumber  String
+  firstName      String
+  lastName       String
+  grade          String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  arInvoices   ARInvoice[]
+  arReceipts   ARReceipt[]
+
+  @@unique([organisationId, studentNumber])
+  @@map("students")
+}
+
+model ARInvoice {
+  id             String   @id @default(cuid())
+  organisationId String
+  voucherId      String   @unique
+  studentId      String
+  currencyCode   String
+  amount         Decimal  @db.Decimal(18, 4)
+  balance        Decimal  @db.Decimal(18, 4)
+  dueDate        DateTime @db.Date
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  voucher     Voucher        @relation(fields: [voucherId], references: [id])
+  student     Student        @relation(fields: [studentId], references: [id])
+  currency    Currency       @relation(fields: [currencyCode], references: [code])
+  lines       ARInvoiceLine[]
+  allocations ARAllocation[]
+
+  @@map("ar_invoices")
+}
+
+model ARInvoiceLine {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Decimal @db.Decimal(18, 4)
+  unitPrice   Decimal @db.Decimal(18, 4)
+  amount      Decimal @db.Decimal(18, 4)
+
+  invoice ARInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("ar_invoice_lines")
+}
+
+model ARReceipt {
+  id             String   @id @default(cuid())
+  organisationId String
+  voucherId      String   @unique
+  studentId      String
+  currencyCode   String
+  amount         Decimal  @db.Decimal(18, 4)
+  unallocated    Decimal  @db.Decimal(18, 4)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  voucher     Voucher        @relation(fields: [voucherId], references: [id])
+  student     Student        @relation(fields: [studentId], references: [id])
+  currency    Currency       @relation(fields: [currencyCode], references: [code])
+  allocations ARAllocation[]
+
+  @@map("ar_receipts")
+}
+
+model ARAllocation {
+  id        String   @id @default(cuid())
+  invoiceId String
+  receiptId String
+  amount    Decimal  @db.Decimal(18, 4)
+  createdAt DateTime @default(now())
+
+  invoice ARInvoice @relation(fields: [invoiceId], references: [id])
+  receipt ARReceipt @relation(fields: [receiptId], references: [id])
+
+  @@map("ar_allocations")
+}
+
+// ============================================================================
+// AP (Suppliers)
+// ============================================================================
+
+model Supplier {
+  id             String   @id @default(cuid())
+  organisationId String
+  code           String
+  name           String
+  taxNumber      String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  apBills      APBill[]
+  apPayments   APPayment[]
+
+  @@unique([organisationId, code])
+  @@map("suppliers")
+}
+
+model APBill {
+  id             String   @id @default(cuid())
+  organisationId String
+  voucherId      String   @unique
+  supplierId     String
+  currencyCode   String
+  amount         Decimal  @db.Decimal(18, 4)
+  balance        Decimal  @db.Decimal(18, 4)
+  dueDate        DateTime @db.Date
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  voucher     Voucher        @relation(fields: [voucherId], references: [id])
+  supplier    Supplier       @relation(fields: [supplierId], references: [id])
+  currency    Currency       @relation(fields: [currencyCode], references: [code])
+  lines       APBillLine[]
+  allocations APAllocation[]
+
+  @@map("ap_bills")
+}
+
+model APBillLine {
+  id          String  @id @default(cuid())
+  billId      String
+  description String
+  quantity    Decimal @db.Decimal(18, 4)
+  unitPrice   Decimal @db.Decimal(18, 4)
+  amount      Decimal @db.Decimal(18, 4)
+
+  bill APBill @relation(fields: [billId], references: [id], onDelete: Cascade)
+
+  @@map("ap_bill_lines")
+}
+
+model APPayment {
+  id             String   @id @default(cuid())
+  organisationId String
+  voucherId      String   @unique
+  supplierId     String
+  currencyCode   String
+  amount         Decimal  @db.Decimal(18, 4)
+  unallocated    Decimal  @db.Decimal(18, 4)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  voucher     Voucher        @relation(fields: [voucherId], references: [id])
+  supplier    Supplier       @relation(fields: [supplierId], references: [id])
+  currency    Currency       @relation(fields: [currencyCode], references: [code])
+  allocations APAllocation[]
+
+  @@map("ap_payments")
+}
+
+model APAllocation {
+  id        String   @id @default(cuid())
+  billId    String
+  paymentId String
+  amount    Decimal  @db.Decimal(18, 4)
+  createdAt DateTime @default(now())
+
+  bill    APBill    @relation(fields: [billId], references: [id])
+  payment APPayment @relation(fields: [paymentId], references: [id])
+
+  @@map("ap_allocations")
+}
+
+// ============================================================================
+// BANK & CASHBOOK
+// ============================================================================
+
+model BankAccount {
+  id             String   @id @default(cuid())
+  organisationId String
+  accountId      String   @unique
+  bankName       String
+  accountNumber  String
+  currencyCode   String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organisation Organisation           @relation(fields: [organisationId], references: [id])
+  account      Account                @relation(fields: [accountId], references: [id])
+  statements   BankStatementImport[]
+
+  @@map("bank_accounts")
+}
+
+model BankStatementImport {
+  id            String   @id @default(cuid())
+  bankAccountId String
+  importDate    DateTime @default(now())
+  filename      String?
+  
+  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id])
+  rows          BankStatementRow[]
+
+  @@map("bank_statement_imports")
+}
+
+model BankStatementRow {
+  id               String   @id @default(cuid())
+  importId         String
+  date             DateTime @db.Date
+  description      String
+  reference        String?
+  amount           Decimal  @db.Decimal(18, 4)
+  matchingStatus   MatchingStatus @default(UNMATCHED)
+  matchedVoucherId String?
+
+  import BankStatementImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  @@map("bank_statement_rows")
+}
+
+enum MatchingStatus {
+  UNMATCHED
+  MATCHED
+  EXCLUDED
+}
+
+// ============================================================================
+// REPORT MAPPING
+// ============================================================================
+
+model StatementLine {
+  id             String   @id @default(cuid())
+  organisationId String
+  reportType     ReportType
+  code           String
+  name           String
+  order          Int      @default(0)
+  parentId       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organisation Organisation          @relation(fields: [organisationId], references: [id])
+  parent       StatementLine?        @relation("StatementHierarchy", fields: [parentId], references: [id])
+  children     StatementLine[]       @relation("StatementHierarchy")
+  accountMaps  AccountStatementMap[]
+
+  @@unique([organisationId, reportType, code])
+  @@map("statement_lines")
+}
+
+enum ReportType {
+  FINANCIAL_POSITION
+  FINANCIAL_PERFORMANCE
+  CASH_FLOW
+}
+
+model AccountStatementMap {
+  id              String @id @default(cuid())
+  accountId       String
+  statementLineId String
+
+  account       Account       @relation(fields: [accountId], references: [id])
+  statementLine StatementLine @relation(fields: [statementLineId], references: [id])
+
+  @@unique([accountId, statementLineId])
+  @@map("account_statement_maps")
 }
 
 // ============================================================================
 // ATTACHMENTS & FILE STORAGE
 // ============================================================================
 
-model Attachment {
+model FileAttachment {
   id             String   @id @default(cuid())
   organisationId String
   filename       String
@@ -407,9 +761,10 @@ model Attachment {
   createdAt      DateTime @default(now())
 
   organisation Organisation        @relation(fields: [organisationId], references: [id])
+  uploadedBy   User                @relation(fields: [uploadedById], references: [id])
   vouchers     VoucherAttachment[]
 
-  @@map("attachments")
+  @@map("file_attachments")
 }
 
 model VoucherAttachment {
@@ -418,8 +773,8 @@ model VoucherAttachment {
   attachmentId String
   createdAt    DateTime @default(now())
 
-  voucher    Voucher    @relation(fields: [voucherId], references: [id], onDelete: Cascade)
-  attachment Attachment @relation(fields: [attachmentId], references: [id])
+  voucher    Voucher        @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  attachment FileAttachment @relation(fields: [attachmentId], references: [id])
 
   @@unique([voucherId, attachmentId])
   @@map("voucher_attachments")
