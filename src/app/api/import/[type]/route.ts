@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthContext } from '@/lib/auth';
+import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { parseImportFile } from '@/lib/import-utils';
 import { ImportType, ImportStatus } from '@prisma/client';
@@ -8,7 +8,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ type: string }> }
 ) {
-  const auth = await getAuthContext(request);
+  const auth = await verifyAuth(request);
   if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {

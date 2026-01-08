@@ -25,7 +25,7 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
   }
 }
 
-export async function getAuthContext(req: NextRequest): Promise<JWTPayload | null> {
+export async function verifyAuth(req: NextRequest): Promise<JWTPayload | null> {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.startsWith("Bearer ") 
     ? authHeader.split(" ")[1] 

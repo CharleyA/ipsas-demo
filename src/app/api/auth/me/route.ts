@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AuthService } from "@/lib/services/auth.service";
-import { getAuthContext } from "@/lib/auth";
+import { verifyAuth } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
-    const authContext = await getAuthContext(req);
+    const authContext = await verifyAuth(req);
     
     if (!authContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

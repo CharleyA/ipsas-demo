@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { getAuthContext, enforceRole } from "@/lib/auth";
+import { verifyAuth, enforceRole } from "@/lib/auth";
 import { AuditService } from "@/lib/services/audit.service";
 
 const CONFIRM_STRING = "I_UNDERSTAND_THIS_DELETES_DATA";
 
 export async function POST(req: NextRequest) {
   try {
-    const authContext = await getAuthContext(req);
+    const authContext = await verifyAuth(req);
     if (!authContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

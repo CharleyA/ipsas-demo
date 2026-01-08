@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { getAuthContext } from "@/lib/auth";
+import { verifyAuth } from "@/lib/auth";
 import { StudentService, SupplierService } from "@/lib/services/party.service";
 import { ARService } from "@/lib/services/ar.service";
 import { APService } from "@/lib/services/ap.service";
@@ -11,7 +11,7 @@ import { Decimal } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
   try {
-    const authContext = await getAuthContext(req);
+    const authContext = await verifyAuth(req);
     if (!authContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

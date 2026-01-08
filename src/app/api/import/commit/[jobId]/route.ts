@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthContext } from '@/lib/auth';
+import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { ImportType, ImportStatus, VoucherType, AccountType, VoucherStatus, UserRole, Prisma } from '@prisma/client';
 import { VoucherService } from '@/lib/services/voucher.service';
