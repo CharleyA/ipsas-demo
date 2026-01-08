@@ -4,6 +4,7 @@ import path from "node:path";
 // Loader path from orchids-visual-edits - use direct resolve to get the actual file
 const loaderPath = require.resolve('orchids-visual-edits/loader.js');
 
+// Restart server to apply Prisma changes
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -24,6 +25,7 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  serverExternalPackages: ["@prisma/client"],
   turbopack: {
     rules: {
       "*.{jsx,tsx}": {

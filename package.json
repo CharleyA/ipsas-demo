@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -38,6 +39,7 @@
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@supabase/supabase-js": "^2.90.0",
+    "@types/pg": "^8.16.0",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -55,6 +57,7 @@
     "nodemailer": "^7.0.12",
     "orchids-visual-edits": "^1.0.12",
     "papaparse": "^5.5.3",
+    "pg": "^8.16.3",
     "prisma": "^7.2.0",
     "puppeteer": "^24.34.0",
     "react": "19.2.0",
