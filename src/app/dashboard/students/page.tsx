@@ -101,13 +101,14 @@ export default function StudentsPage() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Student No.</TableHead>
-                  <TableHead>Full Name</TableHead>
-                  <TableHead>Grade</TableHead>
-                  <TableHead>Balance (ZWG)</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
+                  <TableRow>
+                    <TableHead>Student No.</TableHead>
+                    <TableHead>Full Name</TableHead>
+                    <TableHead>Grade</TableHead>
+                    <TableHead>Class</TableHead>
+                    <TableHead>Balance (ZWG)</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredStudents.map((student) => (
@@ -115,11 +116,12 @@ export default function StudentsPage() {
                     <TableCell className="font-medium">
                       {student.studentNumber}
                     </TableCell>
-                    <TableCell>
-                      {student.firstName} {student.lastName}
-                    </TableCell>
-                    <TableCell>{student.grade || "N/A"}</TableCell>
-                    <TableCell>
+                      <TableCell>
+                        {student.firstName} {student.lastName}
+                      </TableCell>
+                      <TableCell>{student.grade || "N/A"}</TableCell>
+                      <TableCell>{student.class || "N/A"}</TableCell>
+                      <TableCell>
                       {/* Balance would normally come from a summary API */}
                       0.00
                     </TableCell>

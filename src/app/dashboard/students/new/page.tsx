@@ -34,6 +34,7 @@ export default function NewStudentPage() {
       firstName: "",
       lastName: "",
       grade: "",
+      class: "",
     },
   });
 
@@ -65,7 +66,7 @@ export default function NewStudentPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="flex-1 space-y-6 max-w-2xl mx-auto w-full">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/dashboard/students">
@@ -123,19 +124,34 @@ export default function NewStudentPage() {
                   )}
                 />
               </div>
-              <FormField
-                control={form.control}
-                name="grade"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Grade / Class</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. Form 1A" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="grade"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Grade</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Form 1" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="class"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Class</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. A" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <div className="flex justify-end gap-2 pt-4">
                 <Button variant="outline" type="button" asChild>
                   <Link href="/dashboard/students">Cancel</Link>

@@ -5,13 +5,14 @@ import { AuditService } from "./audit.service";
 export class StudentService {
   static async create(data: CreateStudentInput, actorId: string) {
     const student = await prisma.student.create({
-      data: {
-        organisationId: data.organisationId,
-        studentNumber: data.studentNumber,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        grade: data.grade,
-      },
+        data: {
+          organisationId: data.organisationId,
+          studentNumber: data.studentNumber,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          grade: data.grade,
+          class: data.class,
+        },
     });
 
     await AuditService.log({
@@ -32,16 +33,17 @@ export class StudentService {
 
     const student = await prisma.student.update({
       where: { id },
-      data: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        grade: data.grade,
-        parentName: data.parentName,
-        parentPhone: data.parentPhone,
-        parentEmail: data.parentEmail,
-        enrollmentDate: data.enrollmentDate ? new Date(data.enrollmentDate) : undefined,
-        isActive: data.isActive,
-      },
+        data: {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          grade: data.grade,
+          class: data.class,
+          parentName: data.parentName,
+          parentPhone: data.parentPhone,
+          parentEmail: data.parentEmail,
+          enrollmentDate: data.enrollmentDate ? new Date(data.enrollmentDate) : undefined,
+          isActive: data.isActive,
+        },
     });
 
     await AuditService.log({

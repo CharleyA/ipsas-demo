@@ -231,6 +231,7 @@ export const createStudentSchema = z.object({
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
   grade: z.string().max(20).optional(),
+  class: z.string().max(20).optional(),
 });
 
 export const updateStudentSchema = createStudentSchema.partial().extend({
