@@ -63,10 +63,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(newUser);
     localStorage.setItem("auth_token", newToken);
     localStorage.setItem("auth_user", JSON.stringify(newUser));
-    // Set cookie for middleware
     document.cookie = `token=${newToken}; path=/; max-age=86400; SameSite=Lax`;
     toast.success("Logged in successfully");
-    router.push("/dashboard");
+    window.location.href = "/dashboard";
   };
 
   const logout = () => {
