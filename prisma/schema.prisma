@@ -1,0 +1,450 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// ORGANIZATION & USER MANAGEMENT
+// ============================================================================
+
+model Organisation {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  type            OrganisationType
+  baseCurrency    String   @default("ZWG")
+  fiscalYearStart Int      @default(1)
+  address         String?
+  phone           String?
+  email           String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  users           OrganisationUser[]
+  chartOfAccounts Account[]
+  fiscalPeriods   FiscalPeriod[]
+  vouchers        Voucher[]
+  journalEntries  JournalEntry[]
+  currencies      OrganisationCurrency[]
+  attachments     Attachment[]
+
+  @@map("organisations")
+}
+
+enum OrganisationType {
+  PRIMARY_SCHOOL
+  SECONDARY_SCHOOL
+  COMBINED_SCHOOL
+  MINISTRY
+  DEPARTMENT
+  LOCAL_AUTHORITY
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  organisations     OrganisationUser[]
+  createdVouchers   Voucher[]         @relation("VoucherCreatedBy")
+  submittedVouchers Voucher[]         @relation("VoucherSubmittedBy")
+  approvedVouchers  Voucher[]         @relation("VoucherApprovedBy")
+  postedVouchers    Voucher[]         @relation("VoucherPostedBy")
+  auditLogs         AuditLog[]
+
+  @@map("users")
+}
+
+model OrganisationUser {
+  id             String   @id @default(cuid())
+  organisationId String
+  userId         String
+  role           UserRole
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@unique([organisationId, userId])
+  @@map("organisation_users")
+}
+
+enum UserRole {
+  ADMIN
+  ACCOUNTANT
+  BURSAR
+  AUDITOR
+  VIEWER
+}
+
+// ============================================================================
+// MULTI-CURRENCY SUPPORT
+// ============================================================================
+
+model Currency {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  symbol    String
+  decimals  Int      @default(2)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  exchangeRatesFrom ExchangeRate[]         @relation("FromCurrency")
+  exchangeRatesTo   ExchangeRate[]         @relation("ToCurrency")
+  organisations     OrganisationCurrency[]
+  voucherLines      VoucherLine[]
+  journalLines      JournalLine[]
+
+  @@map("currencies")
+}
+
+model OrganisationCurrency {
+  id             String   @id @default(cuid())
+  organisationId String
+  currencyCode   String
+  isBaseCurrency Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  currency     Currency     @relation(fields: [currencyCode], references: [code])
+
+  @@unique([organisationId, currencyCode])
+  @@map("organisation_currencies")
+}
+
+model ExchangeRate {
+  id               String   @id @default(cuid())
+  fromCurrencyCode String
+  toCurrencyCode   String
+  rate             Decimal  @db.Decimal(18, 8)
+  effectiveDate    DateTime @db.Date
+  source           String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  fromCurrency Currency @relation("FromCurrency", fields: [fromCurrencyCode], references: [code])
+  toCurrency   Currency @relation("ToCurrency", fields: [toCurrencyCode], references: [code])
+
+  @@unique([fromCurrencyCode, toCurrencyCode, effectiveDate])
+  @@index([effectiveDate])
+  @@map("exchange_rates")
+}
+
+// ============================================================================
+// CHART OF ACCOUNTS (IPSAS-ALIGNED)
+// ============================================================================
+
+model AccountCategory {
+  id        String      @id @default(cuid())
+  code      String      @unique
+  name      String
+  type      AccountType
+  order     Int         @default(0)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  accounts Account[]
+
+  @@map("account_categories")
+}
+
+model Account {
+  id                String          @id @default(cuid())
+  organisationId    String
+  code              String
+  name              String
+  type              AccountType
+  categoryId        String?
+  parentId          String?
+  description       String?
+  isSystemAccount   Boolean         @default(false)
+  isFxGainLoss      Boolean         @default(false)
+  isActive          Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  organisation Organisation     @relation(fields: [organisationId], references: [id])
+  category     AccountCategory? @relation(fields: [categoryId], references: [id])
+  parent       Account?         @relation("AccountHierarchy", fields: [parentId], references: [id])
+  children     Account[]        @relation("AccountHierarchy")
+
+  debitLines   VoucherLine[]  @relation("DebitAccount")
+  creditLines  VoucherLine[]  @relation("CreditAccount")
+  journalLines JournalLine[]
+
+  @@unique([organisationId, code])
+  @@index([organisationId, type])
+  @@map("accounts")
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+// ============================================================================
+// FISCAL PERIODS & PERIOD LOCKS
+// ============================================================================
+
+model FiscalPeriod {
+  id             String            @id @default(cuid())
+  organisationId String
+  year           Int
+  period         Int
+  name           String
+  startDate      DateTime          @db.Date
+  endDate        DateTime          @db.Date
+  status         FiscalPeriodStatus @default(OPEN)
+  lockedAt       DateTime?
+  lockedBy       String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  organisation   Organisation   @relation(fields: [organisationId], references: [id])
+  vouchers       Voucher[]
+  journalEntries JournalEntry[]
+
+  @@unique([organisationId, year, period])
+  @@index([organisationId, status])
+  @@map("fiscal_periods")
+}
+
+enum FiscalPeriodStatus {
+  OPEN
+  CLOSED
+  LOCKED
+}
+
+// ============================================================================
+// VOUCHERS (SOURCE DOCUMENTS)
+// ============================================================================
+
+model VoucherType {
+  id           String    @id @default(cuid())
+  code         String    @unique
+  name         String
+  description  String?
+  prefix       String
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  vouchers Voucher[]
+
+  @@map("voucher_types")
+}
+
+model Voucher {
+  id              String        @id @default(cuid())
+  organisationId  String
+  voucherTypeId   String
+  fiscalPeriodId  String
+  voucherNumber   String
+  voucherDate     DateTime      @db.Date
+  description     String
+  reference       String?
+  status          VoucherStatus @default(DRAFT)
+  
+  createdById     String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  submittedById   String?
+  submittedAt     DateTime?
+  
+  approvedById    String?
+  approvedAt      DateTime?
+  approvalNotes   String?
+  
+  postedById      String?
+  postedAt        DateTime?
+  
+  rejectedAt      DateTime?
+  rejectionReason String?
+  
+  reversalOfId    String?       @unique
+  reversedById    String?
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  voucherType  VoucherType  @relation(fields: [voucherTypeId], references: [id])
+  fiscalPeriod FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id])
+  
+  createdBy    User   @relation("VoucherCreatedBy", fields: [createdById], references: [id])
+  submittedBy  User?  @relation("VoucherSubmittedBy", fields: [submittedById], references: [id])
+  approvedBy   User?  @relation("VoucherApprovedBy", fields: [approvedById], references: [id])
+  postedBy     User?  @relation("VoucherPostedBy", fields: [postedById], references: [id])
+  
+  reversalOf   Voucher?  @relation("VoucherReversal", fields: [reversalOfId], references: [id])
+  reversal     Voucher?  @relation("VoucherReversal")
+
+  lines        VoucherLine[]
+  attachments  VoucherAttachment[]
+  journalEntry JournalEntry?
+
+  @@unique([organisationId, voucherNumber])
+  @@index([organisationId, status])
+  @@index([organisationId, voucherDate])
+  @@map("vouchers")
+}
+
+enum VoucherStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  POSTED
+  REJECTED
+  REVERSED
+}
+
+model VoucherLine {
+  id              String   @id @default(cuid())
+  voucherId       String
+  lineNumber      Int
+  description     String?
+  
+  debitAccountId  String?
+  creditAccountId String?
+  
+  currencyCode    String
+  amountFc        Decimal  @db.Decimal(18, 4)
+  fxRate          Decimal  @db.Decimal(18, 8)
+  amountLc        Decimal  @db.Decimal(18, 4)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  voucher       Voucher  @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  debitAccount  Account? @relation("DebitAccount", fields: [debitAccountId], references: [id])
+  creditAccount Account? @relation("CreditAccount", fields: [creditAccountId], references: [id])
+  currency      Currency @relation(fields: [currencyCode], references: [code])
+
+  @@index([voucherId])
+  @@map("voucher_lines")
+}
+
+// ============================================================================
+// JOURNAL ENTRIES (POSTED LEDGER - IMMUTABLE)
+// ============================================================================
+
+model JournalEntry {
+  id              String   @id @default(cuid())
+  organisationId  String
+  fiscalPeriodId  String
+  voucherId       String   @unique
+  entryNumber     String
+  entryDate       DateTime @db.Date
+  description     String
+  postedAt        DateTime @default(now())
+  postedById      String
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  fiscalPeriod FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id])
+  voucher      Voucher      @relation(fields: [voucherId], references: [id])
+
+  lines JournalLine[]
+
+  @@unique([organisationId, entryNumber])
+  @@index([organisationId, entryDate])
+  @@map("journal_entries")
+}
+
+model JournalLine {
+  id             String         @id @default(cuid())
+  journalEntryId String
+  lineNumber     Int
+  accountId      String
+  description    String?
+  
+  currencyCode   String
+  debitFc        Decimal        @db.Decimal(18, 4)
+  creditFc       Decimal        @db.Decimal(18, 4)
+  fxRate         Decimal        @db.Decimal(18, 8)
+  debitLc        Decimal        @db.Decimal(18, 4)
+  creditLc       Decimal        @db.Decimal(18, 4)
+  
+  createdAt      DateTime       @default(now())
+
+  journalEntry JournalEntry @relation(fields: [journalEntryId], references: [id])
+  account      Account      @relation(fields: [accountId], references: [id])
+  currency     Currency     @relation(fields: [currencyCode], references: [code])
+
+  @@index([journalEntryId])
+  @@index([accountId])
+  @@map("journal_lines")
+}
+
+// ============================================================================
+// ATTACHMENTS & FILE STORAGE
+// ============================================================================
+
+model Attachment {
+  id             String   @id @default(cuid())
+  organisationId String
+  filename       String
+  originalName   String
+  mimeType       String
+  size           Int
+  storagePath    String
+  uploadedById   String
+  createdAt      DateTime @default(now())
+
+  organisation Organisation        @relation(fields: [organisationId], references: [id])
+  vouchers     VoucherAttachment[]
+
+  @@map("attachments")
+}
+
+model VoucherAttachment {
+  id           String   @id @default(cuid())
+  voucherId    String
+  attachmentId String
+  createdAt    DateTime @default(now())
+
+  voucher    Voucher    @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  attachment Attachment @relation(fields: [attachmentId], references: [id])
+
+  @@unique([voucherId, attachmentId])
+  @@map("voucher_attachments")
+}
+
+// ============================================================================
+// AUDIT LOG (APPEND-ONLY)
+// ============================================================================
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organisationId String?
+  userId         String
+  action         String
+  entityType     String
+  entityId       String
+  oldValues      Json?
+  newValues      Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([organisationId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
