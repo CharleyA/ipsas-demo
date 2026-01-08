@@ -43,6 +43,13 @@ export const updateOrganisationSchema = createOrganisationSchema.partial().exten
   isActive: z.boolean().optional(),
 });
 
+export const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
+
+export type LoginInput = z.infer<typeof loginSchema>;
+
 export const createUserSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(100),
@@ -139,6 +146,24 @@ export const auditLogSchema = z.object({
   oldValues: z.any().optional(),
   newValues: z.any().optional(),
 });
+
+export const createStudentSchema = z.object({
+  organisationId: z.string().cuid(),
+  studentNumber: z.string().min(1).max(50),
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  grade: z.string().max(20).optional(),
+});
+
+export const createSupplierSchema = z.object({
+  organisationId: z.string().cuid(),
+  code: z.string().min(1).max(50),
+  name: z.string().min(1).max(200),
+  taxNumber: z.string().max(50).optional(),
+});
+
+export type CreateStudentInput = z.infer<typeof createStudentSchema>;
+export type CreateSupplierInput = z.infer<typeof createSupplierSchema>;
 
 export type CreateOrganisationInput = z.infer<typeof createOrganisationSchema>;
 export type UpdateOrganisationInput = z.infer<typeof updateOrganisationSchema>;
