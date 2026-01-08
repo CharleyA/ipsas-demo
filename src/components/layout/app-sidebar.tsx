@@ -17,6 +17,7 @@ import {
   BookOpen,
   Wrench,
   FileSpreadsheet,
+  AlertTriangle,
 } from "lucide-react";
 
 
@@ -124,6 +125,12 @@ const menuItems = [
           href: "/dashboard/reports/audit-log",
           icon: History,
           roles: ["ADMIN", "AUDITOR"],
+        },
+        {
+          title: "Exceptions Report",
+          href: "/dashboard/reports/exceptions",
+          icon: AlertTriangle,
+          roles: ["ADMIN", "AUDITOR", "HEADMASTER", "BURSAR"],
         },
 
       ],

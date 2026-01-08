@@ -332,45 +332,54 @@ enum AccountType {
 }
 
 model Voucher {
-  id              String        @id @default(cuid())
-  organisationId  String
-  type            VoucherType
-  periodId        String
-  number          String
-  date            DateTime      @db.Date
-  description     String
-  reference       String?
-  status          VoucherStatus @default(DRAFT)
-  
-  createdById     String
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  
-  organisation Organisation @relation(fields: [organisationId], references: [id])
-  period       FiscalPeriod @relation(fields: [periodId], references: [id])
-  createdBy    User         @relation("VoucherCreatedBy", fields: [createdById], references: [id])
-  
-  lines        VoucherLine[]
-  attachments  VoucherAttachment[]
-  glHeader     GLHeader?
-  approvals    ApprovalTask[]
+    id              String        @id @default(cuid())
+    organisationId  String
+    type            VoucherType
+    periodId        String
+    number          String
+    date            DateTime      @db.Date
+    description     String
+    reference       String?
+    status          VoucherStatus @default(DRAFT)
+    
+    // Reversal tracking
+    reversedById    String?       // ID of the reversal voucher (if this voucher was reversed)
+    reversesId      String?       // ID of the original voucher (if this is a reversal)
+    
+    createdById     String
+    createdAt       DateTime      @default(now())
+    updatedAt       DateTime      @updatedAt
+    
+    organisation Organisation @relation(fields: [organisationId], references: [id])
+    period       FiscalPeriod @relation(fields: [periodId], references: [id])
+    createdBy    User         @relation("VoucherCreatedBy", fields: [createdById], references: [id])
+    
+    // Self-referencing reversal relationship
+    reversedBy   Voucher?     @relation("VoucherReversal", fields: [reversedById], references: [id])
+    reverses     Voucher?     @relation("VoucherReversal")
+    
+    lines        VoucherLine[]
+    attachments  VoucherAttachment[]
+    glHeader     GLHeader?
+    approvals    ApprovalTask[]
 
-  // Source relationships
-  arInvoice    ARInvoice?
-  arReceipt    ARReceipt?
-  apBill       APBill?
-  apPayment    APPayment?
-  
-  studentId    String?
-  supplierId   String?
-  student      Student?      @relation(fields: [studentId], references: [id])
-  supplier     Supplier?     @relation(fields: [supplierId], references: [id])
+    // Source relationships
+    arInvoice    ARInvoice?
+    arReceipt    ARReceipt?
+    apBill       APBill?
+    apPayment    APPayment?
+    
+    studentId    String?
+    supplierId   String?
+    student      Student?      @relation(fields: [studentId], references: [id])
+    supplier     Supplier?     @relation(fields: [supplierId], references: [id])
 
-  @@unique([organisationId, number])
-  @@index([organisationId, status])
-  @@index([organisationId, date])
-  @@map("vouchers")
-}
+    @@unique([organisationId, number])
+    @@unique([reversedById])
+    @@index([organisationId, status])
+    @@index([organisationId, date])
+    @@map("vouchers")
+  }
 
 enum VoucherType {
   JOURNAL

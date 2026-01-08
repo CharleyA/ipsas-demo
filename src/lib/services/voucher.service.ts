@@ -1,20 +1,51 @@
 import prisma from "@/lib/db";
-import { Decimal, VoucherStatus, VoucherType } from "@prisma/client";
+import { Prisma, VoucherStatus, VoucherType, FiscalPeriodStatus } from "@prisma/client";
 import type { CreateVoucherInput, UpdateVoucherInput, VoucherLineInput } from "@/lib/validations/schemas";
 import { AuditService } from "./audit.service";
-import { AccountingPeriodService } from "./accounting-period.service";
+import { 
+  computeLineAmounts, 
+  validateDoubleEntry, 
+  isImmutableStatus, 
+  canEditVoucher, 
+  canReverseVoucher,
+  roundLc,
+  LC_DECIMALS 
+} from "@/lib/accounting-utils";
+
+const Decimal = Prisma.Decimal;
+
+const PERIOD_OVERRIDE_ROLES = ["ADMIN", "HEADMASTER"];
 
 export class VoucherService {
   static async create(data: CreateVoucherInput, creatorId: string) {
-    const period = await AccountingPeriodService.findById(data.periodId);
-    if (!period) throw new Error("Accounting period not found");
-    if (period.isClosed || period.isLocked) {
-      throw new Error("Cannot create voucher in closed/locked period");
-    }
-
+    const period = await this.validatePeriodForPosting(data.periodId, data.date, creatorId);
+    
     const number = await this.generateVoucherNumber(data.organisationId, data.type);
 
-    this.validateDoubleEntry(data.lines);
+    const processedLines = data.lines.map(line => {
+      const amounts = computeLineAmounts(line.debit, line.credit, line.fxRate);
+      return {
+        lineNumber: line.lineNumber,
+        description: line.description,
+        accountId: line.accountId,
+        costCentreId: line.costCentreId,
+        fundId: line.fundId,
+        programmeId: line.programmeId,
+        projectId: line.projectId,
+        currencyCode: line.currencyCode,
+        fxRate: amounts.fxRate,
+        amountFc: amounts.amountFc,
+        amountLc: amounts.amountLc,
+        debit: amounts.debitFc,
+        credit: amounts.creditFc,
+        debitFc: amounts.debitFc,
+        creditFc: amounts.creditFc,
+        debitLc: amounts.debitLc,
+        creditLc: amounts.creditLc,
+      };
+    });
+
+    validateDoubleEntry(data.lines);
 
     const voucher = await prisma.voucher.create({
       data: {
@@ -27,23 +58,7 @@ export class VoucherService {
         reference: data.reference,
         status: "DRAFT",
         createdById: creatorId,
-        lines: {
-          create: data.lines.map(line => ({
-            lineNumber: line.lineNumber,
-            description: line.description,
-            accountId: line.accountId,
-            costCentreId: line.costCentreId,
-            fundId: line.fundId,
-            programmeId: line.programmeId,
-            projectId: line.projectId,
-            currencyCode: line.currencyCode,
-            amountFc: new Decimal(line.amountFc),
-            fxRate: new Decimal(line.fxRate),
-            amountLc: new Decimal(line.amountLc),
-            debit: line.debit ? new Decimal(line.debit) : null,
-            credit: line.credit ? new Decimal(line.credit) : null,
-          })),
-        },
+        lines: { create: processedLines },
       },
       include: { lines: true },
     });
@@ -77,6 +92,8 @@ export class VoucherService {
         createdBy: { select: { id: true, firstName: true, lastName: true } },
         attachments: { include: { attachment: true } },
         glHeader: true,
+        reversedBy: { select: { id: true, number: true, date: true, status: true } },
+        reverses: { select: { id: true, number: true, date: true, status: true } },
       },
     });
   }
@@ -88,19 +105,22 @@ export class VoucherService {
     });
     
     if (!oldVoucher) throw new Error("Voucher not found");
-    if (oldVoucher.status !== "DRAFT") {
-      throw new Error("Only draft vouchers can be edited");
+    
+    if (!canEditVoucher(oldVoucher.status)) {
+      throw new Error(`Cannot edit voucher in ${oldVoucher.status} status. Only DRAFT vouchers can be edited.`);
     }
 
     if (data.lines) {
-      this.validateDoubleEntry(data.lines);
+      validateDoubleEntry(data.lines);
     }
 
     const voucher = await prisma.$transaction(async (tx) => {
       if (data.lines) {
         await tx.voucherLine.deleteMany({ where: { voucherId: id } });
-        await tx.voucherLine.createMany({
-          data: data.lines.map(line => ({
+        
+        const processedLines = data.lines.map(line => {
+          const amounts = computeLineAmounts(line.debit, line.credit, line.fxRate);
+          return {
             voucherId: id,
             lineNumber: line.lineNumber,
             description: line.description,
@@ -110,13 +130,19 @@ export class VoucherService {
             programmeId: line.programmeId,
             projectId: line.projectId,
             currencyCode: line.currencyCode,
-            amountFc: new Decimal(line.amountFc),
-            fxRate: new Decimal(line.fxRate),
-            amountLc: new Decimal(line.amountLc),
-            debit: line.debit ? new Decimal(line.debit) : null,
-            credit: line.credit ? new Decimal(line.credit) : null,
-          })),
+            fxRate: amounts.fxRate,
+            amountFc: amounts.amountFc,
+            amountLc: amounts.amountLc,
+            debit: amounts.debitFc,
+            credit: amounts.creditFc,
+            debitFc: amounts.debitFc,
+            creditFc: amounts.creditFc,
+            debitLc: amounts.debitLc,
+            creditLc: amounts.creditLc,
+          };
         });
+        
+        await tx.voucherLine.createMany({ data: processedLines });
       }
 
       return tx.voucher.update({
@@ -156,7 +182,7 @@ export class VoucherService {
     await prisma.approvalTask.create({
       data: {
         voucherId: id,
-        userId: actorId, // In a real app, this would be a different user
+        userId: actorId,
         status: "PENDING",
       },
     });
@@ -172,139 +198,6 @@ export class VoucherService {
     });
 
     return updated;
-  }
-
-  static async post(id: string, actorId: string) {
-    const voucher = await prisma.voucher.findUnique({ 
-      where: { id },
-      include: { lines: true, period: true },
-    });
-    
-    if (!voucher) throw new Error("Voucher not found");
-    if (voucher.status !== "APPROVED") throw new Error("Only approved vouchers can be posted");
-    if (voucher.period.isClosed || voucher.period.isLocked) {
-      throw new Error("Cannot post to closed/locked period");
-    }
-
-    const entryNumber = await this.generateEntryNumber(voucher.organisationId);
-
-    const result = await prisma.$transaction(async (tx) => {
-      const glHeader = await tx.glHeader.create({
-        data: {
-          organisationId: voucher.organisationId,
-          periodId: voucher.periodId,
-          voucherId: id,
-          entryNumber,
-          entryDate: voucher.date,
-          description: voucher.description,
-          entries: {
-            create: voucher.lines.map((line) => ({
-              lineNumber: line.lineNumber,
-              accountId: line.accountId,
-              description: line.description,
-              costCentreId: line.costCentreId,
-              fundId: line.fundId,
-              programmeId: line.programmeId,
-              projectId: line.projectId,
-              currencyCode: line.currencyCode,
-              amountFc: line.amountFc,
-              fxRate: line.fxRate,
-              amountLc: line.amountLc,
-              debitFc: line.debit,
-              creditFc: line.credit,
-              // For simplicity, we assume lc debit/credit matches fc * rate
-              debitLc: line.debit ? line.debit.mul(line.fxRate) : null,
-              creditLc: line.credit ? line.credit.mul(line.fxRate) : null,
-            })),
-          },
-        },
-      });
-
-      const updatedVoucher = await tx.voucher.update({
-        where: { id },
-        data: { status: "POSTED" },
-      });
-
-      return { voucher: updatedVoucher, glHeader };
-    });
-
-    await AuditService.log({
-      userId: actorId,
-      organisationId: voucher.organisationId,
-      action: "POST",
-      entityType: "Voucher",
-      entityId: id,
-      oldValues: { status: voucher.status },
-      newValues: { status: "POSTED", glHeaderId: result.glHeader.id },
-    });
-
-    return result;
-  }
-
-  static async reverse(id: string, actorId: string) {
-    const voucher = await prisma.voucher.findUnique({ 
-      where: { id },
-      include: { lines: true, period: true },
-    });
-    
-    if (!voucher) throw new Error("Voucher not found");
-    if (voucher.status !== "POSTED") throw new Error("Only posted vouchers can be reversed");
-
-    const currentPeriod = await AccountingPeriodService.getCurrentPeriod(voucher.organisationId);
-    if (!currentPeriod) {
-      throw new Error("No open accounting period for reversal");
-    }
-
-    const reversalNumber = await this.generateVoucherNumber(voucher.organisationId, voucher.type);
-
-    const reversedLines = voucher.lines.map(line => ({
-      lineNumber: line.lineNumber,
-      description: `Reversal: ${line.description ?? ""}`,
-      accountId: line.accountId,
-      costCentreId: line.costCentreId,
-      fundId: line.fundId,
-      programmeId: line.programmeId,
-      projectId: line.projectId,
-      currencyCode: line.currencyCode,
-      amountFc: line.amountFc,
-      fxRate: line.fxRate,
-      amountLc: line.amountLc,
-      debit: line.credit, // Swap debit and credit
-      credit: line.debit,
-    }));
-
-    const reversal = await prisma.voucher.create({
-      data: {
-        organisationId: voucher.organisationId,
-        type: voucher.type,
-        periodId: currentPeriod.id,
-        number: reversalNumber,
-        date: new Date(),
-        description: `Reversal of ${voucher.number}: ${voucher.description}`,
-        reference: voucher.number,
-        status: "DRAFT",
-        createdById: actorId,
-        lines: { create: reversedLines },
-      },
-      include: { lines: true },
-    });
-
-    await prisma.voucher.update({
-      where: { id },
-      data: { status: "REVERSED" },
-    });
-
-    await AuditService.log({
-      userId: actorId,
-      organisationId: voucher.organisationId,
-      action: "REVERSE",
-      entityType: "Voucher",
-      entityId: id,
-      oldValues: { status: voucher.status },
-      newValues: { status: "REVERSED", reversalVoucherId: reversal.id },
-    });
-
-    return reversal;
   }
 
   static async approve(id: string, actorId: string, notes?: string) {
@@ -346,10 +239,183 @@ export class VoucherService {
     return result;
   }
 
-  static async reject(id: string, actorId: string, notes?: string) {
+  static async post(id: string, actorId: string, overridePeriodLock = false) {
     const voucher = await prisma.voucher.findUnique({ 
       where: { id },
+      include: { lines: true, period: true },
     });
+    
+    if (!voucher) throw new Error("Voucher not found");
+    if (voucher.status !== "APPROVED") throw new Error("Only approved vouchers can be posted");
+
+    await this.validatePeriodForPosting(
+      voucher.periodId, 
+      voucher.date.toISOString(), 
+      actorId, 
+      overridePeriodLock
+    );
+
+    const isBackdated = await this.checkBackdatedPosting(voucher.organisationId, voucher.date);
+    if (isBackdated) {
+      await AuditService.log({
+        userId: actorId,
+        organisationId: voucher.organisationId,
+        action: "BACKDATED_POSTING_ATTEMPT",
+        entityType: "Voucher",
+        entityId: id,
+        newValues: { voucherDate: voucher.date, postDate: new Date() },
+      });
+    }
+
+    const entryNumber = await this.generateEntryNumber(voucher.organisationId);
+
+    const result = await prisma.$transaction(async (tx) => {
+      const glHeader = await tx.glHeader.create({
+        data: {
+          organisationId: voucher.organisationId,
+          periodId: voucher.periodId,
+          voucherId: id,
+          entryNumber,
+          entryDate: voucher.date,
+          description: voucher.description,
+          entries: {
+            create: voucher.lines.map((line) => ({
+              lineNumber: line.lineNumber,
+              accountId: line.accountId,
+              description: line.description,
+              costCentreId: line.costCentreId,
+              fundId: line.fundId,
+              programmeId: line.programmeId,
+              projectId: line.projectId,
+              currencyCode: line.currencyCode,
+              fxRate: line.fxRate,
+              amountFc: line.amountFc,
+              amountLc: line.amountLc,
+              debitFc: line.debitFc ?? line.debit,
+              creditFc: line.creditFc ?? line.credit,
+              debitLc: line.debitLc ?? (line.debit ? roundLc(new Decimal(line.debit.toString()).mul(line.fxRate)) : null),
+              creditLc: line.creditLc ?? (line.credit ? roundLc(new Decimal(line.credit.toString()).mul(line.fxRate)) : null),
+            })),
+          },
+        },
+      });
+
+      const updatedVoucher = await tx.voucher.update({
+        where: { id },
+        data: { status: "POSTED" },
+      });
+
+      return { voucher: updatedVoucher, glHeader };
+    });
+
+    await AuditService.log({
+      userId: actorId,
+      organisationId: voucher.organisationId,
+      action: "POST",
+      entityType: "Voucher",
+      entityId: id,
+      oldValues: { status: voucher.status },
+      newValues: { status: "POSTED", glHeaderId: result.glHeader.id, isBackdated },
+    });
+
+    return result;
+  }
+
+  static async reverse(id: string, actorId: string, reason?: string) {
+    const voucher = await prisma.voucher.findUnique({ 
+      where: { id },
+      include: { lines: true, period: true, reversedBy: true },
+    });
+    
+    if (!voucher) throw new Error("Voucher not found");
+    if (!canReverseVoucher(voucher.status)) {
+      throw new Error(`Cannot reverse voucher in ${voucher.status} status. Only POSTED vouchers can be reversed.`);
+    }
+    if (voucher.reversedBy) {
+      throw new Error(`Voucher has already been reversed by ${voucher.reversedBy.number}`);
+    }
+
+    const currentPeriod = await this.getCurrentOpenPeriod(voucher.organisationId);
+    if (!currentPeriod) {
+      throw new Error("No open accounting period for reversal");
+    }
+
+    const reversalNumber = await this.generateVoucherNumber(voucher.organisationId, voucher.type);
+
+    const reversedLines = voucher.lines.map(line => {
+      const amounts = computeLineAmounts(
+        line.credit ? line.credit.toString() : null,
+        line.debit ? line.debit.toString() : null,
+        line.fxRate.toString()
+      );
+      
+      return {
+        lineNumber: line.lineNumber,
+        description: `Reversal: ${line.description ?? ""}`,
+        accountId: line.accountId,
+        costCentreId: line.costCentreId,
+        fundId: line.fundId,
+        programmeId: line.programmeId,
+        projectId: line.projectId,
+        currencyCode: line.currencyCode,
+        fxRate: amounts.fxRate,
+        amountFc: amounts.amountFc,
+        amountLc: amounts.amountLc,
+        debit: amounts.debitFc,
+        credit: amounts.creditFc,
+        debitFc: amounts.debitFc,
+        creditFc: amounts.creditFc,
+        debitLc: amounts.debitLc,
+        creditLc: amounts.creditLc,
+      };
+    });
+
+    const result = await prisma.$transaction(async (tx) => {
+      const reversal = await tx.voucher.create({
+        data: {
+          organisationId: voucher.organisationId,
+          type: voucher.type,
+          periodId: currentPeriod.id,
+          number: reversalNumber,
+          date: new Date(),
+          description: `Reversal of ${voucher.number}: ${reason || voucher.description}`,
+          reference: voucher.number,
+          status: "APPROVED",
+          createdById: actorId,
+          reversesId: voucher.id,
+          lines: { create: reversedLines },
+        },
+        include: { lines: true },
+      });
+
+      await tx.voucher.update({
+        where: { id },
+        data: { 
+          status: "REVERSED",
+          reversedById: reversal.id,
+        },
+      });
+
+      return reversal;
+    });
+
+    await AuditService.log({
+      userId: actorId,
+      organisationId: voucher.organisationId,
+      action: "REVERSE",
+      entityType: "Voucher",
+      entityId: id,
+      oldValues: { status: voucher.status },
+      newValues: { status: "REVERSED", reversalVoucherId: result.id, reason },
+    });
+
+    const posted = await this.post(result.id, actorId);
+
+    return { reversal: result, glHeader: posted.glHeader };
+  }
+
+  static async reject(id: string, actorId: string, notes?: string) {
+    const voucher = await prisma.voucher.findUnique({ where: { id } });
     
     if (!voucher) throw new Error("Voucher not found");
     if (voucher.status !== "SUBMITTED") throw new Error("Only submitted vouchers can be rejected");
@@ -387,8 +453,13 @@ export class VoucherService {
   static async cancel(id: string, actorId: string) {
     const voucher = await prisma.voucher.findUnique({ where: { id } });
     if (!voucher) throw new Error("Voucher not found");
-    if (!["DRAFT", "SUBMITTED"].includes(voucher.status)) {
-      throw new Error("Only draft or submitted vouchers can be cancelled");
+    
+    if (isImmutableStatus(voucher.status)) {
+      throw new Error(`Cannot cancel voucher in ${voucher.status} status. Use reversal instead.`);
+    }
+    
+    if (!["DRAFT", "SUBMITTED", "REJECTED"].includes(voucher.status)) {
+      throw new Error("Only draft, submitted, or rejected vouchers can be cancelled");
     }
 
     const updated = await prisma.voucher.update({
@@ -419,24 +490,73 @@ export class VoucherService {
       include: {
         lines: true,
         createdBy: { select: { firstName: true, lastName: true } },
+        reversedBy: { select: { id: true, number: true } },
+        reverses: { select: { id: true, number: true } },
       },
       orderBy: { createdAt: "desc" },
     });
   }
 
-  private static validateDoubleEntry(lines: VoucherLineInput[]) {
-    let totalDebits = new Decimal(0);
-    let totalCredits = new Decimal(0);
+  private static async validatePeriodForPosting(
+    periodId: string, 
+    voucherDate: string | Date, 
+    actorId: string,
+    override = false
+  ) {
+    const period = await prisma.fiscalPeriod.findUnique({ where: { id: periodId } });
+    if (!period) throw new Error("Accounting period not found");
 
-    for (const line of lines) {
-      if (line.debit) totalDebits = totalDebits.add(new Decimal(line.debit).mul(line.fxRate));
-      if (line.credit) totalCredits = totalCredits.add(new Decimal(line.credit).mul(line.fxRate));
+    const date = new Date(voucherDate);
+    if (date < period.startDate || date > period.endDate) {
+      throw new Error(`Voucher date ${date.toISOString().split('T')[0]} is outside period ${period.name} (${period.startDate.toISOString().split('T')[0]} - ${period.endDate.toISOString().split('T')[0]})`);
     }
 
-    const diff = totalDebits.sub(totalCredits).abs();
-    if (diff.gt(0.01)) {
-      throw new Error(`Double-entry violation: Debits (${totalDebits}) must equal Credits (${totalCredits}) in base currency`);
+    if (period.status === FiscalPeriodStatus.LOCKED) {
+      if (!override) {
+        throw new Error(`Period ${period.name} is locked. Posting requires override permission.`);
+      }
+      
+      const userOrg = await prisma.organisationUser.findFirst({
+        where: { userId: actorId, organisationId: period.organisationId }
+      });
+      
+      if (!userOrg || !PERIOD_OVERRIDE_ROLES.includes(userOrg.role)) {
+        throw new Error(`Only ${PERIOD_OVERRIDE_ROLES.join(", ")} can override locked period restrictions.`);
+      }
+
+      await AuditService.log({
+        userId: actorId,
+        organisationId: period.organisationId,
+        action: "PERIOD_LOCK_OVERRIDE",
+        entityType: "FiscalPeriod",
+        entityId: period.id,
+        newValues: { periodName: period.name, override: true },
+      });
     }
+
+    if (period.status === FiscalPeriodStatus.CLOSED) {
+      throw new Error(`Period ${period.name} is closed. No further postings allowed.`);
+    }
+
+    return period;
+  }
+
+  private static async getCurrentOpenPeriod(organisationId: string) {
+    const now = new Date();
+    return prisma.fiscalPeriod.findFirst({
+      where: {
+        organisationId,
+        status: FiscalPeriodStatus.OPEN,
+        startDate: { lte: now },
+        endDate: { gte: now },
+      },
+    });
+  }
+
+  private static async checkBackdatedPosting(organisationId: string, voucherDate: Date): Promise<boolean> {
+    const now = new Date();
+    const daysDiff = Math.floor((now.getTime() - voucherDate.getTime()) / (1000 * 60 * 60 * 24));
+    return daysDiff > 7;
   }
 
   private static async generateVoucherNumber(organisationId: string, type: string) {
@@ -463,5 +583,15 @@ export class VoucherService {
     });
 
     return `GL-${year}-${String(count + 1).padStart(6, "0")}`;
+  }
+}
+
+export class GLEntryService {
+  static async updateEntry() {
+    throw new Error("GL entries are immutable and cannot be updated. Use voucher reversal instead.");
+  }
+
+  static async deleteEntry() {
+    throw new Error("GL entries are immutable and cannot be deleted. Use voucher reversal instead.");
   }
 }
