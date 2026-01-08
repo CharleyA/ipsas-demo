@@ -109,13 +109,13 @@ export default function StudentsPage() {
                     <TableHead>Balance (ZWG)</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredStudents.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell className="font-medium">
-                      {student.studentNumber}
-                    </TableCell>
+                </TableHeader>
+                <TableBody>
+                  {filteredStudents.map((student) => (
+                    <TableRow key={student.id}>
+                      <TableCell className="font-medium">
+                        {student.studentNumber}
+                      </TableCell>
                       <TableCell>
                         {student.firstName} {student.lastName}
                       </TableCell>

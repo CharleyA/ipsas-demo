@@ -93,9 +93,9 @@ export default function StudentDetailPage(props: { params: Promise<{ id: string 
             <h1 className="text-3xl font-bold tracking-tight">
               {student.firstName} {student.lastName}
             </h1>
-            <p className="text-muted-foreground">
-              Student No: {student.studentNumber} | Grade: {student.grade || "N/A"}
-            </p>
+              <p className="text-muted-foreground">
+                Student No: {student.studentNumber} | Grade: {student.grade || "N/A"} | Class: {student.class || "N/A"}
+              </p>
           </div>
         </div>
         <div className="flex gap-2">

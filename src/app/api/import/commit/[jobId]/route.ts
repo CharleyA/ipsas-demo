@@ -50,20 +50,22 @@ export async function POST(
                 studentNumber: String(row.studentNumber),
               },
             },
-            update: {
-              firstName: row.firstName,
-              lastName: row.lastName,
-              grade: row.grade ? String(row.grade) : null,
-              isActive: row.isActive === 'true' || row.isActive === true || row.isActive === 'TRUE',
-            },
-            create: {
-              organisationId: job.organisationId,
-              studentNumber: String(row.studentNumber),
-              firstName: row.firstName,
-              lastName: row.lastName,
-              grade: row.grade ? String(row.grade) : null,
-              isActive: row.isActive === 'true' || row.isActive === true || row.isActive === 'TRUE' || row.isActive === undefined,
-            },
+              update: {
+                firstName: row.firstName,
+                lastName: row.lastName,
+                grade: row.grade ? String(row.grade) : null,
+                class: row.class ? String(row.class) : null,
+                isActive: row.isActive === 'true' || row.isActive === true || row.isActive === 'TRUE',
+              },
+              create: {
+                organisationId: job.organisationId,
+                studentNumber: String(row.studentNumber),
+                firstName: row.firstName,
+                lastName: row.lastName,
+                grade: row.grade ? String(row.grade) : null,
+                class: row.class ? String(row.class) : null,
+                isActive: row.isActive === 'true' || row.isActive === true || row.isActive === 'TRUE' || row.isActive === undefined,
+              },
           });
           processedCount++;
         } catch (err: any) {

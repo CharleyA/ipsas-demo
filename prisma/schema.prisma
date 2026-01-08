@@ -575,6 +575,7 @@ model Student {
   firstName      String
   lastName       String
   grade          String?
+  class          String?
   isActive       Boolean  @default(true)
   
   parentName     String?
