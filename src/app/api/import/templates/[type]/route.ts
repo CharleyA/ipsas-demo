@@ -11,7 +11,7 @@ export async function GET(
     const format = searchParams.get('format') || 'csv';
 
     if (format === 'xlsx') {
-      const buffer = generateXLSXTemplate(type);
+      const buffer = await generateXLSXTemplate(type);
       return new NextResponse(buffer, {
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -27,7 +27,8 @@ export async function GET(
         },
       });
     }
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  }
+    } catch (error: any) {
+      console.error('Template Download Error:', error);
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
 }

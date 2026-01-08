@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import * as ExcelJS from 'exceljs';
 import Papa from 'papaparse';
 
 export interface ImportTemplate {
@@ -28,15 +28,19 @@ export function generateCSVTemplate(type: string): string {
   return Papa.unparse([template.columns]);
 }
 
-export function generateXLSXTemplate(type: string): Buffer {
+export async function generateXLSXTemplate(type: string): Promise<Buffer> {
   const template = IMPORT_TEMPLATES[type.toLowerCase()];
   if (!template) throw new Error('Invalid template type');
 
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet([template.columns]);
-  XLSX.utils.book_append_sheet(wb, ws, 'Template');
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Template');
 
-  return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  worksheet.addRow(template.columns);
+  
+  // Make header bold
+  worksheet.getRow(1).font = { bold: true };
+
+  return (await workbook.xlsx.writeBuffer()) as Buffer;
 }
 
 export async function parseImportFile(file: File): Promise<any[]> {
