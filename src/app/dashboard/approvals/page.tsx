@@ -135,8 +135,8 @@ export default function ApprovalsPage() {
                             <Eye className="w-4 h-4" />
                           </Link>
                         </Button>
-                        {user?.role !== "VIEWER" && (
-                          <>
+                          {["ADMIN", "BURSAR", "HEADMASTER"].includes(user?.role) && (
+                            <>
                             <Button 
                               variant="ghost" 
                               size="icon" 

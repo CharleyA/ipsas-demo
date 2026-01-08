@@ -9,7 +9,7 @@ export const OrganisationType = z.enum([
   "LOCAL_AUTHORITY",
 ]);
 
-export const UserRole = z.enum(["ADMIN", "ACCOUNTANT", "BURSAR", "AUDITOR", "VIEWER"]);
+export const UserRole = z.enum(["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"]);
 
 export const AccountType = z.enum([
   "ASSET",
@@ -25,6 +25,7 @@ export const VoucherStatus = z.enum([
   "APPROVED",
   "POSTED",
   "REVERSED",
+  "REJECTED",
   "CANCELLED",
 ]);
 
@@ -162,6 +163,12 @@ export const createSupplierSchema = z.object({
   taxNumber: z.string().max(50).optional(),
 });
 
+export const addUserToOrganisationSchema = z.object({
+  userId: z.string().cuid(),
+  organisationId: z.string().cuid(),
+  role: UserRole,
+});
+
 export type CreateStudentInput = z.infer<typeof createStudentSchema>;
 export type CreateSupplierInput = z.infer<typeof createSupplierSchema>;
 
@@ -178,3 +185,4 @@ export type VoucherLineInput = z.infer<typeof voucherLineSchema>;
 export type CreateVoucherInput = z.infer<typeof createVoucherSchema>;
 export type UpdateVoucherInput = z.infer<typeof updateVoucherSchema>;
 export type AuditLogInput = z.infer<typeof auditLogSchema>;
+export type AddUserToOrganisationInput = z.infer<typeof addUserToOrganisationSchema>;

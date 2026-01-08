@@ -36,69 +36,70 @@ const menuItems = [
   {
     title: "General",
     items: [
-      {
-        title: "Dashboard",
-        href: "/dashboard",
-        icon: LayoutDashboard,
-        roles: ["ADMIN", "ACCOUNTANT", "BURSAR", "AUDITOR", "VIEWER"],
-      },
-      {
-        title: "Approvals",
-        href: "/dashboard/approvals",
-        icon: ShieldCheck,
-        roles: ["ADMIN", "BURSAR", "VIEWER"],
-      },
-    ],
-  },
-  {
-    title: "Accounting",
-    items: [
-      {
-        title: "Vouchers",
-        href: "/dashboard/vouchers",
-        icon: FileText,
-        roles: ["ADMIN", "ACCOUNTANT", "BURSAR", "AUDITOR"],
-      },
-      {
-        title: "Chart of Accounts",
-        href: "/dashboard/accounts",
-        icon: BookOpen,
-        roles: ["ADMIN", "ACCOUNTANT", "BURSAR", "AUDITOR"],
-      },
-    ],
-  },
-  {
-    title: "Sub-Ledgers",
-    items: [
-      {
-        title: "Students (AR)",
-        href: "/dashboard/students",
-        icon: Users,
-        roles: ["ADMIN", "ACCOUNTANT", "BURSAR", "AUDITOR"],
-      },
-      {
-        title: "Suppliers (AP)",
-        href: "/dashboard/suppliers",
-        icon: Building2,
-        roles: ["ADMIN", "ACCOUNTANT", "BURSAR", "AUDITOR"],
-      },
-    ],
-  },
-  {
-    title: "Reporting",
-    items: [
-      {
-        title: "Financial Reports",
-        href: "/dashboard/reports",
-        icon: PieChart,
-        roles: ["ADMIN", "ACCOUNTANT", "BURSAR", "AUDITOR", "VIEWER"],
-      },
-      {
-        title: "Audit Log",
-        href: "/dashboard/reports/audit-log",
-        icon: History,
-        roles: ["ADMIN", "AUDITOR"],
-      },
+        {
+          title: "Dashboard",
+          href: "/dashboard",
+          icon: LayoutDashboard,
+          roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"],
+        },
+        {
+          title: "Approvals",
+          href: "/dashboard/approvals",
+          icon: ShieldCheck,
+          roles: ["ADMIN", "BURSAR", "HEADMASTER"],
+        },
+      ],
+    },
+    {
+      title: "Accounting",
+      items: [
+        {
+          title: "Vouchers",
+          href: "/dashboard/vouchers",
+          icon: FileText,
+          roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR"],
+        },
+        {
+          title: "Chart of Accounts",
+          href: "/dashboard/accounts",
+          icon: BookOpen,
+          roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR"],
+        },
+      ],
+    },
+    {
+      title: "Sub-Ledgers",
+      items: [
+        {
+          title: "Students (AR)",
+          href: "/dashboard/students",
+          icon: Users,
+          roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR"],
+        },
+        {
+          title: "Suppliers (AP)",
+          href: "/dashboard/suppliers",
+          icon: Building2,
+          roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR"],
+        },
+      ],
+    },
+    {
+      title: "Reporting",
+      items: [
+        {
+          title: "Financial Reports",
+          href: "/dashboard/reports",
+          icon: PieChart,
+          roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"],
+        },
+        {
+          title: "Audit Log",
+          href: "/dashboard/reports/audit-log",
+          icon: History,
+          roles: ["ADMIN", "AUDITOR"],
+        },
+
     ],
   },
   {

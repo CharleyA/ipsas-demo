@@ -89,10 +89,10 @@ model OrganisationUser {
 
 enum UserRole {
   ADMIN
-  ACCOUNTANT
+  CLERK
   BURSAR
+  HEADMASTER
   AUDITOR
-  VIEWER
 }
 
 // ============================================================================
@@ -319,6 +319,7 @@ enum VoucherStatus {
   APPROVED
   POSTED
   REVERSED
+  REJECTED
   CANCELLED
 }
 

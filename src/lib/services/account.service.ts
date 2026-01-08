@@ -1,6 +1,7 @@
 import prisma from "@/lib/db";
-import type { CreateAccountInput, UpdateAccountInput, CreateAccountCategoryInput } from "@/lib/validations/schemas";
+import type { CreateAccountInput, UpdateAccountInput } from "@/lib/validations/schemas";
 import { AuditService } from "./audit.service";
+import { Decimal } from "@prisma/client/runtime/library";
 
 export class AccountService {
   static async create(data: CreateAccountInput, actorId: string) {
@@ -10,11 +11,9 @@ export class AccountService {
         code: data.code,
         name: data.name,
         type: data.type,
-        categoryId: data.categoryId,
         parentId: data.parentId,
         description: data.description,
         isSystemAccount: data.isSystemAccount ?? false,
-        isFxGainLoss: data.isFxGainLoss ?? false,
       },
     });
 
@@ -34,7 +33,6 @@ export class AccountService {
     return prisma.account.findUnique({
       where: { id },
       include: {
-        category: true,
         parent: true,
         children: true,
       },
@@ -64,11 +62,11 @@ export class AccountService {
   }
 
   static async listByOrganisation(organisationId: string, options?: {
-    type?: string;
+    type?: any;
     isActive?: boolean;
     parentId?: string | null;
   }) {
-    const where: Record<string, unknown> = { organisationId };
+    const where: any = { organisationId };
 
     if (options?.type) where.type = options.type;
     if (options?.isActive !== undefined) where.isActive = options.isActive;
@@ -77,7 +75,6 @@ export class AccountService {
     return prisma.account.findMany({
       where,
       include: {
-        category: true,
         parent: { select: { id: true, code: true, name: true } },
       },
       orderBy: { code: "asc" },
@@ -87,11 +84,10 @@ export class AccountService {
   static async getChartOfAccounts(organisationId: string) {
     const accounts = await prisma.account.findMany({
       where: { organisationId, isActive: true },
-      include: { category: true },
       orderBy: { code: "asc" },
     });
 
-    const buildTree = (parentId: string | null): unknown[] => {
+    const buildTree = (parentId: string | null): any[] => {
       return accounts
         .filter(a => a.parentId === parentId)
         .map(a => ({
@@ -103,43 +99,13 @@ export class AccountService {
     return buildTree(null);
   }
 
-  static async createCategory(data: CreateAccountCategoryInput, actorId: string) {
-    const category = await prisma.accountCategory.create({
-      data: {
-        code: data.code,
-        name: data.name,
-        type: data.type,
-        order: data.order ?? 0,
-      },
-    });
-
-    await AuditService.log({
-      userId: actorId,
-      action: "CREATE",
-      entityType: "AccountCategory",
-      entityId: category.id,
-      newValues: category,
-    });
-
-    return category;
-  }
-
-  static async listCategories(type?: string) {
-    const where = type ? { type: type as "ASSET" | "LIABILITY" | "EQUITY" | "REVENUE" | "EXPENSE" } : {};
-    
-    return prisma.accountCategory.findMany({
-      where,
-      orderBy: { order: "asc" },
-    });
-  }
-
   static async getAccountBalance(accountId: string, asOfDate?: Date) {
-    const dateFilter = asOfDate ? { entryDate: { lte: asOfDate } } : {};
+    const dateFilter = asOfDate ? { glHeader: { entryDate: { lte: asOfDate } } } : {};
 
-    const result = await prisma.journalLine.aggregate({
+    const result = await prisma.gLEntry.aggregate({
       where: {
         accountId,
-        journalEntry: dateFilter,
+        ...dateFilter,
       },
       _sum: {
         debitLc: true,

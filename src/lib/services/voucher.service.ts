@@ -1,5 +1,5 @@
 import prisma from "@/lib/db";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal, VoucherStatus, VoucherType } from "@prisma/client";
 import type { CreateVoucherInput, UpdateVoucherInput, VoucherLineInput } from "@/lib/validations/schemas";
 import { AuditService } from "./audit.service";
 import { AccountingPeriodService } from "./accounting-period.service";
@@ -344,6 +344,69 @@ export class VoucherService {
     });
 
     return result;
+  }
+
+  static async reject(id: string, actorId: string, notes?: string) {
+    const voucher = await prisma.voucher.findUnique({ 
+      where: { id },
+    });
+    
+    if (!voucher) throw new Error("Voucher not found");
+    if (voucher.status !== "SUBMITTED") throw new Error("Only submitted vouchers can be rejected");
+
+    const result = await prisma.$transaction(async (tx) => {
+      await tx.approvalTask.updateMany({
+        where: { voucherId: id, status: "PENDING" },
+        data: {
+          status: "REJECTED",
+          userId: actorId,
+          notes,
+          updatedAt: new Date(),
+        },
+      });
+
+      return tx.voucher.update({
+        where: { id },
+        data: { status: "REJECTED" },
+      });
+    });
+
+    await AuditService.log({
+      userId: actorId,
+      organisationId: voucher.organisationId,
+      action: "REJECT",
+      entityType: "Voucher",
+      entityId: id,
+      oldValues: { status: voucher.status },
+      newValues: { status: "REJECTED", notes },
+    });
+
+    return result;
+  }
+
+  static async cancel(id: string, actorId: string) {
+    const voucher = await prisma.voucher.findUnique({ where: { id } });
+    if (!voucher) throw new Error("Voucher not found");
+    if (!["DRAFT", "SUBMITTED"].includes(voucher.status)) {
+      throw new Error("Only draft or submitted vouchers can be cancelled");
+    }
+
+    const updated = await prisma.voucher.update({
+      where: { id },
+      data: { status: "CANCELLED" },
+    });
+
+    await AuditService.log({
+      userId: actorId,
+      organisationId: voucher.organisationId,
+      action: "CANCEL",
+      entityType: "Voucher",
+      entityId: id,
+      oldValues: { status: voucher.status },
+      newValues: { status: "CANCELLED" },
+    });
+
+    return updated;
   }
 
   static async listByOrganisation(organisationId: string, filters?: { status?: VoucherStatus, type?: VoucherType }) {
