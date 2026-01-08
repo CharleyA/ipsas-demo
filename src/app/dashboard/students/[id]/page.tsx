@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState, use } from "react";
 import {
   Card,
   CardContent,
@@ -23,67 +22,41 @@ import {
   ArrowLeft, 
   FileText, 
   Receipt, 
-  Loader2,
+  Loader2, 
   Printer,
-  Download
+  Download,
+  AlertTriangle
 } from "lucide-react";
 import Link from "next/link";
-import { useAuth } from "@/components/providers/auth-provider";
 import { toast } from "sonner";
+import { useAuth } from "@/components/providers/auth-provider";
+import { format } from "date-fns";
 
-export default function StudentDetailPage() {
-  const { id } = useParams();
+export default function StudentDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const { token } = useAuth();
-  const [student, setStudent] = useState<any>(null);
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchStatement = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/ar/students/${params.id}/statement`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      setData(result);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to fetch statement");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        // Mock data for student
-        setStudent({
-          id,
-          studentNumber: "2026-001",
-          firstName: "John",
-          lastName: "Doe",
-          grade: "Form 1A",
-          balance: 1500.00
-        });
-
-        // Mock transactions
-        setTransactions([
-          {
-            id: "t1",
-            date: "2026-01-01",
-            type: "INVOICE",
-            reference: "INV-2026-001",
-            description: "Term 1 School Fees",
-            amount: 2500.00,
-            balance: 1500.00,
-            status: "PARTIAL"
-          },
-          {
-            id: "t2",
-            date: "2026-01-05",
-            type: "RECEIPT",
-            reference: "RCT-2026-005",
-            description: "Initial Payment",
-            amount: -1000.00,
-            balance: 1500.00,
-            status: "POSTED"
-          }
-        ]);
-      } catch (error) {
-        toast.error("Failed to load student statement");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (token) fetchData();
-  }, [id, token]);
+    if (token) fetchStatement();
+  }, [token]);
 
   if (isLoading) {
     return (
@@ -93,7 +66,19 @@ export default function StudentDetailPage() {
     );
   }
 
-  if (!student) return <div>Student not found</div>;
+  if (!data) {
+    return (
+      <div className="text-center py-12">
+        <AlertTriangle className="w-12 h-12 mx-auto text-yellow-500 mb-4" />
+        <h2 className="text-xl font-bold">Student Not Found</h2>
+        <Button variant="link" asChild>
+          <Link href="/dashboard/students">Back to List</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const { student, transactions, totalBalance } = data;
 
   return (
     <div className="space-y-6">
@@ -109,60 +94,64 @@ export default function StudentDetailPage() {
               {student.firstName} {student.lastName}
             </h1>
             <p className="text-muted-foreground">
-              {student.studentNumber} • {student.grade}
+              Student No: {student.studentNumber} | Grade: {student.grade || "N/A"}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline">
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => window.print()}>
             <Printer className="w-4 h-4 mr-2" />
             Print Statement
           </Button>
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export CSV
-          </Button>
           <Button asChild>
-            <Link href={`/dashboard/vouchers/new?type=RECEIPT&studentId=${id}`}>
-              <PlusIcon className="w-4 h-4 mr-2" />
+            <Link href={`/dashboard/ar/invoices/new?studentId=${student.id}`}>
+              <FileText className="w-4 h-4 mr-2" />
+              New Invoice
+            </Link>
+          </Button>
+          <Button variant="secondary" asChild>
+            <Link href={`/dashboard/ar/receipts/new?studentId=${student.id}`}>
+              <Receipt className="w-4 h-4 mr-2" />
               Receive Payment
             </Link>
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Invoiced</CardTitle>
+            <CardDescription>Outstanding Balance</CardDescription>
+            <CardTitle className={`text-2xl ${Number(totalBalance) > 0 ? "text-red-600" : "text-green-600"}`}>
+              {student.organisation?.baseCurrency || "ZWG"} {Number(totalBalance).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">ZWG 2,500.00</div>
-          </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Paid</CardTitle>
+            <CardDescription>Status</CardDescription>
+            <CardTitle className="text-2xl">
+              <Badge variant={student.isActive ? "default" : "secondary"}>
+                {student.isActive ? "Active" : "Inactive"}
+              </Badge>
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">ZWG 1,000.00</div>
-          </CardContent>
         </Card>
-        <Card className="border-primary/50 bg-primary/5">
+        <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-primary">Outstanding Balance</CardTitle>
+            <CardDescription>Enrollment Date</CardDescription>
+            <CardTitle className="text-2xl">
+              {student.enrollmentDate ? format(new Date(student.enrollmentDate), "dd MMM yyyy") : "N/A"}
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">ZWG 1,500.00</div>
-          </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Transaction History</CardTitle>
+          <CardTitle>Transaction History (Statement)</CardTitle>
           <CardDescription>
-            All invoices and payments associated with this student.
+            All invoices and receipts for this student.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -173,64 +162,51 @@ export default function StudentDetailPage() {
                 <TableHead>Type</TableHead>
                 <TableHead>Reference</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead className="text-right">Amount (ZWG)</TableHead>
-                <TableHead className="text-right">Balance (ZWG)</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="text-right">Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transactions.map((tx) => (
-                <TableRow key={tx.id}>
-                  <TableCell>{new Date(tx.date).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {tx.type === "INVOICE" ? (
-                        <FileText className="w-4 h-4 text-blue-500" />
-                      ) : (
-                        <Receipt className="w-4 h-4 text-green-500" />
-                      )}
-                      <span className="text-xs font-medium">{tx.type}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">{tx.reference}</TableCell>
-                  <TableCell>{tx.description}</TableCell>
-                  <TableCell className={`text-right font-medium ${tx.amount < 0 ? "text-green-600" : ""}`}>
-                    {Math.abs(tx.amount).toFixed(2)}
-                  </TableCell>
-                  <TableCell className="text-right font-bold">
-                    {tx.balance.toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={tx.status === "POSTED" ? "success" : "outline"}>
-                      {tx.status}
-                    </Badge>
+              {transactions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    No transactions found.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                transactions.map((tx: any) => (
+                  <TableRow key={tx.id}>
+                    <TableCell>{format(new Date(tx.date), "dd MMM yyyy")}</TableCell>
+                    <TableCell>
+                      <Badge variant={tx.type === "INVOICE" ? "outline" : "secondary"}>
+                        {tx.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-medium">{tx.number}</TableCell>
+                    <TableCell>{tx.description}</TableCell>
+                    <TableCell className={`text-right font-bold ${Number(tx.amount) > 0 ? "text-red-600" : "text-green-600"}`}>
+                      {Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant={tx.status === "POSTED" ? "default" : "secondary"}>
+                        {tx.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                       <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/dashboard/vouchers/${tx.voucherId || tx.id}`}>
+                            View
+                          </Link>
+                       </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function PlusIcon(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M5 12h14" />
-      <path d="M12 5v14" />
-    </svg>
   );
 }

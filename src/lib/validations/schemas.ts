@@ -123,13 +123,63 @@ export const voucherLineSchema = z.object({
 
 export const createVoucherSchema = z.object({
   organisationId: z.string().cuid(),
-  type: z.enum(["JOURNAL", "RECEIPT", "PAYMENT", "INVOICE", "BILL", "CASHBOOK"]),
+  type: z.enum(["JOURNAL", "RECEIPT", "PAYMENT", "INVOICE", "BILL", "CASHBOOK", "AR_INVOICE", "AR_RECEIPT"]),
   periodId: z.string().cuid(),
   date: z.string().datetime().or(z.date()),
   description: z.string().min(1).max(500),
   reference: z.string().max(100).optional(),
   lines: z.array(voucherLineSchema).min(1),
 });
+
+export const arInvoiceLineSchema = z.object({
+  description: z.string().min(1),
+  quantity: z.number().positive(),
+  unitPrice: z.number().nonnegative(),
+  amount: z.number().nonnegative(),
+});
+
+export const createARInvoiceSchema = z.object({
+  organisationId: z.string().cuid(),
+  studentId: z.string().cuid(),
+  currencyCode: z.string().length(3),
+  term: z.string().optional(),
+  dueDate: z.string().datetime().or(z.date()),
+  lines: z.array(arInvoiceLineSchema).min(1),
+  description: z.string().optional(),
+});
+
+export const createARReceiptSchema = z.object({
+  organisationId: z.string().cuid(),
+  studentId: z.string().cuid(),
+  currencyCode: z.string().length(3),
+  amount: z.number().positive(),
+  paymentMethod: z.string().optional(),
+  reference: z.string().optional(),
+  date: z.string().datetime().or(z.date()),
+  bankAccountId: z.string().cuid(), // The bank/cash account to DR
+});
+
+export const allocateARReceiptSchema = z.object({
+  receiptId: z.string().cuid(),
+  allocations: z.array(z.object({
+    invoiceId: z.string().cuid(),
+    amount: z.number().positive(),
+  })),
+});
+
+export const updateStudentSchema = createStudentSchema.partial().extend({
+  parentName: z.string().max(200).optional(),
+  parentPhone: z.string().max(20).optional(),
+  parentEmail: z.string().email().optional(),
+  enrollmentDate: z.string().datetime().or(z.date()).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type CreateARInvoiceInput = z.infer<typeof createARInvoiceSchema>;
+export type CreateARReceiptInput = z.infer<typeof createARReceiptSchema>;
+export type AllocateARReceiptInput = z.infer<typeof allocateARReceiptSchema>;
+export type UpdateStudentInput = z.infer<typeof updateStudentSchema>;
+
 
 export const updateVoucherSchema = z.object({
   date: z.string().datetime().or(z.date()).optional(),

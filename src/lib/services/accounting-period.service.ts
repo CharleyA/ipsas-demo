@@ -4,7 +4,7 @@ import { AuditService } from "./audit.service";
 
 export class AccountingPeriodService {
   static async create(data: CreateAccountingPeriodInput, actorId: string) {
-    const period = await prisma.accountingPeriod.create({
+    const period = await prisma.fiscalPeriod.create({
       data: {
         organisationId: data.organisationId,
         year: data.year,
@@ -19,13 +19,45 @@ export class AccountingPeriodService {
       userId: actorId,
       organisationId: data.organisationId,
       action: "CREATE",
-      entityType: "AccountingPeriod",
+      entityType: "FiscalPeriod",
       entityId: period.id,
       newValues: period,
     });
 
     return period;
   }
+
+  static async findById(id: string) {
+    return prisma.fiscalPeriod.findUnique({
+      where: { id },
+    });
+  }
+
+  static async listByOrganisation(organisationId: string, options?: {
+    year?: number;
+  }) {
+    const where: any = { organisationId };
+    if (options?.year) where.year = options.year;
+
+    return prisma.fiscalPeriod.findMany({
+      where,
+      orderBy: [{ year: "desc" }, { period: "desc" }],
+    });
+  }
+
+  static async getCurrentPeriod(organisationId: string) {
+    const now = new Date();
+    return prisma.fiscalPeriod.findFirst({
+      where: {
+        organisationId,
+        status: "OPEN",
+        startDate: { lte: now },
+        endDate: { gte: now },
+      },
+    });
+  }
+}
+
 
   static async findById(id: string) {
     return prisma.accountingPeriod.findUnique({

@@ -1,0 +1,20 @@
+import { NextRequest, NextResponse } from "next/server";
+import { withAuth } from "@/lib/middleware-utils";
+import { ARService } from "@/lib/services/ar.service";
+import { createARInvoiceSchema } from "@/lib/validations/schemas";
+
+export async function POST(req: NextRequest) {
+  return withAuth(req, async (authReq) => {
+    try {
+      const body = await authReq.json();
+      const validatedData = createARInvoiceSchema.parse(body);
+      
+      validatedData.organisationId = authReq.user.organisationId;
+      
+      const invoice = await ARService.createInvoice(validatedData, authReq.user.id);
+      return NextResponse.json(invoice, { status: 201 });
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+  }, ["ADMIN", "CLERK", "BURSAR"]);
+}

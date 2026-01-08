@@ -26,6 +26,43 @@ export class StudentService {
     return student;
   }
 
+  static async update(id: string, data: UpdateStudentInput, actorId: string) {
+    const oldStudent = await prisma.student.findUnique({ where: { id } });
+    if (!oldStudent) throw new Error("Student not found");
+
+    const student = await prisma.student.update({
+      where: { id },
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        grade: data.grade,
+        parentName: data.parentName,
+        parentPhone: data.parentPhone,
+        parentEmail: data.parentEmail,
+        enrollmentDate: data.enrollmentDate ? new Date(data.enrollmentDate) : undefined,
+        isActive: data.isActive,
+      },
+    });
+
+    await AuditService.log({
+      userId: actorId,
+      organisationId: student.organisationId,
+      action: "UPDATE",
+      entityType: "Student",
+      entityId: id,
+      oldValues: oldStudent,
+      newValues: student,
+    });
+
+    return student;
+  }
+
+  static async findById(id: string) {
+    return prisma.student.findUnique({
+      where: { id },
+    });
+  }
+
   static async listByOrganisation(organisationId: string) {
     return prisma.student.findMany({
       where: { organisationId },
@@ -33,6 +70,7 @@ export class StudentService {
     });
   }
 }
+
 
 export class SupplierService {
   static async create(data: any, actorId: string) {

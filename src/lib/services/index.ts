@@ -5,3 +5,5 @@ export { AccountService } from "./account.service";
 export { VoucherService } from "./voucher.service";
 export { FiscalPeriodService } from "./fiscal-period.service";
 export { CurrencyService } from "./currency.service";
+export { StudentService, SupplierService } from "./party.service";
+export { ARService } from "./ar.service";

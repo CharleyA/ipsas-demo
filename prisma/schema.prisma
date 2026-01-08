@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ============================================================================
@@ -25,9 +26,14 @@ model Organisation {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  // AR Settings
+  arReceivableAccountId String?
+  arRevenueAccountId    String?
+  arBankAccountId      String?
+
   users              OrganisationUser[]
   chartOfAccounts    Account[]
-  accountingPeriods  AccountingPeriod[]
+  fiscalPeriods      FiscalPeriod[]
   vouchers           Voucher[]
   glHeaders          GLHeader[]
   currencies         OrganisationCurrency[]
@@ -59,7 +65,7 @@ model User {
   email         String   @unique
   passwordHash  String
   firstName     String
-  lastName     String
+  lastName      String
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -111,6 +117,7 @@ enum ImportType {
   STUDENTS
   RECEIPTS
   ACCOUNTS
+  SUPPLIERS
 }
 
 enum ImportStatus {
@@ -334,9 +341,9 @@ model Voucher {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   
-  organisation Organisation     @relation(fields: [organisationId], references: [id])
-  period       AccountingPeriod @relation(fields: [periodId], references: [id])
-  createdBy    User             @relation("VoucherCreatedBy", fields: [createdById], references: [id])
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  period       FiscalPeriod @relation(fields: [periodId], references: [id])
+  createdBy    User         @relation("VoucherCreatedBy", fields: [createdById], references: [id])
   
   lines        VoucherLine[]
   attachments  VoucherAttachment[]
@@ -362,6 +369,8 @@ enum VoucherType {
   INVOICE
   BILL
   CASHBOOK
+  AR_INVOICE
+  AR_RECEIPT
 }
 
 enum VoucherStatus {
@@ -390,6 +399,11 @@ model VoucherLine {
   currencyCode    String
   fxRate          Decimal  @db.Decimal(18, 8) // Exchange Rate to Base Currency
   
+  amountFc        Decimal? @db.Decimal(18, 4)
+  amountLc        Decimal? @db.Decimal(18, 4)
+  debit           Decimal? @db.Decimal(18, 4)
+  credit          Decimal? @db.Decimal(18, 4)
+
   debitFc         Decimal? @db.Decimal(18, 4)
   creditFc        Decimal? @db.Decimal(18, 4)
   debitLc         Decimal? @db.Decimal(18, 4)
@@ -424,9 +438,9 @@ model GLHeader {
   description     String
   postedAt        DateTime @default(now())
 
-  organisation Organisation     @relation(fields: [organisationId], references: [id])
-  period       AccountingPeriod @relation(fields: [periodId], references: [id])
-  voucher      Voucher          @relation(fields: [voucherId], references: [id])
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  period       FiscalPeriod @relation(fields: [periodId], references: [id])
+  voucher      Voucher      @relation(fields: [voucherId], references: [id])
 
   entries GLEntry[]
 
@@ -451,10 +465,12 @@ model GLEntry {
   currencyCode   String
   fxRate         Decimal        @db.Decimal(18, 8)
   
+  amountFc       Decimal?       @db.Decimal(18, 4)
+  amountLc       Decimal?       @db.Decimal(18, 4)
   debitFc        Decimal?       @db.Decimal(18, 4)
   creditFc       Decimal?       @db.Decimal(18, 4)
   debitLc        Decimal?       @db.Decimal(18, 4)
-  creditLc        Decimal?       @db.Decimal(18, 4)
+  creditLc       Decimal?       @db.Decimal(18, 4)
   
   createdAt      DateTime       @default(now())
 
@@ -477,7 +493,7 @@ model GLEntry {
 // PERIODS & CONTROLS
 // ============================================================================
 
-model AccountingPeriod {
+model FiscalPeriod {
   id             String            @id @default(cuid())
   organisationId String
   year           Int
@@ -485,9 +501,9 @@ model AccountingPeriod {
   name           String
   startDate      DateTime          @db.Date
   endDate        DateTime          @db.Date
-  isClosed       Boolean           @default(false)
-  isLocked       Boolean           @default(false)
+  status         FiscalPeriodStatus @default(OPEN)
   lockedAt       DateTime?
+  lockedBy       String?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
@@ -496,7 +512,13 @@ model AccountingPeriod {
   glHeaders    GLHeader[]
 
   @@unique([organisationId, year, period])
-  @@map("accounting_periods")
+  @@map("fiscal_periods")
+}
+
+enum FiscalPeriodStatus {
+  OPEN
+  CLOSED
+  LOCKED
 }
 
 model ApprovalTask {
@@ -533,6 +555,12 @@ model Student {
   lastName       String
   grade          String?
   isActive       Boolean  @default(true)
+  
+  parentName     String?
+  parentPhone    String?
+  parentEmail    String?
+  enrollmentDate DateTime?
+  
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -550,6 +578,9 @@ model ARInvoice {
   voucherId      String   @unique
   studentId      String
   currencyCode   String
+  term           String?
+  status         VoucherStatus @default(DRAFT)
+  
   amount         Decimal  @db.Decimal(18, 4)
   balance        Decimal  @db.Decimal(18, 4)
   dueDate        DateTime @db.Date
@@ -586,6 +617,10 @@ model ARReceipt {
   currencyCode   String
   amount         Decimal  @db.Decimal(18, 4)
   unallocated    Decimal  @db.Decimal(18, 4)
+  
+  paymentMethod  String?
+  reference      String?
+  
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

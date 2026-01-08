@@ -131,15 +131,16 @@ export default function StudentsPage() {
                           </Link>
                         </Button>
                         <Button variant="ghost" size="icon" title="Raise Invoice" asChild>
-                          <Link href={`/dashboard/vouchers/new?type=INVOICE&studentId=${student.id}`}>
+                          <Link href={`/dashboard/ar/invoices/new?studentId=${student.id}`}>
                             <FileText className="w-4 h-4" />
                           </Link>
                         </Button>
                         <Button variant="ghost" size="icon" title="Receive Payment" asChild>
-                          <Link href={`/dashboard/vouchers/new?type=RECEIPT&studentId=${student.id}`}>
+                          <Link href={`/dashboard/ar/receipts/new?studentId=${student.id}`}>
                             <Receipt className="w-4 h-4" />
                           </Link>
                         </Button>
+
                       </div>
                     </TableCell>
                   </TableRow>
