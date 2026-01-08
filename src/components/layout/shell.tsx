@@ -25,7 +25,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="h-svh flex flex-col overflow-hidden">
+      <SidebarInset className="flex h-svh flex-col overflow-hidden">
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
@@ -61,11 +61,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </Breadcrumb>
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-4 pt-4">
-          <div className="flex flex-col gap-4">
-            {children}
-          </div>
-        </div>
+        <main className="flex-1 overflow-y-auto p-4 pt-0">
+          {children}
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );

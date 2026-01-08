@@ -176,7 +176,7 @@ export default function TrialBalancePage() {
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="rounded-md border overflow-x-auto">
+            <div className="rounded-md border overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50">
