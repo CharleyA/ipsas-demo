@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import * as ExcelJS from "exceljs";
 import Papa from "papaparse";
-import puppeteer from "puppeteer";
+import { generatePDFFromHTML, type PDFGenerationOptions } from "./pdf";
 import { Prisma } from "@prisma/client";
 
 export type ExportFormat = "json" | "csv" | "xlsx" | "pdf";
@@ -13,12 +13,17 @@ export interface ExportColumn {
   format?: "number" | "date" | "currency";
 }
 
+export interface PDFOptions extends PDFGenerationOptions {
+  orientation?: 'portrait' | 'landscape';
+}
+
 export class ReportExporter {
   static async export(
     format: ExportFormat,
     data: any[],
     columns: ExportColumn[],
-    reportName: string
+    reportName: string,
+    pdfOptions?: PDFOptions
   ): Promise<Buffer | string | any> {
     switch (format) {
       case "csv":
@@ -26,7 +31,7 @@ export class ReportExporter {
       case "xlsx":
         return this.generateExcel(data, columns, reportName);
       case "pdf":
-        return this.generatePDF(data, columns, reportName);
+        return this.generatePDF(data, columns, reportName, pdfOptions);
       default:
         return data;
     }
@@ -38,6 +43,14 @@ export class ReportExporter {
       return value.toLocaleDateString();
     }
     return value;
+  }
+
+  static formatCurrency(amount: number | string | null | undefined, decimals = 2): string {
+    const num = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
+    return num.toLocaleString('en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    });
   }
 
   private static generateCSV(data: any[], columns: ExportColumn[]): string {
@@ -74,7 +87,6 @@ export class ReportExporter {
       worksheet.addRow(row);
     });
 
-    // Styling
     worksheet.getRow(1).font = { bold: true };
     worksheet.getRow(1).fill = {
       type: "pattern",
@@ -88,60 +100,50 @@ export class ReportExporter {
   private static async generatePDF(
     data: any[],
     columns: ExportColumn[],
-    reportName: string
+    reportName: string,
+    options?: PDFOptions
   ): Promise<Buffer> {
-    const html = `
-      <html>
-        <head>
-          <style>
-            body { font-family: sans-serif; padding: 20px; }
-            h1 { text-align: center; color: #333; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; font-weight: bold; }
-            .text-right { text-align: right; }
-          </style>
-        </head>
-        <body>
-          <h1>${reportName}</h1>
-          <table>
-            <thead>
-              <tr>
-                ${columns.map((col) => `<th>${col.header}</th>`).join("")}
-              </tr>
-            </thead>
-            <tbody>
-              ${data
-                .map(
-                  (item) => `
-                <tr>
-                  ${columns
-                    .map((col) => {
-                      const val = this.formatValue(item[col.key], col);
-                      const isNum = typeof val === "number";
-                      return `<td class="${isNum ? "text-right" : ""}">${val}</td>`;
-                    })
-                    .join("")}
-                </tr>
-              `
-                )
+    const tableHtml = `
+      <table>
+        <thead>
+          <tr>
+            ${columns.map((col) => `<th>${col.header}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>
+          ${data
+            .map(
+              (item) => `
+            <tr>
+              ${columns
+                .map((col) => {
+                  const val = this.formatValue(item[col.key], col);
+                  const isNum = typeof val === "number";
+                  const displayVal = isNum ? this.formatCurrency(val) : (val ?? '');
+                  return `<td class="${isNum ? "text-right" : ""}">${displayVal}</td>`;
+                })
                 .join("")}
-            </tbody>
-          </table>
-        </body>
-      </html>
+            </tr>
+          `
+            )
+            .join("")}
+        </tbody>
+      </table>
     `;
 
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    return generatePDFFromHTML(tableHtml, {
+      title: reportName,
+      subtitle: options?.subtitle,
+      organisationName: options?.organisationName || 'Organisation',
+      orientation: options?.orientation || 'portrait',
     });
-    const page = await browser.newPage();
-    await page.setContent(html);
-    const pdf = await page.pdf({ format: "A4", landscape: true, printBackground: true });
-    await browser.close();
+  }
 
-    return pdf;
+  static async generateCustomPDF(
+    htmlContent: string,
+    options: PDFOptions
+  ): Promise<Buffer> {
+    return generatePDFFromHTML(htmlContent, options);
   }
 
   static getResponse(

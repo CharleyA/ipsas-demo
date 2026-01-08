@@ -25,26 +25,46 @@ interface ReportToolbarProps {
 }
 
 export function ReportToolbar({ reportName, endpoint, filters }: ReportToolbarProps) {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   const handleDownload = (format: string) => {
-    const params = new URLSearchParams(filters);
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        params.set(key, String(value));
+      }
+    });
     params.set("format", format);
-    window.location.href = `${endpoint}?${params.toString()}`;
+    
+    const url = `${endpoint}?${params.toString()}`;
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    
+    fetch(url, {
+      headers: { "Authorization": `Bearer ${token}` }
+    }).then(res => res.blob())
+      .then(blob => {
+        const blobUrl = URL.createObjectURL(blob);
+        link.href = blobUrl;
+        link.download = `${reportName.toLowerCase().replace(/\s+/g, '_')}.${format}`;
+        link.click();
+        URL.revokeObjectURL(blobUrl);
+      });
   };
 
-  const canEmail = ["ADMIN", "AUDITOR", "HEADMASTER"].includes(user?.role || "");
+  const canEmail = ["ADMIN", "AUDITOR", "HEADMASTER", "BURSAR"].includes(user?.role || "");
 
   return (
     <div className="flex items-center gap-2">
+      <Button variant="outline" size="sm" onClick={() => handleDownload("pdf")} className="hidden md:flex">
+        <FileText className="mr-2 h-4 w-4" />
+        PDF
+      </Button>
       <Button variant="outline" size="sm" onClick={() => handleDownload("xlsx")} className="hidden md:flex">
         <FileSpreadsheet className="mr-2 h-4 w-4" />
-        Download Excel
-      </Button>
-      <Button variant="outline" size="sm" onClick={() => handleDownload("csv")} className="hidden md:flex">
-        <FileDown className="mr-2 h-4 w-4" />
-        Download CSV
+        Excel
       </Button>
       
       <DropdownMenu>
@@ -55,7 +75,7 @@ export function ReportToolbar({ reportName, endpoint, filters }: ReportToolbarPr
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => handleDownload("pdf")}>
+          <DropdownMenuItem onClick={() => handleDownload("pdf")} className="md:hidden">
             <FileText className="mr-2 h-4 w-4" />
             Download PDF
           </DropdownMenuItem>
@@ -63,7 +83,7 @@ export function ReportToolbar({ reportName, endpoint, filters }: ReportToolbarPr
             <FileSpreadsheet className="mr-2 h-4 w-4" />
             Download Excel
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleDownload("csv")} className="md:hidden">
+          <DropdownMenuItem onClick={() => handleDownload("csv")}>
             <FileDown className="mr-2 h-4 w-4" />
             Download CSV
           </DropdownMenuItem>
@@ -73,7 +93,7 @@ export function ReportToolbar({ reportName, endpoint, filters }: ReportToolbarPr
       {canEmail && (
         <Button variant="outline" size="sm" onClick={() => setIsEmailModalOpen(true)}>
           <Mail className="mr-2 h-4 w-4" />
-          Email Report
+          Email
         </Button>
       )}
 

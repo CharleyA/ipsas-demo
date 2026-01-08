@@ -1,195 +1,176 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
+import { Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Loader2, Mail } from "lucide-react";
-
-const emailSchema = z.object({
-  to: z.string().email("Invalid email address"),
-  subject: z.string().min(5, "Subject must be at least 5 characters"),
-  message: z.string().min(10, "Message must be at least 10 characters"),
-  format: z.enum(["csv", "xlsx", "pdf"]),
-});
-
-type EmailFormValues = z.infer<typeof emailSchema>;
+import { useAuth } from "@/components/providers/auth-provider";
 
 interface EmailReportModalProps {
-  isOpen: boolean;
-  onClose: () => void;
   reportName: string;
-  filters: any;
+  filters: Record<string, any>;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export function EmailReportModal({ isOpen, onClose, reportName, filters }: EmailReportModalProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const ALLOWED_ROLES = ["ADMIN", "HEADMASTER", "AUDITOR", "BURSAR"];
 
-  const form = useForm<EmailFormValues>({
-    resolver: zodResolver(emailSchema),
-    defaultValues: {
-      to: "",
-      subject: `${reportName} - ${new Date().toLocaleDateString()}`,
-      message: `Please find attached the ${reportName} report.`,
-      format: "pdf",
-    },
+export function EmailReportModal({ reportName, filters, isOpen, onClose }: EmailReportModalProps) {
+  const { user, token } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    to: "",
+    subject: `${reportName} Report`,
+    message: "",
+    format: "pdf",
   });
 
-  const onSubmit = async (values: EmailFormValues) => {
-    setIsSubmitting(true);
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, subject: `${reportName} Report` }));
+  }, [reportName]);
+
+  const canEmail = user?.role && ALLOWED_ROLES.includes(user.role);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.to || !formData.subject) {
+      toast.error("Email and subject are required");
+      return;
+    }
+
+    setIsLoading(true);
     try {
       const response = await fetch("/api/reports/email", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify({
           reportName,
           filters,
-          ...values,
+          format: formData.format,
+          to: formData.to,
+          subject: formData.subject,
+          message: formData.message,
         }),
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to send email");
+        throw new Error(data.error || "Failed to send email");
       }
 
-      toast.success("Email sent successfully!");
-      onClose();
+      toast.success(data.message || "Report sent successfully!");
+      onClose?.();
+      setFormData({ ...formData, to: "", message: "" });
     } catch (error: any) {
       toast.error(error.message);
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
+  if (!canEmail) {
+    return null;
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Email Report</DialogTitle>
-          <DialogDescription>
-            Send the {reportName} report as an attachment.
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="to"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Recipient Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="clerk@school.ac.zw" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose?.()}>
+      <DialogContent className="sm:max-w-[425px]">
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Email Report</DialogTitle>
+            <DialogDescription>
+              Send the {reportName} report to an email address.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="to">Recipient Email</Label>
+              <Input
+                id="to"
+                type="email"
+                placeholder="email@example.com"
+                value={formData.to}
+                onChange={(e) => setFormData({ ...formData, to: e.target.value })}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="subject">Subject</Label>
+              <Input
+                id="subject"
+                value={formData.subject}
+                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="format">Attachment Format</Label>
+              <Select
+                value={formData.format}
+                onValueChange={(value) => setFormData({ ...formData, format: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pdf">PDF</SelectItem>
+                  <SelectItem value="xlsx">Excel (XLSX)</SelectItem>
+                  <SelectItem value="csv">CSV</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="message">Message (Optional)</Label>
+              <Textarea
+                id="message"
+                placeholder="Add a personal message..."
+                value={formData.message}
+                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Send Email
+                </>
               )}
-            />
-
-            <FormField
-              control={form.control}
-              name="subject"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Subject</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="format"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Attachment Format</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select format" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="pdf">PDF Document</SelectItem>
-                      <SelectItem value="xlsx">Excel Spreadsheet</SelectItem>
-                      <SelectItem value="csv">CSV File</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="message"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Message</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Write a brief message..." 
-                      className="min-h-[100px]"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Mail className="mr-2 h-4 w-4" />
-                    Send Email
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

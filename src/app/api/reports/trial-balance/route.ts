@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/middleware-utils";
 import { ReportService } from "@/lib/services/report.service";
 import { ReportExporter, ExportFormat, ExportColumn } from "@/lib/report-exporter";
+import prisma from "@/lib/db";
+import { format } from "date-fns";
 
 export const runtime = "nodejs";
 
@@ -9,14 +11,18 @@ export async function GET(req: NextRequest) {
   return withAuth(req, async (authReq) => {
     const { searchParams } = new URL(authReq.url);
     const dateStr = searchParams.get("date");
-    const format = (searchParams.get("format") || "json") as ExportFormat;
+    const exportFormat = (searchParams.get("format") || "json") as ExportFormat;
     const date = dateStr ? new Date(dateStr) : new Date();
 
     const report = await ReportService.getTrialBalance(authReq.user.organisationId, date);
 
-    if (format === "json") {
+    if (exportFormat === "json") {
       return NextResponse.json(report);
     }
+
+    const org = await prisma.organisation.findUnique({ 
+      where: { id: authReq.user.organisationId } 
+    });
 
     const columns: ExportColumn[] = [
       { header: "Code", key: "code" },
@@ -27,7 +33,12 @@ export async function GET(req: NextRequest) {
       { header: "Net Balance", key: "balance" },
     ];
 
-    const content = await ReportExporter.export(format, report.rows, columns, "Trial Balance");
-    return ReportExporter.getResponse(format, content, "Trial Balance");
+    const content = await ReportExporter.export(exportFormat, report.rows, columns, "Trial Balance", {
+      title: "Trial Balance",
+      subtitle: `As at ${format(date, "MMMM d, yyyy")}`,
+      organisationName: org?.name || "Organisation",
+      orientation: "portrait",
+    });
+    return ReportExporter.getResponse(exportFormat, content, "Trial Balance");
   });
 }

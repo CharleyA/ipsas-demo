@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthContext } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { ImportType, ImportStatus, VoucherType, AccountType, VoucherStatus, UserRole } from '@prisma/client';
+import { ImportType, ImportStatus, VoucherType, AccountType, VoucherStatus, UserRole, Prisma } from '@prisma/client';
 import { VoucherService } from '@/lib/services/voucher.service';
-import { Decimal } from '@prisma/client/runtime/library';
+
+const { Decimal } = Prisma;
 
 export async function POST(
   request: NextRequest,

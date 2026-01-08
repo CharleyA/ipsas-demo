@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/middleware-utils";
 import { ReportService } from "@/lib/services/report.service";
 import { ReportExporter, ExportFormat, ExportColumn } from "@/lib/report-exporter";
+import prisma from "@/lib/db";
+import { format } from "date-fns";
 
 export const runtime = "nodejs";
 
@@ -11,7 +13,7 @@ export async function GET(req: NextRequest) {
     const accountId = searchParams.get("accountId");
     const startDateStr = searchParams.get("startDate");
     const endDateStr = searchParams.get("endDate");
-    const format = (searchParams.get("format") || "json") as ExportFormat;
+    const exportFormat = (searchParams.get("format") || "json") as ExportFormat;
 
     if (!accountId || !startDateStr || !endDateStr) {
       return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
@@ -27,9 +29,13 @@ export async function GET(req: NextRequest) {
       endDate
     );
 
-    if (format === "json") {
+    if (exportFormat === "json") {
       return NextResponse.json(report);
     }
+
+    const org = await prisma.organisation.findUnique({ 
+      where: { id: authReq.user.organisationId } 
+    });
 
     const columns: ExportColumn[] = [
       { header: "Date", key: "date" },
@@ -41,12 +47,13 @@ export async function GET(req: NextRequest) {
       { header: "Balance", key: "balance" },
     ];
 
-    const content = await ReportExporter.export(
-      format,
-      report.entries,
-      columns,
-      `General Ledger - ${report.account.name}`
-    );
-    return ReportExporter.getResponse(format, content, `General Ledger - ${report.account.name}`);
+    const reportName = `General Ledger - ${report.account.name}`;
+    const content = await ReportExporter.export(exportFormat, report.entries, columns, reportName, {
+      title: "General Ledger",
+      subtitle: `${report.account.code} - ${report.account.name} | ${format(startDate, "MMM d, yyyy")} to ${format(endDate, "MMM d, yyyy")}`,
+      organisationName: org?.name || "Organisation",
+      orientation: "landscape",
+    });
+    return ReportExporter.getResponse(exportFormat, content, reportName);
   });
 }
