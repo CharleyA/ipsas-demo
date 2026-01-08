@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthContext } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { ImportType, ImportStatus, VoucherType, AccountType } from '@prisma/client';
+import { ImportType, ImportStatus, VoucherType, AccountType, VoucherStatus, UserRole } from '@prisma/client';
 import { VoucherService } from '@/lib/services/voucher.service';
+import { Decimal } from '@prisma/client/runtime/library';
 
 export async function POST(
   request: NextRequest,
@@ -45,22 +46,22 @@ export async function POST(
             where: {
               organisationId_studentNumber: {
                 organisationId: job.organisationId,
-                studentNumber: row.studentNumber,
+                studentNumber: String(row.studentNumber),
               },
             },
             update: {
               firstName: row.firstName,
               lastName: row.lastName,
-              grade: row.grade,
-              isActive: row.isActive === 'true' || row.isActive === true,
+              grade: row.grade ? String(row.grade) : null,
+              isActive: row.isActive === 'true' || row.isActive === true || row.isActive === 'TRUE',
             },
             create: {
               organisationId: job.organisationId,
-              studentNumber: row.studentNumber,
+              studentNumber: String(row.studentNumber),
               firstName: row.firstName,
               lastName: row.lastName,
-              grade: row.grade,
-              isActive: row.isActive === 'true' || row.isActive === true || row.isActive === undefined,
+              grade: row.grade ? String(row.grade) : null,
+              isActive: row.isActive === 'true' || row.isActive === true || row.isActive === 'TRUE' || row.isActive === undefined,
             },
           });
           processedCount++;
@@ -69,8 +70,44 @@ export async function POST(
           await prisma.importJobRowError.create({
             data: {
               jobId: job.id,
-              rowNumber: 0, // General error or row-specific? 
+              rowNumber: 0,
               error: `Error importing student ${row.studentNumber}: ${err.message}`,
+              rowData: row,
+            },
+          });
+        }
+      }
+    } else if (job.type === ImportType.SUPPLIERS) {
+      for (const row of previewData) {
+        try {
+          await prisma.supplier.upsert({
+            where: {
+              organisationId_code: {
+                organisationId: job.organisationId,
+                code: String(row.code),
+              },
+            },
+            update: {
+              name: row.name,
+              taxNumber: row.taxNumber ? String(row.taxNumber) : null,
+              isActive: row.isActive === 'true' || row.isActive === true || row.isActive === 'TRUE',
+            },
+            create: {
+              organisationId: job.organisationId,
+              code: String(row.code),
+              name: row.name,
+              taxNumber: row.taxNumber ? String(row.taxNumber) : null,
+              isActive: row.isActive === 'true' || row.isActive === true || row.isActive === 'TRUE' || row.isActive === undefined,
+            },
+          });
+          processedCount++;
+        } catch (err: any) {
+          errorCount++;
+          await prisma.importJobRowError.create({
+            data: {
+              jobId: job.id,
+              rowNumber: 0,
+              error: `Error importing supplier ${row.code}: ${err.message}`,
               rowData: row,
             },
           });
@@ -79,14 +116,13 @@ export async function POST(
     } else if (job.type === ImportType.ACCOUNTS) {
       for (const row of previewData) {
         try {
-          // Find parent if exists
           let parentId = null;
           if (row.parentCode) {
             const parent = await prisma.account.findUnique({
               where: {
                 organisationId_code: {
                   organisationId: job.organisationId,
-                  code: row.parentCode,
+                  code: String(row.parentCode),
                 },
               },
             });
@@ -97,7 +133,7 @@ export async function POST(
             where: {
               organisationId_code: {
                 organisationId: job.organisationId,
-                code: row.code,
+                code: String(row.code),
               },
             },
             update: {
@@ -108,7 +144,7 @@ export async function POST(
             },
             create: {
               organisationId: job.organisationId,
-              code: row.code,
+              code: String(row.code),
               name: row.name,
               type: row.type.toUpperCase() as AccountType,
               parentId,
@@ -129,30 +165,21 @@ export async function POST(
         }
       }
     } else if (job.type === ImportType.RECEIPTS) {
-      // Find default accounts for receipts
-      const bankAccount = await prisma.account.findFirst({
-        where: { organisationId: job.organisationId, type: AccountType.ASSET, name: { contains: 'Bank', mode: 'insensitive' } },
-      }) || await prisma.account.findFirst({
-        where: { organisationId: job.organisationId, type: AccountType.ASSET },
-      });
+      const org = await prisma.organisation.findUnique({ where: { id: job.organisationId } });
+      const bankAccountId = org?.arBankAccountId;
+      const revenueAccountId = org?.arRevenueAccountId;
+      const receivableAccountId = org?.arReceivableAccountId;
 
-      const revenueAccount = await prisma.account.findFirst({
-        where: { organisationId: job.organisationId, type: AccountType.REVENUE, name: { contains: 'Fee', mode: 'insensitive' } },
-      }) || await prisma.account.findFirst({
-        where: { organisationId: job.organisationId, type: AccountType.REVENUE },
-      });
-
-      if (!bankAccount || !revenueAccount) {
-        throw new Error('Bank or Revenue accounts not found. Please setup Chart of Accounts first.');
+      if (!bankAccountId || (!revenueAccountId && !receivableAccountId)) {
+        throw new Error('AR accounts not configured in Organisation settings.');
       }
 
-      // Find first open period
-      const period = await prisma.accountingPeriod.findFirst({
-        where: { organisationId: job.organisationId, isClosed: false, isLocked: false },
+      const period = await prisma.fiscalPeriod.findFirst({
+        where: { organisationId: job.organisationId, status: 'OPEN' },
         orderBy: [{ year: 'desc' }, { period: 'desc' }],
       });
 
-      if (!period) throw new Error('No open accounting period found.');
+      if (!period) throw new Error('No open fiscal period found.');
 
       for (const row of previewData) {
         try {
@@ -160,7 +187,7 @@ export async function POST(
             where: {
               organisationId_studentNumber: {
                 organisationId: job.organisationId,
-                studentNumber: row.studentNumber,
+                studentNumber: String(row.studentNumber),
               }
             }
           });
@@ -171,17 +198,20 @@ export async function POST(
           const fxRate = parseFloat(row.fxRate || '1');
           const amountLc = amount * fxRate;
 
+          // If allocating to invoices, we usually credit Accounts Receivable
+          const creditAccountId = receivableAccountId || revenueAccountId;
+
           const voucher = await VoucherService.create({
             organisationId: job.organisationId,
-            type: VoucherType.RECEIPT,
+            type: VoucherType.AR_RECEIPT,
             periodId: period.id,
             date: new Date(row.date),
-            description: row.description || `Receipt for ${student.firstName} ${student.lastName}`,
+            description: row.description || `Bulk Receipt for ${student.firstName} ${student.lastName}`,
             reference: row.reference,
             lines: [
               {
                 lineNumber: 1,
-                accountId: bankAccount.id,
+                accountId: bankAccountId!,
                 description: 'Debit Bank',
                 currencyCode: row.currencyCode,
                 amountFc: amount,
@@ -192,8 +222,8 @@ export async function POST(
               },
               {
                 lineNumber: 2,
-                accountId: revenueAccount.id,
-                description: 'Credit Revenue',
+                accountId: creditAccountId!,
+                description: 'Credit Receivable/Revenue',
                 currencyCode: row.currencyCode,
                 amountFc: amount,
                 fxRate: fxRate,
@@ -204,12 +234,65 @@ export async function POST(
             ]
           }, auth.userId);
 
+          // Create the AR Receipt record
+          const arReceipt = await prisma.aRReceipt.create({
+            data: {
+              organisationId: job.organisationId,
+              voucherId: voucher.id,
+              studentId: student.id,
+              currencyCode: row.currencyCode,
+              amount: new Decimal(amount),
+              unallocated: new Decimal(amount),
+              reference: row.reference,
+            }
+          });
+
+          // Auto-allocate if requested (simplistic: allocate to oldest invoices first)
+          if (row.autoAllocate === 'true' || row.autoAllocate === true) {
+             const invoices = await prisma.aRInvoice.findMany({
+               where: { studentId: student.id, balance: { gt: 0 }, status: 'POSTED' },
+               orderBy: { dueDate: 'asc' }
+             });
+
+             let remaining = new Decimal(amount);
+             for (const invoice of invoices) {
+               if (remaining.lte(0)) break;
+               const allocAmount = Decimal.min(remaining, invoice.balance);
+               
+               await prisma.aRAllocation.create({
+                 data: {
+                   invoiceId: invoice.id,
+                   receiptId: arReceipt.id,
+                   amount: allocAmount,
+                 }
+               });
+
+               await prisma.aRInvoice.update({
+                 where: { id: invoice.id },
+                 data: { balance: { decrement: allocAmount } }
+               });
+
+               remaining = remaining.sub(allocAmount);
+             }
+
+             await prisma.aRReceipt.update({
+               where: { id: arReceipt.id },
+               data: { unallocated: remaining }
+             });
+          }
+
           if (row.postImmediately === 'true' || row.postImmediately === true) {
-             // If user is BURSAR or ADMIN, they might have permission to post
-             // But for now, let's keep it simple as per VoucherService logic
-             // which requires APPROVAL before POSTING.
-             // We'll just leave it as DRAFT as requested for now, or SUBMITTED.
-             await VoucherService.submit(voucher.id, auth.userId);
+            // Check role for posting
+            const userOrg = await prisma.organisationUser.findUnique({
+              where: { organisationId_userId: { organisationId: job.organisationId, userId: auth.userId } }
+            });
+            if (userOrg && ['ADMIN', 'BURSAR', 'HEADMASTER'].includes(userOrg.role)) {
+              await VoucherService.submit(voucher.id, auth.userId);
+              await VoucherService.approve(voucher.id, auth.userId);
+              await VoucherService.post(voucher.id, auth.userId);
+            } else {
+              await VoucherService.submit(voucher.id, auth.userId);
+            }
           }
 
           processedCount++;
@@ -225,6 +308,127 @@ export async function POST(
           });
         }
       }
+    } else if (job.type === ImportType.OPENING_BALANCES) {
+      // For opening balances, we generate a SINGLE balanced journal voucher
+      const period = await prisma.fiscalPeriod.findFirst({
+        where: { organisationId: job.organisationId, status: 'OPEN' },
+        orderBy: [{ year: 'asc' }, { period: 'asc' }],
+      });
+
+      if (!period) throw new Error('No open fiscal period found for opening balances.');
+
+      // Find or create Opening Balance Equity account
+      let obeAccount = await prisma.account.findFirst({
+        where: { organisationId: job.organisationId, code: 'OBE' }
+      });
+
+      if (!obeAccount) {
+        obeAccount = await prisma.account.create({
+          data: {
+            organisationId: job.organisationId,
+            code: 'OBE',
+            name: 'Opening Balance Equity',
+            type: AccountType.NET_ASSETS_EQUITY,
+            isSystemAccount: true,
+          }
+        });
+      }
+
+      const lines: any[] = [];
+      let totalDebitLc = new Decimal(0);
+      let totalCreditLc = new Decimal(0);
+
+      // We need to resolve account codes to IDs first
+      const accountMap = new Map<string, string>();
+      const accounts = await prisma.account.findMany({ where: { organisationId: job.organisationId } });
+      accounts.forEach(a => accountMap.set(a.code, a.id));
+
+      const currencyMap = new Map<string, string>();
+      const currencies = await prisma.currency.findMany();
+      currencies.forEach(c => currencyMap.set(c.code, c.id));
+
+      const costCentreMap = new Map<string, string>();
+      const costCentres = await prisma.costCentre.findMany({ where: { organisationId: job.organisationId } });
+      costCentres.forEach(cc => costCentreMap.set(cc.code, cc.id));
+
+      const fundMap = new Map<string, string>();
+      const funds = await prisma.fund.findMany({ where: { organisationId: job.organisationId } });
+      funds.forEach(f => fundMap.set(f.code, f.id));
+
+      for (let i = 0; i < previewData.length; i++) {
+        const row = previewData[i];
+        const accountId = accountMap.get(String(row.accountCode));
+        if (!accountId) {
+          errorCount++;
+          await prisma.importJobRowError.create({
+            data: {
+              jobId: job.id,
+              rowNumber: i + 1,
+              error: `Account code ${row.accountCode} not found`,
+              rowData: row,
+            }
+          });
+          continue;
+        }
+
+        const debitFc = new Decimal(row.debit || 0);
+        const creditFc = new Decimal(row.credit || 0);
+        const fxRate = new Decimal(row.fxRate || 1);
+        const debitLc = debitFc.mul(fxRate);
+        const creditLc = creditFc.mul(fxRate);
+
+        totalDebitLc = totalDebitLc.add(debitLc);
+        totalCreditLc = totalCreditLc.add(creditLc);
+
+        lines.push({
+          lineNumber: lines.length + 1,
+          accountId,
+          description: row.description || 'Opening Balance',
+          currencyCode: row.currencyCode || 'ZWG',
+          fxRate,
+          amountFc: debitFc.gt(0) ? debitFc : creditFc,
+          amountLc: debitLc.gt(0) ? debitLc : creditLc,
+          debit: debitFc.gt(0) ? debitFc : null,
+          credit: creditFc.gt(0) ? creditFc : null,
+          costCentreId: costCentreMap.get(String(row.costCentreCode)) || null,
+          fundId: fundMap.get(String(row.fundCode)) || null,
+        });
+        processedCount++;
+      }
+
+      if (lines.length > 0) {
+        // Balance it with OBE
+        const diffLc = totalDebitLc.sub(totalCreditLc);
+        if (!diffLc.isZero()) {
+          lines.push({
+            lineNumber: lines.length + 1,
+            accountId: obeAccount.id,
+            description: 'Opening Balance Balancing Entry',
+            currencyCode: 'ZWG', // Base currency for balancing
+            fxRate: new Decimal(1),
+            amountFc: diffLc.abs(),
+            amountLc: diffLc.abs(),
+            debit: diffLc.lt(0) ? diffLc.abs() : null,
+            credit: diffLc.gt(0) ? diffLc.abs() : null,
+          });
+        }
+
+        await VoucherService.create({
+          organisationId: job.organisationId,
+          type: VoucherType.JOURNAL,
+          periodId: period.id,
+          date: new Date(),
+          description: 'Opening Balances Import',
+          lines: lines.map(l => ({
+            ...l,
+            amountFc: l.amountFc.toNumber(),
+            fxRate: l.fxRate.toNumber(),
+            amountLc: l.amountLc.toNumber(),
+            debit: l.debit?.toNumber() ?? null,
+            credit: l.credit?.toNumber() ?? null,
+          }))
+        }, auth.userId);
+      }
     }
 
     // Finalize job
@@ -234,7 +438,7 @@ export async function POST(
         status: ImportStatus.COMPLETED,
         processedCount,
         errorCount,
-        previewData: null, // Clear preview data after commit
+        previewData: null,
       },
     });
 
@@ -246,13 +450,13 @@ export async function POST(
 
   } catch (error: any) {
     console.error('Import commit error:', error);
-    if (params) {
-      const { jobId } = await params;
-      await prisma.importJob.update({
-        where: { id: jobId },
-        data: { status: ImportStatus.FAILED },
-      }).catch(() => {});
-    }
+    try {
+        const { jobId } = await params;
+        await prisma.importJob.update({
+          where: { id: jobId },
+          data: { status: ImportStatus.FAILED },
+        });
+    } catch (e) {}
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

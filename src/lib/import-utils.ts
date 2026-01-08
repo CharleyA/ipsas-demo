@@ -22,7 +22,11 @@ export const IMPORT_TEMPLATES: Record<string, ImportTemplate> = {
   },
   suppliers: {
     filename: 'suppliers_import_template',
-    columns: ['name', 'email', 'phone', 'address', 'taxNumber', 'isActive'],
+    columns: ['code', 'name', 'taxNumber', 'isActive'],
+  },
+  opening_balances: {
+    filename: 'opening_balances_import_template',
+    columns: ['accountCode', 'currencyCode', 'debit', 'credit', 'costCentreCode', 'fundCode', 'description'],
   },
 };
 

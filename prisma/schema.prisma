@@ -122,6 +122,7 @@ enum ImportType {
   RECEIPTS
   ACCOUNTS
   SUPPLIERS
+  OPENING_BALANCES
 }
 
 enum ImportStatus {

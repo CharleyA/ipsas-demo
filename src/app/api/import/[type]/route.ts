@@ -59,6 +59,18 @@ export async function POST(
         if (row.type && !validTypes.includes(row.type.toUpperCase())) {
           rowErrors.push(`Invalid account type: ${row.type}. Must be one of ${validTypes.join(', ')}`);
         }
+      } else if (importType === ImportType.SUPPLIERS) {
+        if (!row.code) rowErrors.push('Supplier code is required');
+        if (!row.name) rowErrors.push('Supplier name is required');
+      } else if (importType === ImportType.OPENING_BALANCES) {
+        if (!row.accountCode) rowErrors.push('Account code is required');
+        if (!row.currencyCode) rowErrors.push('Currency code is required');
+        const debit = parseFloat(row.debit || 0);
+        const credit = parseFloat(row.credit || 0);
+        if (isNaN(debit)) rowErrors.push('Invalid debit amount');
+        if (isNaN(credit)) rowErrors.push('Invalid credit amount');
+        if (debit === 0 && credit === 0) rowErrors.push('Either debit or credit must be non-zero');
+        if (debit !== 0 && credit !== 0) rowErrors.push('Cannot have both debit and credit on the same line');
       }
 
       if (rowErrors.length > 0) {
