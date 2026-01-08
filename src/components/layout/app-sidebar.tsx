@@ -39,12 +39,12 @@ const menuItems = [
   {
     title: "General",
     items: [
-          {
-            title: "Dashboard",
-            href: user?.role === "ADMIN" ? "/dashboard/admin" : "/dashboard",
-            icon: LayoutDashboard,
-            roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"],
-          },
+            {
+              title: "Dashboard",
+              href: "/dashboard",
+              icon: LayoutDashboard,
+              roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"],
+            },
         {
           title: "Approvals",
           href: "/dashboard/approvals",
