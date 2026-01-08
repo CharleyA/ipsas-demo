@@ -12,11 +12,12 @@ import {
   Settings,
   Wallet,
   ArrowRightLeft,
-    ShieldCheck,
-    History,
-    BookOpen,
-    Wrench,
-  } from "lucide-react";
+  ShieldCheck,
+  History,
+  BookOpen,
+  Wrench,
+  FileSpreadsheet,
+} from "lucide-react";
 
 
 import {
@@ -102,10 +103,22 @@ const menuItems = [
           roles: ["ADMIN", "AUDITOR"],
         },
 
-    ],
-  },
-  {
-    title: "System",
+      ],
+    },
+    {
+      title: "Tools",
+      items: [
+        {
+          title: "Import Data",
+          href: "/dashboard/imports",
+          icon: FileSpreadsheet,
+          roles: ["ADMIN", "BURSAR"],
+        },
+      ],
+    },
+    {
+      title: "System",
+
     items: [
       {
         title: "Currencies",

@@ -66,11 +66,92 @@ model User {
   organisations     OrganisationUser[]
   createdVouchers   Voucher[]          @relation("VoucherCreatedBy")
   auditLogs         AuditLog[]
-  approvalTasks     ApprovalTask[]
-  uploadedFiles     FileAttachment[]
+  importJobs        ImportJob[]
 
   @@map("users")
 }
+
+model Organisation {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  type            OrganisationType
+  baseCurrency    String   @default("ZWG")
+  fiscalYearStart Int      @default(1)
+  address         String?
+  phone           String?
+  email           String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  users              OrganisationUser[]
+  chartOfAccounts    Account[]
+  accountingPeriods  AccountingPeriod[]
+  vouchers           Voucher[]
+  glHeaders          GLHeader[]
+  currencies         OrganisationCurrency[]
+  attachments        FileAttachment[]
+  costCentres        CostCentre[]
+  funds              Fund[]
+  programmes         Programme[]
+  projects           Project[]
+  students           Student[]
+  suppliers          Supplier[]
+  bankAccounts       BankAccount[]
+  statementLines     StatementLine[]
+  importJobs         ImportJob[]
+
+  @@map("organisations")
+}
+
+model ImportJob {
+  id             String      @id @default(cuid())
+  organisationId String
+  userId         String
+  type           ImportType
+  status         ImportStatus @default(PENDING)
+  filename       String
+  rowCount       Int          @default(0)
+  processedCount Int          @default(0)
+  errorCount     Int          @default(0)
+  previewData    Json?        // To store valid rows for commit
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+  errors       ImportJobRowError[]
+
+  @@map("import_jobs")
+}
+
+model ImportJobRowError {
+  id        String   @id @default(cuid())
+  jobId     String
+  rowNumber Int
+  error     String
+  rowData   Json?
+
+  job ImportJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@map("import_job_row_errors")
+}
+
+enum ImportType {
+  STUDENTS
+  RECEIPTS
+  ACCOUNTS
+}
+
+enum ImportStatus {
+  PENDING
+  PREVIEWED
+  COMMITTING
+  COMPLETED
+  FAILED
+}
+
 
 model OrganisationUser {
   id             String   @id @default(cuid())
