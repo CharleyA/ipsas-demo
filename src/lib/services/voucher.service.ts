@@ -307,6 +307,60 @@ export class VoucherService {
     return reversal;
   }
 
+  static async approve(id: string, actorId: string, notes?: string) {
+    const voucher = await prisma.voucher.findUnique({ 
+      where: { id },
+      include: { approvals: { where: { status: "PENDING" } } }
+    });
+    
+    if (!voucher) throw new Error("Voucher not found");
+    if (voucher.status !== "SUBMITTED") throw new Error("Only submitted vouchers can be approved");
+
+    const result = await prisma.$transaction(async (tx) => {
+      await tx.approvalTask.updateMany({
+        where: { voucherId: id, status: "PENDING" },
+        data: {
+          status: "APPROVED",
+          userId: actorId,
+          notes,
+          updatedAt: new Date(),
+        },
+      });
+
+      return tx.voucher.update({
+        where: { id },
+        data: { status: "APPROVED" },
+      });
+    });
+
+    await AuditService.log({
+      userId: actorId,
+      organisationId: voucher.organisationId,
+      action: "APPROVE",
+      entityType: "Voucher",
+      entityId: id,
+      oldValues: { status: voucher.status },
+      newValues: { status: "APPROVED", notes },
+    });
+
+    return result;
+  }
+
+  static async listByOrganisation(organisationId: string, filters?: { status?: VoucherStatus, type?: VoucherType }) {
+    return prisma.voucher.findMany({
+      where: {
+        organisationId,
+        ...(filters?.status && { status: filters.status }),
+        ...(filters?.type && { type: filters.type }),
+      },
+      include: {
+        lines: true,
+        createdBy: { select: { firstName: true, lastName: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
   private static validateDoubleEntry(lines: VoucherLineInput[]) {
     let totalDebits = new Decimal(0);
     let totalCredits = new Decimal(0);
