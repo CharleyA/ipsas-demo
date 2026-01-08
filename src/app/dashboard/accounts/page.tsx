@@ -130,19 +130,19 @@ export default function AccountsPage() {
             Manage your organization's general ledger accounts.
           </p>
         </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSeedIPSAS} disabled={isSeeding}>
-              {isSeeding ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <BookOpen className="w-4 h-4 mr-2" />}
-              Populate IPSAS COA
-            </Button>
-            <Dialog open={isAddingAccount} onOpenChange={setIsAddingAccount}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Account
-                </Button>
-              </DialogTrigger>
-          <DialogContent>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleSeedIPSAS} disabled={isSeeding}>
+            {isSeeding ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <BookOpen className="w-4 h-4 mr-2" />}
+            Populate IPSAS COA
+          </Button>
+          <Dialog open={isAddingAccount} onOpenChange={setIsAddingAccount}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Account
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
             <DialogHeader>
               <DialogTitle>Create New Account</DialogTitle>
               <DialogDescription>
@@ -271,7 +271,8 @@ export default function AccountsPage() {
             </Table>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }
