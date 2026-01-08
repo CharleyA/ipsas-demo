@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Eye, FileText, Wallet, Loader2 } from "lucide-react";
+import { Plus, Search, Eye, FileText, Receipt, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -73,9 +73,9 @@ export default function SuppliersPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Vendor Directory</CardTitle>
+              <CardTitle>Supplier Directory</CardTitle>
               <CardDescription>
-                A list of all registered suppliers and service providers.
+                A list of all suppliers registered in the system.
               </CardDescription>
             </div>
             <div className="relative w-64">
@@ -102,8 +102,8 @@ export default function SuppliersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Vendor Code</TableHead>
-                  <TableHead>Company Name</TableHead>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Name</TableHead>
                   <TableHead>Tax ID</TableHead>
                   <TableHead>Balance (ZWG)</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -112,31 +112,30 @@ export default function SuppliersPage() {
               <TableBody>
                 {filteredSuppliers.map((supplier) => (
                   <TableRow key={supplier.id}>
-                    <TableCell className="font-mono text-xs">
+                    <TableCell className="font-medium">
                       {supplier.code}
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {supplier.name}
-                    </TableCell>
+                    <TableCell>{supplier.name}</TableCell>
                     <TableCell>{supplier.taxNumber || "N/A"}</TableCell>
                     <TableCell>
+                      {/* Balance normally from summary API */}
                       0.00
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" title="View History" asChild>
+                        <Button variant="ghost" size="icon" title="View Statement" asChild>
                           <Link href={`/dashboard/suppliers/${supplier.id}`}>
                             <Eye className="w-4 h-4" />
                           </Link>
                         </Button>
-                        <Button variant="ghost" size="icon" title="Record Bill" asChild>
-                          <Link href={`/dashboard/vouchers/new?type=BILL&supplierId=${supplier.id}`}>
+                        <Button variant="ghost" size="icon" title="Raise Bill" asChild>
+                          <Link href={`/dashboard/ap/bills/new?supplierId=${supplier.id}`}>
                             <FileText className="w-4 h-4" />
                           </Link>
                         </Button>
-                        <Button variant="ghost" size="icon" title="Make Payment" asChild>
-                          <Link href={`/dashboard/vouchers/new?type=PAYMENT&supplierId=${supplier.id}`}>
-                            <Wallet className="w-4 h-4" />
+                        <Button variant="ghost" size="icon" title="Record Payment" asChild>
+                          <Link href={`/dashboard/ap/payments/new?supplierId=${supplier.id}`}>
+                            <Receipt className="w-4 h-4" />
                           </Link>
                         </Button>
                       </div>

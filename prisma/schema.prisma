@@ -26,12 +26,17 @@ model Organisation {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  // AR Settings
-  arReceivableAccountId String?
-  arRevenueAccountId    String?
-  arBankAccountId      String?
-
-  users              OrganisationUser[]
+    // AR Settings
+    arReceivableAccountId String?
+    arRevenueAccountId    String?
+    arBankAccountId      String?
+  
+    // AP Settings
+    apPayableAccountId String?
+    apExpenseAccountId String?
+    apBankAccountId    String?
+  
+    users              OrganisationUser[]
   chartOfAccounts    Account[]
   fiscalPeriods      FiscalPeriod[]
   vouchers           Voucher[]
@@ -371,6 +376,8 @@ enum VoucherType {
   CASHBOOK
   AR_INVOICE
   AR_RECEIPT
+  AP_BILL
+  AP_PAYMENT
 }
 
 enum VoucherStatus {

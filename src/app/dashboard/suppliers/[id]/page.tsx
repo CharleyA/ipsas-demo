@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -22,57 +21,42 @@ import { Badge } from "@/components/ui/badge";
 import { 
   ArrowLeft, 
   FileText, 
-  Wallet, 
-  Loader2,
-  Printer,
+  Receipt, 
+  Loader2, 
   Download,
-  Plus
+  CheckCircle2,
+  Clock
 } from "lucide-react";
 import Link from "next/link";
-import { useAuth } from "@/components/providers/auth-provider";
+import { useParams } from "next/navigation";
 import { toast } from "sonner";
+import { useAuth } from "@/components/providers/auth-provider";
+import { format } from "date-fns";
 
 export default function SupplierDetailPage() {
   const { id } = useParams();
   const { token } = useAuth();
-  const [supplier, setSupplier] = useState<any>(null);
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchStatement = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/ap/suppliers/${id}/statement`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const result = await response.json();
+      setData(result);
+    } catch (error) {
+      toast.error("Failed to fetch supplier statement");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        // Mock data
-        setSupplier({
-          id,
-          code: "SUP-042",
-          name: "ZESA Holdings",
-          taxNumber: "BP 12345678",
-          balance: 2450.00
-        });
-
-        setTransactions([
-          {
-            id: "t1",
-            date: "2026-01-02",
-            type: "BILL",
-            reference: "BILL/2026/102",
-            description: "Electricity - Dec 2025",
-            amount: 2450.00,
-            balance: 2450.00,
-            status: "POSTED"
-          }
-        ]);
-      } catch (error) {
-        toast.error("Failed to load supplier statement");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (token) fetchData();
-  }, [id, token]);
+    if (token && id) fetchStatement();
+  }, [token, id]);
 
   if (isLoading) {
     return (
@@ -82,76 +66,68 @@ export default function SupplierDetailPage() {
     );
   }
 
-  if (!supplier) return <div>Supplier not found</div>;
+  if (!data) return <div>Supplier not found</div>;
+
+  const { supplier, transactions, totalBalance } = data;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="outline" size="icon" asChild>
             <Link href="/dashboard/suppliers">
               <ArrowLeft className="w-4 h-4" />
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              {supplier.name}
-            </h1>
+            <h1 className="text-3xl font-bold tracking-tight">{supplier.name}</h1>
             <p className="text-muted-foreground">
-              {supplier.code} • {supplier.taxNumber || "No Tax ID"}
+              Code: {supplier.code} | Tax ID: {supplier.taxNumber || "N/A"}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline">
-            <Printer className="w-4 h-4 mr-2" />
-            Print Ledger
-          </Button>
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href={`/api/ap/suppliers/${id}/statement?format=pdf`} target="_blank">
+              <Download className="w-4 h-4 mr-2" />
+              Statement PDF
+            </Link>
           </Button>
           <Button asChild>
-            <Link href={`/dashboard/vouchers/new?type=PAYMENT&supplierId=${id}`}>
-              <Plus className="w-4 h-4 mr-2" />
-              Make Payment
+            <Link href={`/dashboard/ap/bills/new?supplierId=${id}`}>
+              <FileText className="w-4 h-4 mr-2" />
+              New Bill
+            </Link>
+          </Button>
+          <Button variant="secondary" asChild>
+            <Link href={`/dashboard/ap/payments/new?supplierId=${id}`}>
+              <Receipt className="w-4 h-4 mr-2" />
+              Record Payment
             </Link>
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Billed</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Outstanding
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">ZWG 2,450.00</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Paid</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">ZWG 0.00</div>
-          </CardContent>
-        </Card>
-        <Card className="border-red-200 bg-red-50/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-red-600">Outstanding Balance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-700">ZWG 2,450.00</div>
+            <div className="text-2xl font-bold">
+              ZWG {parseFloat(totalBalance).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </div>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Vendor Ledger</CardTitle>
+          <CardTitle>Transaction History</CardTitle>
           <CardDescription>
-            Historical record of bills and payments for this vendor.
+            All bills and payments for this supplier.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -159,43 +135,47 @@ export default function SupplierDetailPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
-                <TableHead>Type</TableHead>
                 <TableHead>Reference</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Amount (ZWG)</TableHead>
-                <TableHead className="text-right">Balance (ZWG)</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="text-right">Balance</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transactions.map((tx) => (
+              {transactions.map((tx: any) => (
                 <TableRow key={tx.id}>
-                  <TableCell>{new Date(tx.date).toLocaleDateString()}</TableCell>
+                  <TableCell>{format(new Date(tx.date), "dd MMM yyyy")}</TableCell>
+                  <TableCell className="font-medium">{tx.number}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      {tx.type === "BILL" ? (
-                        <FileText className="w-4 h-4 text-orange-500" />
-                      ) : (
-                        <Wallet className="w-4 h-4 text-green-500" />
-                      )}
-                      <span className="text-xs font-medium">{tx.type}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">{tx.reference}</TableCell>
-                  <TableCell>{tx.description}</TableCell>
-                  <TableCell className={`text-right font-medium ${tx.type === "PAYMENT" ? "text-green-600" : ""}`}>
-                    {tx.amount.toFixed(2)}
-                  </TableCell>
-                  <TableCell className="text-right font-bold">
-                    {tx.balance.toFixed(2)}
+                    <Badge variant="outline">{tx.type}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={tx.status === "POSTED" ? "success" : "outline"}>
-                      {tx.status}
-                    </Badge>
+                    {tx.status === "POSTED" ? (
+                      <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20">
+                        <CheckCircle2 className="w-3 h-3 mr-1" /> Posted
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">
+                        <Clock className="w-3 h-3 mr-1" /> {tx.status}
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {parseFloat(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {tx.balance ? parseFloat(tx.balance).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
                   </TableCell>
                 </TableRow>
               ))}
+              {transactions.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    No transactions found.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

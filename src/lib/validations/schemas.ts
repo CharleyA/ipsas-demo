@@ -123,7 +123,7 @@ export const voucherLineSchema = z.object({
 
 export const createVoucherSchema = z.object({
   organisationId: z.string().cuid(),
-  type: z.enum(["JOURNAL", "RECEIPT", "PAYMENT", "INVOICE", "BILL", "CASHBOOK", "AR_INVOICE", "AR_RECEIPT"]),
+  type: z.enum(["JOURNAL", "RECEIPT", "PAYMENT", "INVOICE", "BILL", "CASHBOOK", "AR_INVOICE", "AR_RECEIPT", "AP_BILL", "AP_PAYMENT"]),
   periodId: z.string().cuid(),
   date: z.string().datetime().or(z.date()),
   description: z.string().min(1).max(500),
@@ -197,6 +197,52 @@ export const auditLogSchema = z.object({
   oldValues: z.any().optional(),
   newValues: z.any().optional(),
 });
+
+export const apBillLineSchema = z.object({
+  description: z.string().min(1),
+  quantity: z.number().positive(),
+  unitPrice: z.number().nonnegative(),
+  amount: z.number().nonnegative(),
+  accountId: z.string().cuid(),
+});
+
+export const createAPBillSchema = z.object({
+  organisationId: z.string().cuid(),
+  supplierId: z.string().cuid(),
+  currencyCode: z.string().length(3),
+  dueDate: z.string().datetime().or(z.date()),
+  lines: z.array(apBillLineSchema).min(1),
+  description: z.string().optional(),
+});
+
+export const createAPPaymentSchema = z.object({
+  organisationId: z.string().cuid(),
+  supplierId: z.string().cuid(),
+  currencyCode: z.string().length(3),
+  amount: z.number().positive(),
+  paymentMethod: z.string().optional(),
+  reference: z.string().optional(),
+  date: z.string().datetime().or(z.date()),
+  bankAccountId: z.string().cuid(),
+});
+
+export const allocateAPPaymentSchema = z.object({
+  paymentId: z.string().cuid(),
+  allocations: z.array(z.object({
+    billId: z.string().cuid(),
+    amount: z.number().positive(),
+  })),
+});
+
+export const updateSupplierSchema = createSupplierSchema.partial().extend({
+  isActive: z.boolean().optional(),
+});
+
+export type CreateAPBillInput = z.infer<typeof createAPBillSchema>;
+export type CreateAPPaymentInput = z.infer<typeof createAPPaymentSchema>;
+export type AllocateAPPaymentInput = z.infer<typeof allocateAPPaymentSchema>;
+export type CreateSupplierInput = z.infer<typeof createSupplierSchema>;
+export type UpdateSupplierInput = z.infer<typeof updateSupplierSchema>;
 
 export const createStudentSchema = z.object({
   organisationId: z.string().cuid(),
