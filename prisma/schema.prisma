@@ -40,6 +40,7 @@ model Organisation {
   suppliers          Supplier[]
   bankAccounts       BankAccount[]
   statementLines     StatementLine[]
+  importJobs         ImportJob[]
 
   @@map("organisations")
 }
@@ -58,7 +59,7 @@ model User {
   email         String   @unique
   passwordHash  String
   firstName     String
-  lastName      String
+  lastName     String
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -67,42 +68,9 @@ model User {
   createdVouchers   Voucher[]          @relation("VoucherCreatedBy")
   auditLogs         AuditLog[]
   importJobs        ImportJob[]
+  approvalTasks     ApprovalTask[]
 
   @@map("users")
-}
-
-model Organisation {
-  id              String   @id @default(cuid())
-  code            String   @unique
-  name            String
-  type            OrganisationType
-  baseCurrency    String   @default("ZWG")
-  fiscalYearStart Int      @default(1)
-  address         String?
-  phone           String?
-  email           String?
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  users              OrganisationUser[]
-  chartOfAccounts    Account[]
-  accountingPeriods  AccountingPeriod[]
-  vouchers           Voucher[]
-  glHeaders          GLHeader[]
-  currencies         OrganisationCurrency[]
-  attachments        FileAttachment[]
-  costCentres        CostCentre[]
-  funds              Fund[]
-  programmes         Programme[]
-  projects           Project[]
-  students           Student[]
-  suppliers          Supplier[]
-  bankAccounts       BankAccount[]
-  statementLines     StatementLine[]
-  importJobs         ImportJob[]
-
-  @@map("organisations")
 }
 
 model ImportJob {
@@ -419,12 +387,12 @@ model VoucherLine {
   projectId       String?
   
   currencyCode    String
-  amountFc        Decimal  @db.Decimal(18, 4) // Amount in Foreign Currency
   fxRate          Decimal  @db.Decimal(18, 8) // Exchange Rate to Base Currency
-  amountLc        Decimal  @db.Decimal(18, 4) // Amount in Local (Base) Currency
   
-  debit           Decimal? @db.Decimal(18, 4) // For convenience in UI
-  credit          Decimal? @db.Decimal(18, 4) // For convenience in UI
+  debitFc         Decimal? @db.Decimal(18, 4)
+  creditFc        Decimal? @db.Decimal(18, 4)
+  debitLc         Decimal? @db.Decimal(18, 4)
+  creditLc        Decimal? @db.Decimal(18, 4)
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -480,14 +448,12 @@ model GLEntry {
   projectId       String?
 
   currencyCode   String
-  amountFc       Decimal        @db.Decimal(18, 4)
   fxRate         Decimal        @db.Decimal(18, 8)
-  amountLc       Decimal        @db.Decimal(18, 4)
   
   debitFc        Decimal?       @db.Decimal(18, 4)
   creditFc       Decimal?       @db.Decimal(18, 4)
   debitLc        Decimal?       @db.Decimal(18, 4)
-  creditLc       Decimal?       @db.Decimal(18, 4)
+  creditLc        Decimal?       @db.Decimal(18, 4)
   
   createdAt      DateTime       @default(now())
 
