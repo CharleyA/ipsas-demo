@@ -41,11 +41,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  useEffect(() => {
-    if (!isLoading && !token && !pathname.startsWith("/auth/login") && pathname !== "/") {
-      router.push("/auth/login");
-    }
-  }, [token, isLoading, pathname, router]);
+    useEffect(() => {
+      console.log("Auth State:", { token: !!token, isLoading, pathname });
+      if (!isLoading) {
+        if (!token && !pathname.startsWith("/auth/login") && pathname !== "/") {
+          console.log("Redirecting to login");
+          router.push("/auth/login");
+        } else if (token && pathname.startsWith("/auth/login")) {
+          console.log("Redirecting to dashboard");
+          router.push("/dashboard");
+        }
+      }
+    }, [token, isLoading, pathname, router]);
 
   const login = (newToken: string, newUser: User) => {
     setToken(newToken);
