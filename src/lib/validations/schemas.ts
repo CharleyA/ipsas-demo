@@ -282,3 +282,45 @@ export type CreateVoucherInput = z.infer<typeof createVoucherSchema>;
 export type UpdateVoucherInput = z.infer<typeof updateVoucherSchema>;
 export type AuditLogInput = z.infer<typeof auditLogSchema>;
 export type AddUserToOrganisationInput = z.infer<typeof addUserToOrganisationSchema>;
+
+export const bankImportRowSchema = z.object({
+  date: z.string().or(z.date()),
+  description: z.string(),
+  reference: z.string().optional(),
+  debit: z.number().optional(),
+  credit: z.number().optional(),
+  balance: z.number().optional(),
+});
+
+export const createBankImportSchema = z.object({
+  bankAccountId: z.string().cuid(),
+  filename: z.string(),
+  rows: z.array(bankImportRowSchema),
+});
+
+export const matchBankRowSchema = z.object({
+  rowId: z.string().cuid(),
+  voucherId: z.string().cuid(),
+});
+
+export const createCashbookEntrySchema = z.object({
+  organisationId: z.string().cuid(),
+  bankAccountId: z.string().cuid(),
+  type: z.enum(["RECEIPT", "PAYMENT"]),
+  date: z.string().or(z.date()),
+  description: z.string(),
+  reference: z.string().optional(),
+  amount: z.number().positive(),
+  currencyCode: z.string().length(3),
+  fxRate: z.number().positive(),
+  studentId: z.string().cuid().optional(),
+  supplierId: z.string().cuid().optional(),
+  costCentreId: z.string().cuid().optional(),
+  fundId: z.string().cuid().optional(),
+  accountId: z.string().cuid(),
+});
+
+export type BankImportRowInput = z.infer<typeof bankImportRowSchema>;
+export type CreateBankImportInput = z.infer<typeof createBankImportSchema>;
+export type MatchBankRowInput = z.infer<typeof matchBankRowSchema>;
+export type CreateCashbookEntryInput = z.infer<typeof createCashbookEntrySchema>;

@@ -70,25 +70,48 @@ const menuItems = [
         },
       ],
     },
-    {
-      title: "Sub-Ledgers",
-      items: [
-        {
-          title: "Students (AR)",
-          href: "/dashboard/students",
-          icon: Users,
-          roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR"],
-        },
-        {
-          title: "Suppliers (AP)",
-          href: "/dashboard/suppliers",
-          icon: Building2,
-          roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR"],
-        },
-      ],
-    },
-    {
-      title: "Reporting",
+      {
+        title: "Sub-Ledgers",
+        items: [
+          {
+            title: "Students (AR)",
+            href: "/dashboard/students",
+            icon: Users,
+            roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR"],
+          },
+          {
+            title: "Suppliers (AP)",
+            href: "/dashboard/suppliers",
+            icon: Building2,
+            roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR"],
+          },
+        ],
+      },
+      {
+        title: "Banking",
+        items: [
+          {
+            title: "Bank Accounts",
+            href: "/dashboard/bank/accounts",
+            icon: Wallet,
+            roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR"],
+          },
+          {
+            title: "Cashbook Entry",
+            href: "/dashboard/bank/cashbook/new",
+            icon: FileText,
+            roles: ["ADMIN", "CLERK", "BURSAR"],
+          },
+          {
+            title: "Reconciliation",
+            href: "/dashboard/bank/reconcile",
+            icon: ArrowRightLeft,
+            roles: ["ADMIN", "BURSAR"],
+          },
+        ],
+      },
+      {
+        title: "Reporting",
       items: [
         {
           title: "Financial Reports",
