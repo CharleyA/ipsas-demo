@@ -3,6 +3,7 @@ import { AuthService } from "@/lib/services/auth.service";
 import { loginSchema } from "@/lib/validations/schemas";
 
 export async function POST(req: NextRequest) {
+  // Trigger recompile
   try {
     const body = await req.json();
     const validatedData = loginSchema.parse(body);
