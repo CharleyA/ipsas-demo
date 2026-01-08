@@ -1,7 +1,7 @@
 import prisma from "@/lib/db";
 import type { CreateCurrencyInput, CreateExchangeRateInput } from "@/lib/validations/schemas";
 import { AuditService } from "./audit.service";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 
 export class CurrencyService {
   static async create(data: CreateCurrencyInput, actorId: string) {
@@ -43,7 +43,7 @@ export class CurrencyService {
       data: {
         fromCurrencyCode: data.fromCurrencyCode.toUpperCase(),
         toCurrencyCode: data.toCurrencyCode.toUpperCase(),
-        rate: new Decimal(data.rate),
+        rate: new Prisma.Decimal(data.rate),
         effectiveDate: new Date(data.effectiveDate),
         source: data.source,
       },

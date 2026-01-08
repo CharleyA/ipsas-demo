@@ -1,7 +1,6 @@
 import prisma from "@/lib/db";
 import type { CreateAccountInput, UpdateAccountInput } from "@/lib/validations/schemas";
 import { AuditService } from "./audit.service";
-import { Decimal } from "@prisma/client/runtime/library";
 
 export class AccountService {
   static async create(data: CreateAccountInput, actorId: string) {

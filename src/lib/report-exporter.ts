@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import * as ExcelJS from "exceljs";
 import Papa from "papaparse";
 import puppeteer from "puppeteer";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 
 export type ExportFormat = "json" | "csv" | "xlsx" | "pdf";
 
@@ -33,7 +33,7 @@ export class ReportExporter {
   }
 
   private static formatValue(value: any, column: ExportColumn) {
-    if (value instanceof Decimal) return value.toNumber();
+    if (value instanceof Prisma.Decimal) return value.toNumber();
     if (value instanceof Date) {
       return value.toLocaleDateString();
     }

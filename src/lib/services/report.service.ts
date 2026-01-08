@@ -1,7 +1,8 @@
 import prisma from "@/lib/db";
-import { Decimal } from "@prisma/client/runtime/library";
-import { ReportType, AccountType } from "@prisma/client";
+import { Prisma, ReportType, AccountType } from "@prisma/client";
 import { subDays, startOfDay, endOfDay } from "date-fns";
+
+const { Decimal } = Prisma;
 
 export class ReportService {
   static async getTrialBalance(organisationId: string, endDate: Date) {
