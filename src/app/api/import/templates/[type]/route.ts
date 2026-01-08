@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCSVTemplate, generateXLSXTemplate } from '@/lib/import-utils';
 
+export const runtime = "nodejs";
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ type: string }> }
@@ -27,8 +29,8 @@ export async function GET(
         },
       });
     }
-    } catch (error: any) {
-      console.error('Template Download Error:', error);
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
+  } catch (error: any) {
+    console.error('Template Download Error:', error);
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
 }

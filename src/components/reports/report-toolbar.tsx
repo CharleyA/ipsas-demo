@@ -38,11 +38,20 @@ export function ReportToolbar({ reportName, endpoint, filters }: ReportToolbarPr
 
   return (
     <div className="flex items-center gap-2">
+      <Button variant="outline" size="sm" onClick={() => handleDownload("xlsx")} className="hidden md:flex">
+        <FileSpreadsheet className="mr-2 h-4 w-4" />
+        Download Excel
+      </Button>
+      <Button variant="outline" size="sm" onClick={() => handleDownload("csv")} className="hidden md:flex">
+        <FileDown className="mr-2 h-4 w-4" />
+        Download CSV
+      </Button>
+      
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm">
-            <FileDown className="mr-2 h-4 w-4" />
-            Export
+            <MoreHorizontal className="mr-2 h-4 w-4" />
+            More
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -50,12 +59,12 @@ export function ReportToolbar({ reportName, endpoint, filters }: ReportToolbarPr
             <FileText className="mr-2 h-4 w-4" />
             Download PDF
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleDownload("xlsx")}>
+          <DropdownMenuItem onClick={() => handleDownload("xlsx")} className="md:hidden">
             <FileSpreadsheet className="mr-2 h-4 w-4" />
             Download Excel
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleDownload("csv")}>
-            <MoreHorizontal className="mr-2 h-4 w-4" />
+          <DropdownMenuItem onClick={() => handleDownload("csv")} className="md:hidden">
+            <FileDown className="mr-2 h-4 w-4" />
             Download CSV
           </DropdownMenuItem>
         </DropdownMenuContent>

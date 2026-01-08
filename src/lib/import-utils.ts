@@ -1,5 +1,6 @@
 import * as ExcelJS from 'exceljs';
 import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 
 export interface ImportTemplate {
   filename: string;
@@ -18,6 +19,10 @@ export const IMPORT_TEMPLATES: Record<string, ImportTemplate> = {
   accounts: {
     filename: 'accounts_import_template',
     columns: ['code', 'name', 'type', 'parentCode', 'description'],
+  },
+  suppliers: {
+    filename: 'suppliers_import_template',
+    columns: ['name', 'email', 'phone', 'address', 'taxNumber', 'isActive'],
   },
 };
 

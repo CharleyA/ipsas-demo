@@ -3,6 +3,8 @@ import { withAuth } from "@/lib/middleware-utils";
 import { ReportService } from "@/lib/services/report.service";
 import { ReportExporter, ExportFormat, ExportColumn } from "@/lib/report-exporter";
 
+export const runtime = "nodejs";
+
 export async function GET(req: NextRequest) {
   return withAuth(
     req,

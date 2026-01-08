@@ -9,7 +9,11 @@ import {
   Download,
   Loader2,
   Table as TableIcon,
-  XCircle
+  XCircle,
+  Users,
+  Wallet,
+  BookOpen,
+  Truck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -125,20 +129,24 @@ export default function ImportsPage() {
         setImportResult(null);
         setFile(null);
       }} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="students" className="gap-2">
-            <Users className="w-4 h-4" />
-            Students
-          </TabsTrigger>
-          <TabsTrigger value="receipts" className="gap-2">
-            <Wallet className="w-4 h-4" />
-            Receipts
-          </TabsTrigger>
-          <TabsTrigger value="accounts" className="gap-2">
-            <BookOpen className="w-4 h-4" />
-            Chart of Accounts
-          </TabsTrigger>
-        </TabsList>
+          <TabsList>
+            <TabsTrigger value="students" className="gap-2">
+              <Users className="w-4 h-4" />
+              Students
+            </TabsTrigger>
+            <TabsTrigger value="suppliers" className="gap-2">
+              <Truck className="w-4 h-4" />
+              Suppliers
+            </TabsTrigger>
+            <TabsTrigger value="receipts" className="gap-2">
+              <Wallet className="w-4 h-4" />
+              Receipts
+            </TabsTrigger>
+            <TabsTrigger value="accounts" className="gap-2">
+              <BookOpen className="w-4 h-4" />
+              Chart of Accounts
+            </TabsTrigger>
+          </TabsList>
 
         <Card>
           <CardHeader>
