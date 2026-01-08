@@ -127,11 +127,22 @@ export class UserService {
   }
 
   static async addToOrganisation(data: AddUserToOrganisationInput, actorId: string) {
-    const orgUser = await prisma.organisationUser.create({
-      data: {
+    const orgUser = await prisma.organisationUser.upsert({
+      where: {
+        organisationId_userId: {
+          organisationId: data.organisationId,
+          userId: data.userId,
+        },
+      },
+      update: {
+        role: data.role,
+        isActive: true,
+      },
+      create: {
         userId: data.userId,
         organisationId: data.organisationId,
         role: data.role,
+        isActive: true,
       },
       include: {
         user: { select: { id: true, email: true, firstName: true, lastName: true } },

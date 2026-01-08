@@ -296,19 +296,19 @@ export const bankImportRowSchema = z.object({
 });
 
 export const createBankImportSchema = z.object({
-  bankAccountId: z.string().cuid(),
+  bankAccountId: z.string(),
   filename: z.string(),
   rows: z.array(bankImportRowSchema),
 });
 
 export const matchBankRowSchema = z.object({
-  rowId: z.string().cuid(),
-  voucherId: z.string().cuid(),
+  rowId: z.string(),
+  voucherId: z.string(),
 });
 
 export const createCashbookEntrySchema = z.object({
-  organisationId: z.string().cuid(),
-  bankAccountId: z.string().cuid(),
+  organisationId: z.string(),
+  bankAccountId: z.string(),
   type: z.enum(["RECEIPT", "PAYMENT"]),
   date: z.string().or(z.date()),
   description: z.string(),
@@ -316,11 +316,11 @@ export const createCashbookEntrySchema = z.object({
   amount: z.number().positive(),
   currencyCode: z.string().length(3),
   fxRate: z.number().positive(),
-  studentId: z.string().cuid().optional(),
-  supplierId: z.string().cuid().optional(),
-  costCentreId: z.string().cuid().optional(),
-  fundId: z.string().cuid().optional(),
-  accountId: z.string().cuid(),
+  studentId: z.string().optional(),
+  supplierId: z.string().optional(),
+  costCentreId: z.string().optional(),
+  fundId: z.string().optional(),
+  accountId: z.string(),
 });
 
 export type BankImportRowInput = z.infer<typeof bankImportRowSchema>;
