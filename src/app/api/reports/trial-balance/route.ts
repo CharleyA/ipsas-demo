@@ -11,10 +11,15 @@ export async function GET(req: NextRequest) {
   return withAuth(req, async (authReq) => {
     const { searchParams } = new URL(authReq.url);
     const dateStr = searchParams.get("date");
+    const fundId = searchParams.get("fundId") || undefined;
+    const costCentreId = searchParams.get("costCentreId") || undefined;
     const exportFormat = (searchParams.get("format") || "json") as ExportFormat;
     const date = dateStr ? new Date(dateStr) : new Date();
 
-    const report = await ReportService.getTrialBalance(authReq.user.organisationId, date);
+    const report = await ReportService.getTrialBalance(authReq.user.organisationId, date, {
+      fundId,
+      costCentreId,
+    });
 
     if (exportFormat === "json") {
       return NextResponse.json(report);

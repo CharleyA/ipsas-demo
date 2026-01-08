@@ -5,20 +5,25 @@ import { subDays, startOfDay, endOfDay } from "date-fns";
 const { Decimal } = Prisma;
 
 export class ReportService {
-  static async getTrialBalance(organisationId: string, endDate: Date) {
+  static async getTrialBalance(organisationId: string, endDate: Date, filters: { fundId?: string; costCentreId?: string } = {}) {
     const accounts = await prisma.account.findMany({
       where: { organisationId },
       orderBy: { code: "asc" },
     });
 
+    const where: any = {
+      glHeader: {
+        organisationId,
+        entryDate: { lte: endDate },
+      },
+    };
+
+    if (filters.fundId) where.fundId = filters.fundId;
+    if (filters.costCentreId) where.costCentreId = filters.costCentreId;
+
     const balances = await prisma.glEntry.groupBy({
       by: ["accountId"],
-      where: {
-        glHeader: {
-          organisationId,
-          entryDate: { lte: endDate },
-        },
-      },
+      where,
       _sum: {
         debitLc: true,
         creditLc: true,

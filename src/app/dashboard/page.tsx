@@ -1,45 +1,49 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  TrendingUp,
-  TrendingDown,
-  Users,
-  Clock,
-  ArrowUpRight,
-  ArrowDownRight,
-  Wallet,
-} from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { Loader2, LayoutDashboard, Plus } from "lucide-react";
+import { HeadmasterDashboard } from "@/components/dashboard/headmaster-dashboard";
+import { AuditorDashboard } from "@/components/dashboard/auditor-dashboard";
+import { toast } from "sonner";
 
 export default function DashboardPage() {
-  const { user } = useAuth();
-  const [stats, setStats] = useState({
-    revenue: "0.00",
-    expenses: "0.00",
-    receivables: "0.00",
-    pendingApprovals: 0,
-  });
+  const { user, token } = useAuth();
+  const [data, setData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // In a real app, fetch these from an API
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/dashboard", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error("Failed to fetch dashboard data");
+      const result = await response.json();
+      setData(result);
+    } catch (error) {
+      toast.error("Error loading dashboard metrics");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // Mock data for demonstration
-    setStats({
-      revenue: "45,230.00",
-      expenses: "12,150.00",
-      receivables: "154,000.00",
-      pendingApprovals: 3,
-    });
-  }, []);
+    if (token) fetchDashboardData();
+  }, [token]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const isHeadmaster = user?.role === "HEADMASTER" || user?.role === "ADMIN";
+  const isAuditor = user?.role === "AUDITOR";
 
   return (
     <div className="space-y-6">
@@ -47,117 +51,36 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back, {user?.firstName}. Here is your school's financial overview.
+            {isHeadmaster ? "Institutional Financial Overview" : 
+             isAuditor ? "Compliance & Audit Oversight" : 
+             "Welcome to IPSAS Accounting"}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button asChild>
-            <Link href="/dashboard/vouchers/new">
-              Create Voucher
-            </Link>
-          </Button>
+          {user?.role !== "AUDITOR" && (
+            <Button asChild>
+              <Link href="/dashboard/vouchers/new">
+                <Plus className="w-4 h-4 mr-2" />
+                New Transaction
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue (YTD)</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">ZWG {stats.revenue}</div>
-            <p className="text-xs text-muted-foreground">
-              +20.1% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Expenses (YTD)</CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">ZWG {stats.expenses}</div>
-            <p className="text-xs text-muted-foreground">
-              -4.5% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Student Receivables</CardTitle>
-            <Users className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">ZWG {stats.receivables}</div>
-            <p className="text-xs text-muted-foreground">
-              842 active students
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingApprovals}</div>
-            <p className="text-xs text-muted-foreground">
-              Requires your attention
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>Financial Performance</CardTitle>
-            <CardDescription>
-              Monthly revenue vs expenses in ZWG.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="h-[300px] flex items-center justify-center border-t">
-             <div className="text-muted-foreground text-sm italic">
-               Chart visualization would go here
-             </div>
-          </CardContent>
-        </Card>
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              Latest transactions and status changes.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Wallet className="w-4 h-4 text-primary" />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      Voucher PV-2026-000{i} posted
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      2 hours ago by Accountant
-                    </p>
-                  </div>
-                  <div className="text-sm font-medium">
-                    ZWG 1,200.00
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Button variant="ghost" className="w-full mt-4" asChild>
-              <Link href="/dashboard/vouchers">View all activity</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      {isHeadmaster && data ? (
+        <HeadmasterDashboard data={data} />
+      ) : isAuditor && data ? (
+        <AuditorDashboard data={data} />
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-xl border-2 border-dashed">
+          <LayoutDashboard className="h-12 w-12 text-slate-300 mb-4" />
+          <h2 className="text-xl font-semibold text-slate-600">Welcome, {user?.firstName}</h2>
+          <p className="text-slate-500 max-w-sm text-center mt-2">
+            Use the sidebar to navigate through your assigned tasks and reports.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

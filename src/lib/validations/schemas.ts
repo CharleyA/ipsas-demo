@@ -167,18 +167,9 @@ export const allocateARReceiptSchema = z.object({
   })),
 });
 
-export const updateStudentSchema = createStudentSchema.partial().extend({
-  parentName: z.string().max(200).optional(),
-  parentPhone: z.string().max(20).optional(),
-  parentEmail: z.string().email().optional(),
-  enrollmentDate: z.string().datetime().or(z.date()).optional(),
-  isActive: z.boolean().optional(),
-});
-
 export type CreateARInvoiceInput = z.infer<typeof createARInvoiceSchema>;
 export type CreateARReceiptInput = z.infer<typeof createARReceiptSchema>;
 export type AllocateARReceiptInput = z.infer<typeof allocateARReceiptSchema>;
-export type UpdateStudentInput = z.infer<typeof updateStudentSchema>;
 
 
 export const updateVoucherSchema = z.object({
@@ -234,22 +225,20 @@ export const allocateAPPaymentSchema = z.object({
   })),
 });
 
-export const updateSupplierSchema = createSupplierSchema.partial().extend({
-  isActive: z.boolean().optional(),
-});
-
-export type CreateAPBillInput = z.infer<typeof createAPBillSchema>;
-export type CreateAPPaymentInput = z.infer<typeof createAPPaymentSchema>;
-export type AllocateAPPaymentInput = z.infer<typeof allocateAPPaymentSchema>;
-export type CreateSupplierInput = z.infer<typeof createSupplierSchema>;
-export type UpdateSupplierInput = z.infer<typeof updateSupplierSchema>;
-
 export const createStudentSchema = z.object({
   organisationId: z.string().cuid(),
   studentNumber: z.string().min(1).max(50),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
   grade: z.string().max(20).optional(),
+});
+
+export const updateStudentSchema = createStudentSchema.partial().extend({
+  parentName: z.string().max(200).optional(),
+  parentPhone: z.string().max(20).optional(),
+  parentEmail: z.string().email().optional(),
+  enrollmentDate: z.string().datetime().or(z.date()).optional(),
+  isActive: z.boolean().optional(),
 });
 
 export const createSupplierSchema = z.object({
@@ -259,14 +248,23 @@ export const createSupplierSchema = z.object({
   taxNumber: z.string().max(50).optional(),
 });
 
+export const updateSupplierSchema = createSupplierSchema.partial().extend({
+  isActive: z.boolean().optional(),
+});
+
+export type CreateAPBillInput = z.infer<typeof createAPBillSchema>;
+export type CreateAPPaymentInput = z.infer<typeof createAPPaymentSchema>;
+export type AllocateAPPaymentInput = z.infer<typeof allocateAPPaymentSchema>;
+export type CreateSupplierInput = z.infer<typeof createSupplierSchema>;
+export type UpdateSupplierInput = z.infer<typeof updateSupplierSchema>;
+export type CreateStudentInput = z.infer<typeof createStudentSchema>;
+export type UpdateStudentInput = z.infer<typeof updateStudentSchema>;
+
 export const addUserToOrganisationSchema = z.object({
   userId: z.string().cuid(),
   organisationId: z.string().cuid(),
   role: UserRole,
 });
-
-export type CreateStudentInput = z.infer<typeof createStudentSchema>;
-export type CreateSupplierInput = z.infer<typeof createSupplierSchema>;
 
 export type CreateOrganisationInput = z.infer<typeof createOrganisationSchema>;
 export type UpdateOrganisationInput = z.infer<typeof updateOrganisationSchema>;
