@@ -22,7 +22,15 @@ export async function POST(request: NextRequest) {
     
     const existing = await UserService.findByEmail(data.email);
     if (existing) {
-      return errorResponse("Email already registered", 409);
+      // Return the existing user so the frontend can attempt to link them to the organisation
+      // This handles cases where a user was created but linking failed, or they exist in another org
+      return successResponse({
+        id: existing.id,
+        email: existing.email,
+        firstName: existing.firstName,
+        lastName: existing.lastName,
+        isActive: existing.isActive,
+      }, 200);
     }
     
     const user = await UserService.create(data);

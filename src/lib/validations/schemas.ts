@@ -9,7 +9,7 @@ export const OrganisationType = z.enum([
   "LOCAL_AUTHORITY",
 ]);
 
-export const UserRole = z.enum(["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"]);
+export const UserRole = z.enum(["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"]);
 
 export const AccountType = z.enum([
   "ASSET",
@@ -80,11 +80,11 @@ export const createExchangeRateSchema = z.object({
 });
 
 export const createAccountSchema = z.object({
-  organisationId: z.string().cuid(),
+  organisationId: z.string(),
   code: z.string().min(1).max(20),
   name: z.string().min(1).max(200),
   type: AccountType,
-  parentId: z.string().cuid().optional(),
+  parentId: z.string().optional(),
   description: z.string().max(500).optional(),
   isSystemAccount: z.boolean().default(false),
 });
@@ -92,12 +92,12 @@ export const createAccountSchema = z.object({
 export const updateAccountSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   description: z.string().max(500).optional(),
-  parentId: z.string().cuid().nullable().optional(),
+  parentId: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
 });
 
 export const createAccountingPeriodSchema = z.object({
-  organisationId: z.string().cuid(),
+  organisationId: z.string(),
   year: z.number().int().min(2000).max(2100),
   period: z.number().int().min(1).max(12),
   name: z.string().min(1).max(100),
@@ -108,11 +108,11 @@ export const createAccountingPeriodSchema = z.object({
 export const voucherLineSchema = z.object({
   lineNumber: z.number().int().positive(),
   description: z.string().max(500).optional(),
-  accountId: z.string().cuid(),
-  costCentreId: z.string().cuid().optional(),
-  fundId: z.string().cuid().optional(),
-  programmeId: z.string().cuid().optional(),
-  projectId: z.string().cuid().optional(),
+  accountId: z.string(),
+  costCentreId: z.string().optional(),
+  fundId: z.string().optional(),
+  programmeId: z.string().optional(),
+  projectId: z.string().optional(),
   currencyCode: z.string().length(3),
   amountFc: z.number(),
   fxRate: z.number().positive(),
@@ -122,9 +122,9 @@ export const voucherLineSchema = z.object({
 });
 
 export const createVoucherSchema = z.object({
-  organisationId: z.string().cuid(),
+  organisationId: z.string(),
   type: z.enum(["JOURNAL", "RECEIPT", "PAYMENT", "INVOICE", "BILL", "CASHBOOK", "AR_INVOICE", "AR_RECEIPT", "AP_BILL", "AP_PAYMENT"]),
-  periodId: z.string().cuid(),
+  periodId: z.string(),
   date: z.string().datetime().or(z.date()),
   description: z.string().min(1).max(500),
   reference: z.string().max(100).optional(),
@@ -139,32 +139,32 @@ export const arInvoiceLineSchema = z.object({
 });
 
 export const createARInvoiceSchema = z.object({
-  organisationId: z.string().cuid(),
-  studentId: z.string().cuid(),
+  organisationId: z.string(),
+  studentId: z.string(),
   currencyCode: z.string().length(3),
   term: z.string().optional(),
-  fundId: z.string().cuid().optional(),
-  projectId: z.string().cuid().optional(),
+  fundId: z.string().optional(),
+  projectId: z.string().optional(),
   dueDate: z.string().datetime().or(z.date()),
   lines: z.array(arInvoiceLineSchema).min(1),
   description: z.string().optional(),
 });
 
 export const createARReceiptSchema = z.object({
-  organisationId: z.string().cuid(),
-  studentId: z.string().cuid(),
+  organisationId: z.string(),
+  studentId: z.string(),
   currencyCode: z.string().length(3),
   amount: z.number().positive(),
   paymentMethod: z.string().optional(),
   reference: z.string().optional(),
   date: z.string().datetime().or(z.date()),
-  bankAccountId: z.string().cuid(), // The bank/cash account to DR
+  bankAccountId: z.string(), // The bank/cash account to DR
 });
 
 export const allocateARReceiptSchema = z.object({
-  receiptId: z.string().cuid(),
+  receiptId: z.string(),
   allocations: z.array(z.object({
-    invoiceId: z.string().cuid(),
+    invoiceId: z.string(),
     amount: z.number().positive(),
   })),
 });
@@ -182,8 +182,8 @@ export const updateVoucherSchema = z.object({
 });
 
 export const auditLogSchema = z.object({
-  userId: z.string().cuid(),
-  organisationId: z.string().cuid().optional(),
+  userId: z.string(),
+  organisationId: z.string().optional(),
   action: z.string(),
   entityType: z.string(),
   entityId: z.string(),
@@ -196,41 +196,41 @@ export const apBillLineSchema = z.object({
   quantity: z.number().positive(),
   unitPrice: z.number().nonnegative(),
   amount: z.number().nonnegative(),
-  accountId: z.string().cuid(),
+  accountId: z.string(),
 });
 
 export const createAPBillSchema = z.object({
-  organisationId: z.string().cuid(),
-  supplierId: z.string().cuid(),
+  organisationId: z.string(),
+  supplierId: z.string(),
   currencyCode: z.string().length(3),
-  fundId: z.string().cuid().optional(),
-  projectId: z.string().cuid().optional(),
+  fundId: z.string().optional(),
+  projectId: z.string().optional(),
   dueDate: z.string().datetime().or(z.date()),
   lines: z.array(apBillLineSchema).min(1),
   description: z.string().optional(),
 });
 
 export const createAPPaymentSchema = z.object({
-  organisationId: z.string().cuid(),
-  supplierId: z.string().cuid(),
+  organisationId: z.string(),
+  supplierId: z.string(),
   currencyCode: z.string().length(3),
   amount: z.number().positive(),
   paymentMethod: z.string().optional(),
   reference: z.string().optional(),
   date: z.string().datetime().or(z.date()),
-  bankAccountId: z.string().cuid(),
+  bankAccountId: z.string(),
 });
 
 export const allocateAPPaymentSchema = z.object({
-  paymentId: z.string().cuid(),
+  paymentId: z.string(),
   allocations: z.array(z.object({
-    billId: z.string().cuid(),
+    billId: z.string(),
     amount: z.number().positive(),
   })),
 });
 
 export const createStudentSchema = z.object({
-  organisationId: z.string().cuid(),
+  organisationId: z.string(),
   studentNumber: z.string().min(1).max(50),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
@@ -247,7 +247,7 @@ export const updateStudentSchema = createStudentSchema.partial().extend({
 });
 
 export const createSupplierSchema = z.object({
-  organisationId: z.string().cuid(),
+  organisationId: z.string(),
   code: z.string().min(1).max(50),
   name: z.string().min(1).max(200),
   taxNumber: z.string().max(50).optional(),
@@ -266,8 +266,8 @@ export type CreateStudentInput = z.infer<typeof createStudentSchema>;
 export type UpdateStudentInput = z.infer<typeof updateStudentSchema>;
 
 export const addUserToOrganisationSchema = z.object({
-  userId: z.string().cuid(),
-  organisationId: z.string().cuid(),
+  userId: z.string(),
+  organisationId: z.string(),
   role: UserRole,
 });
 

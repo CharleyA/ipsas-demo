@@ -172,7 +172,7 @@ export default function AccountsPage() {
                     <SelectContent>
                       <SelectItem value="ASSET">Asset</SelectItem>
                       <SelectItem value="LIABILITY">Liability</SelectItem>
-                      <SelectItem value="EQUITY">Equity</SelectItem>
+                      <SelectItem value="NET_ASSETS_EQUITY">Equity</SelectItem>
                       <SelectItem value="REVENUE">Revenue</SelectItem>
                       <SelectItem value="EXPENSE">Expense</SelectItem>
                     </SelectContent>
