@@ -270,7 +270,7 @@ export class VoucherService {
     const entryNumber = await this.generateEntryNumber(voucher.organisationId);
 
     const result = await prisma.$transaction(async (tx) => {
-      const glHeader = await tx.glHeader.create({
+      const glHeader = await tx.gLHeader.create({
         data: {
           organisationId: voucher.organisationId,
           periodId: voucher.periodId,

@@ -48,8 +48,10 @@ export async function POST(req: NextRequest) {
 
     const receivableAcc = await getAccount("1200", "Fees Receivable", "ASSET");
     const revenueAcc = await getAccount("4100", "Tuition Fees Revenue", "REVENUE");
+    const grantRevenueAcc = await getAccount("4200", "Grant Income", "REVENUE");
     const payableAcc = await getAccount("2100", "Accounts Payable", "LIABILITY");
     const expenseAcc = await getAccount("5100", "General Expenses", "EXPENSE");
+    const utilityExpenseAcc = await getAccount("5200", "Utilities", "EXPENSE");
     const bankAcc = await getAccount("1100", "Main Bank Account", "ASSET");
 
     // Update org settings if missing
@@ -80,6 +82,22 @@ export async function POST(req: NextRequest) {
           bankName: "Standard Bank",
           accountNumber: "1234567890",
           currencyCode: org.baseCurrency
+        }
+      });
+    }
+
+    // Ensure exchange rate exists for USD to ZWG (Demo purposes)
+    const existingRate = await prisma.exchangeRate.findFirst({
+      where: { fromCurrencyCode: "USD", toCurrencyCode: "ZWG" }
+    });
+    if (!existingRate) {
+      await prisma.exchangeRate.create({
+        data: {
+          fromCurrencyCode: "USD",
+          toCurrencyCode: "ZWG",
+          rate: 25.0,
+          effectiveDate: new Date("2026-01-01"),
+          source: "Demo"
         }
       });
     }
@@ -121,6 +139,7 @@ export async function POST(req: NextRequest) {
     }
     const generalFund = funds.find(f => f.code === "GF")!;
     const capitalFund = funds.find(f => f.code === "CF")!;
+    const grantFund = funds.find(f => f.code === "RF")!;
 
     // 3. Create Projects
     const projectData = [
@@ -171,7 +190,8 @@ export async function POST(req: NextRequest) {
     const supplierNames = [
       { name: "Global Books & Stationery", code: "SUP001" },
       { name: "Fresh Foods Catering", code: "SUP002" },
-      { name: "City Power & Water", code: "SUP003" },
+      { name: "ZESA Holdings", code: "SUP003" },
+      { name: "City of Bulawayo", code: "SUP004" },
     ];
 
     const suppliers = [];
@@ -190,18 +210,24 @@ export async function POST(req: NextRequest) {
       suppliers.push(supplier);
     }
 
-    // 4. Create and Post Invoices
+    // 4. Create and Post Invoices (Mixed USD/ZWG)
+    let invCount = 0;
     for (const student of students) {
+      const isUSD = invCount % 2 === 0;
+      const amount = isUSD ? 50 : 1250;
+      const levy = isUSD ? 10 : 250;
+      const currencyCode = isUSD ? "USD" : "ZWG";
+
       const invoice = await ARService.createInvoice({
         organisationId,
         studentId: student.id,
-        currencyCode: org.baseCurrency,
+        currencyCode,
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        description: "Term 1 School Fees",
+        description: `Term 1 School Fees (${currencyCode})`,
         fundId: generalFund.id,
         lines: [
-          { description: "Tuition Fees", quantity: 1, unitPrice: 1200, amount: 1200 },
-          { description: "Levy", quantity: 1, unitPrice: 200, amount: 200 }
+          { description: "Tuition Fees", quantity: 1, unitPrice: amount, amount: amount },
+          { description: "Levy", quantity: 1, unitPrice: levy, amount: levy }
         ]
       }, actorId);
 
@@ -209,17 +235,22 @@ export async function POST(req: NextRequest) {
       await VoucherService.submit(invoice.voucherId, actorId);
       await VoucherService.approve(invoice.voucherId, actorId);
       await VoucherService.post(invoice.voucherId, actorId);
+      invCount++;
     }
 
-    // 5. Create and Post Receipts for some students
+    // 5. Create and Post Receipts (Mixed USD/ZWG)
     for (let i = 0; i < 3; i++) {
       const student = students[i];
+      const isUSD = i % 2 === 0;
+      const amount = isUSD ? 40 : 1000;
+      const currencyCode = isUSD ? "USD" : "ZWG";
+
       const receipt = await ARService.createReceipt({
         organisationId,
         studentId: student.id,
         bankAccountId: bankAcc.id,
-        amount: 1000,
-        currencyCode: org.baseCurrency,
+        amount: amount,
+        currencyCode: currencyCode,
         date: new Date().toISOString(),
         paymentMethod: "Bank Transfer",
         reference: `TXN-${Math.random().toString(36).substring(7).toUpperCase()}`
@@ -231,35 +262,37 @@ export async function POST(req: NextRequest) {
 
       // Allocate to first invoice
       const studentInv = await prisma.aRInvoice.findFirst({
-        where: { studentId: student.id, balance: { gt: 0 } }
+        where: { studentId: student.id, balance: { gt: 0 }, currencyCode: currencyCode }
       });
       if (studentInv) {
         await ARService.allocate({
           receiptId: receipt.id,
-          allocations: [{ invoiceId: studentInv.id, amount: 1000 }]
+          allocations: [{ invoiceId: studentInv.id, amount: amount }]
         }, actorId);
       }
     }
 
-    // 6. Create and Post Bills
+    // 6. Create and Post Bills (Suppliers + Utilities)
     let billCount = 0;
     for (const supplier of suppliers) {
-      const isProjectBill = billCount === 0; // First supplier bill is for a project
+      const isUtility = supplier.name.includes("ZESA") || supplier.name.includes("City");
+      const isUSD = !isUtility && (billCount % 2 === 0);
+      const currencyCode = isUSD ? "USD" : "ZWG";
+      
       const bill = await APService.createBill({
         organisationId,
         supplierId: supplier.id,
-        currencyCode: org.baseCurrency,
+        currencyCode: currencyCode,
         dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        description: isProjectBill ? "Library Expansion Materials" : "Monthly Supplies",
-        fundId: isProjectBill ? capitalFund.id : generalFund.id,
-        projectId: isProjectBill ? libraryProject.id : undefined,
+        description: isUtility ? `Monthly Utility: ${supplier.name}` : "Monthly Supplies",
+        fundId: generalFund.id,
         lines: [
           { 
-            accountId: expenseAcc.id, 
-            description: isProjectBill ? "Construction Materials" : "General Supplies", 
-            quantity: 10, 
-            unitPrice: isProjectBill ? 500 : 50, 
-            amount: isProjectBill ? 5000 : 500 
+            accountId: isUtility ? utilityExpenseAcc.id : expenseAcc.id, 
+            description: isUtility ? "Consumption Charges" : "General Supplies", 
+            quantity: 1, 
+            unitPrice: isUSD ? 100 : 2500, 
+            amount: isUSD ? 100 : 2500 
           }
         ]
       }, actorId);
@@ -270,35 +303,40 @@ export async function POST(req: NextRequest) {
       billCount++;
     }
 
-    // 7. Create and Post Payments
-    for (let i = 0; i < 2; i++) {
-      const supplier = suppliers[i];
-      const payment = await APService.createPayment({
-        organisationId,
-        supplierId: supplier.id,
-        bankAccountId: bankAcc.id,
-        amount: 300,
-        currencyCode: org.baseCurrency,
-        date: new Date().toISOString(),
-        paymentMethod: "Electronic Transfer"
-      }, actorId);
+    // 7. Create Funding (Grant) - Journal Entry
+    const grantVoucher = await VoucherService.create({
+      organisationId,
+      type: "JOURNAL",
+      date: new Date().toISOString(),
+      description: "UNESCO Library Grant Funding (USD)",
+      status: "DRAFT",
+      lines: [
+        {
+          accountId: bankAcc.id,
+          description: "Grant Funding Received",
+          currencyCode: "USD",
+          debitFc: new Decimal(5000),
+          fxRate: new Decimal(25),
+          fundId: grantFund.id,
+          projectId: libraryProject.id
+        },
+        {
+          accountId: grantRevenueAcc.id,
+          description: "Unesco Grant Revenue",
+          currencyCode: "USD",
+          creditFc: new Decimal(5000),
+          fxRate: new Decimal(25),
+          fundId: grantFund.id,
+          projectId: libraryProject.id
+        }
+      ]
+    }, actorId);
 
-      await VoucherService.submit(payment.voucherId, actorId);
-      await VoucherService.approve(payment.voucherId, actorId);
-      await VoucherService.post(payment.voucherId, actorId);
+    await VoucherService.submit(grantVoucher.id, actorId);
+    await VoucherService.approve(grantVoucher.id, actorId);
+    await VoucherService.post(grantVoucher.id, actorId);
 
-      const supplierBill = await prisma.aPBill.findFirst({
-        where: { supplierId: supplier.id, balance: { gt: 0 } }
-      });
-      if (supplierBill) {
-        await APService.allocate({
-          paymentId: payment.id,
-          allocations: [{ billId: supplierBill.id, amount: 300 }]
-        }, actorId);
-      }
-    }
-
-    return NextResponse.json({ message: "Demo data generated successfully" });
+    return NextResponse.json({ message: "Demo data with multi-currency, funding, and utilities generated successfully" });
 
   } catch (error: any) {
     console.error("Seed Error:", error);
