@@ -36,7 +36,28 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Plus, Search, Loader2, UserPlus, Mail, Shield, ShieldCheck } from "lucide-react";
+import { 
+  Plus, 
+  Search, 
+  Loader2, 
+  UserPlus, 
+  Mail, 
+  Shield, 
+  ShieldCheck,
+  MoreVertical,
+  Pencil,
+  Key,
+  Trash2,
+  UserX
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
 
@@ -46,6 +67,9 @@ export default function UserManagementPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [isAddingUser, setIsAddingUser] = useState(false);
+  const [isEditingUser, setIsEditingUser] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
 
   const [newUser, setNewUser] = useState({
     email: "",
@@ -54,6 +78,15 @@ export default function UserManagementPage() {
     password: "",
     role: "CLERK",
   });
+
+  const [editUser, setEditUser] = useState({
+    firstName: "",
+    lastName: "",
+    role: "CLERK",
+    isActive: true,
+  });
+
+  const [newPassword, setNewPassword] = useState("");
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -120,6 +153,88 @@ export default function UserManagementPage() {
     } catch (error: any) {
       toast.error(error.message);
     }
+  };
+
+  const handleEditUser = async () => {
+    if (!selectedUser) return;
+    try {
+      const res = await fetch(`/api/users/${selectedUser.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(editUser),
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to update user");
+
+      toast.success("User updated successfully");
+      setIsEditingUser(false);
+      fetchUsers();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!selectedUser) return;
+    try {
+      const res = await fetch(`/api/users/${selectedUser.id}/password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ password: newPassword }),
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to reset password");
+
+      toast.success("Password reset successfully");
+      setIsResettingPassword(false);
+      setNewPassword("");
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleRemoveUser = async (userId: string) => {
+    if (!confirm("Are you sure you want to remove this user from the organisation?")) return;
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to remove user");
+
+      toast.success("User removed from organisation");
+      fetchUsers();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const openEditDialog = (u: any) => {
+    setSelectedUser(u);
+    setEditUser({
+      firstName: u.firstName,
+      lastName: u.lastName,
+      role: u.role,
+      isActive: u.isActive,
+    });
+    setIsEditingUser(true);
+  };
+
+  const openResetDialog = (u: any) => {
+    setSelectedUser(u);
+    setIsResettingPassword(true);
   };
 
   const filteredUsers = users.filter((u) =>
@@ -233,52 +348,172 @@ export default function UserManagementPage() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Joined</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{u.firstName} {u.lastName}</span>
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Mail className="w-3 h-3" /> {u.email}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="flex w-fit items-center gap-1">
-                        <Shield className="w-3 h-3 text-primary" />
-                        {u.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={u.isActive ? "success" : "secondary"}>
-                        {u.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(u.createdAt).toLocaleDateString()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filteredUsers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                      No users found.
-                    </TableCell>
+                    <TableHead>User</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((u) => (
+                    <TableRow key={u.id}>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{u.firstName} {u.lastName}</span>
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Mail className="w-3 h-3" /> {u.email}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="flex w-fit items-center gap-1">
+                          <Shield className="w-3 h-3 text-primary" />
+                          {u.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={u.isActive ? "success" : "secondary"}>
+                          {u.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(u.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => openEditDialog(u)}>
+                              <Pencil className="w-4 h-4 mr-2" />
+                              Edit Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openResetDialog(u)}>
+                              <Key className="w-4 h-4 mr-2" />
+                              Reset Password
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => handleRemoveUser(u.id)}
+                            >
+                              <UserX className="w-4 h-4 mr-2" />
+                              Remove from Org
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {filteredUsers.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        No users found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Edit User Dialog */}
+        <Dialog open={isEditingUser} onOpenChange={setIsEditingUser}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit User</DialogTitle>
+              <DialogDescription>
+                Update user details and organisation role.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-firstName">First Name</Label>
+                  <Input
+                    id="edit-firstName"
+                    value={editUser.firstName}
+                    onChange={(e) => setEditUser({ ...editUser, firstName: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-lastName">Last Name</Label>
+                  <Input
+                    id="edit-lastName"
+                    value={editUser.lastName}
+                    onChange={(e) => setEditUser({ ...editUser, lastName: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-role">System Role</Label>
+                <Select 
+                  value={editUser.role} 
+                  onValueChange={(v) => setEditUser({ ...editUser, role: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ADMIN">Administrator</SelectItem>
+                    <SelectItem value="BURSAR">Bursar / Manager</SelectItem>
+                    <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
+                    <SelectItem value="CLERK">Data Entry Clerk</SelectItem>
+                    <SelectItem value="AUDITOR">Auditor (Read-only)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="edit-active"
+                  checked={editUser.isActive}
+                  onChange={(e) => setEditUser({ ...editUser, isActive: e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <Label htmlFor="edit-active">Account Active</Label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleEditUser}>Save Changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Reset Password Dialog */}
+        <Dialog open={isResettingPassword} onOpenChange={setIsResettingPassword}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reset Password</DialogTitle>
+              <DialogDescription>
+                Enter a new password for {selectedUser?.firstName} {selectedUser?.lastName}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="reset-password">New Password</Label>
+                <Input
+                  id="reset-password"
+                  type="password"
+                  placeholder="Min 8 characters"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleResetPassword}>Update Password</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
     </div>
   );
 }

@@ -83,6 +83,47 @@ export class UserService {
     return user;
   }
 
+  static async changePassword(id: string, newPassword: string, actorId: string) {
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    
+    await prisma.user.update({
+      where: { id },
+      data: { passwordHash },
+    });
+
+    await AuditService.log({
+      userId: actorId,
+      action: "CHANGE_PASSWORD",
+      entityType: "User",
+      entityId: id,
+    });
+
+    return { success: true };
+  }
+
+  static async delete(id: string, actorId: string) {
+    const oldUser = await prisma.user.findUnique({ where: { id } });
+    
+    // First remove from all organisations to handle relations
+    await prisma.organisationUser.deleteMany({
+      where: { userId: id },
+    });
+
+    const user = await prisma.user.delete({
+      where: { id },
+    });
+
+    await AuditService.log({
+      userId: actorId,
+      action: "DELETE",
+      entityType: "User",
+      entityId: id,
+      oldValues: oldUser,
+    });
+
+    return user;
+  }
+
   static async verifyPassword(email: string, password: string) {
     const user = await prisma.user.findUnique({
       where: { email },
