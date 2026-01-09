@@ -40,6 +40,7 @@ export default function OrganisationProfilePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [organisation, setOrganisation] = useState<any>(null);
+    const [currencies, setCurrencies] = useState<any[]>([]);
 
     const form = useForm<UpdateOrganisationInput>({
       resolver: zodResolver(updateOrganisationSchema),
@@ -53,38 +54,47 @@ export default function OrganisationProfilePage() {
     });
 
     useEffect(() => {
-      async function fetchOrganisation() {
+      async function fetchData() {
         if (!user?.organisationId || !token) return;
 
         try {
-          const response = await fetch(`/api/organisations/${user.organisationId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          const result = await response.json();
+          const [orgRes, currRes] = await Promise.all([
+            fetch(`/api/organisations/${user.organisationId}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            fetch("/api/currencies?activeOnly=true", {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+          ]);
 
-        if (result.success) {
-          setOrganisation(result.data);
-          form.reset({
-            name: result.data.name,
-            baseCurrency: result.data.baseCurrency,
-            address: result.data.address || "",
-            phone: result.data.phone || "",
-            email: result.data.email || "",
-          });
-        } else {
-          toast.error("Failed to load organisation data");
+          const orgResult = await orgRes.json();
+          const currResult = await currRes.json();
+
+          if (orgResult.success) {
+            setOrganisation(orgResult.data);
+            form.reset({
+              name: orgResult.data.name,
+              baseCurrency: orgResult.data.baseCurrency,
+              address: orgResult.data.address || "",
+              phone: orgResult.data.phone || "",
+              email: orgResult.data.email || "",
+            });
+          }
+
+          if (Array.isArray(currResult.data)) {
+            setCurrencies(currResult.data);
+          } else if (Array.isArray(currResult)) {
+            setCurrencies(currResult);
+          }
+        } catch (error) {
+          toast.error("An error occurred while fetching data");
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        toast.error("An error occurred while fetching organisation data");
-      } finally {
-        setIsLoading(false);
       }
-    }
 
-    fetchOrganisation();
-  }, [user?.organisationId, form]);
+      fetchData();
+    }, [user?.organisationId, form, token]);
 
     async function onSubmit(data: UpdateOrganisationInput) {
       if (!user?.organisationId || !token) return;
@@ -163,28 +173,32 @@ export default function OrganisationProfilePage() {
                   control={form.control}
                   name="baseCurrency"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Base Currency</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled // Base currency usually shouldn't be changed after setup
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select base currency" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="ZWG">Zimbabwe Gold (ZWG)</SelectItem>
-                          <SelectItem value="USD">United States Dollar (USD)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        The primary currency used for reporting.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
+                      <FormItem>
+                        <FormLabel>Base Currency</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select base currency" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {currencies.map((curr) => (
+                              <SelectItem key={curr.code} value={curr.code}>
+                                {curr.name} ({curr.code})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          The primary currency used for reporting.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+
                   )}
                 />
               </div>

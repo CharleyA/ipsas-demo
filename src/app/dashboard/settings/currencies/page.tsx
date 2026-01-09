@@ -29,25 +29,36 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Loader2, ArrowRightLeft, RefreshCw } from "lucide-react";
+import { 
+  Plus, 
+  Search, 
+  Loader2, 
+  ArrowRightLeft, 
+  Check, 
+  Star,
+  StarOff,
+  MoreVertical,
+  Settings2
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
 
 export default function CurrenciesPage() {
-  const { token } = useAuth();
-  const [currencies, setCurrencies] = useState<any[]>([]);
+  const { token, user } = useAuth();
+  const [systemCurrencies, setSystemCurrencies] = useState<any[]>([]);
+  const [orgCurrencies, setOrgCurrencies] = useState<any[]>([]);
   const [exchangeRates, setExchangeRates] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [isAddingCurrency, setIsAddingCurrency] = useState(false);
   const [isAddingRate, setIsAddingRate] = useState(false);
-
-  const [newCurrency, setNewCurrency] = useState({
-    code: "",
-    name: "",
-    symbol: "",
-    decimals: 2,
-  });
 
   const [newRate, setNewRate] = useState({
     fromCurrencyCode: "",
@@ -57,10 +68,14 @@ export default function CurrenciesPage() {
   });
 
   const fetchData = async () => {
+    if (!token || !user?.organisationId) return;
     setIsLoading(true);
     try {
-      const [currRes, rateRes] = await Promise.all([
+      const [sysRes, orgRes, rateRes] = await Promise.all([
         fetch("/api/currencies", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`/api/organisations/${user.organisationId}/currencies`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch("/api/currencies/exchange-rates", {
@@ -68,43 +83,59 @@ export default function CurrenciesPage() {
         }),
       ]);
 
-      const currData = await currRes.json();
+      const sysData = await sysRes.json();
+      const orgData = await orgRes.json();
       const rateData = await rateRes.json();
 
-      setCurrencies(Array.isArray(currData) ? currData : []);
-      setExchangeRates(Array.isArray(rateData) ? rateData : []);
+      setSystemCurrencies(Array.isArray(sysData.data) ? sysData.data : (Array.isArray(sysData) ? sysData : []));
+      setOrgCurrencies(Array.isArray(orgData.data) ? orgData.data : (Array.isArray(orgData) ? orgData : []));
+      setExchangeRates(Array.isArray(rateData.data) ? rateData.data : (Array.isArray(rateData) ? rateData : []));
     } catch (error) {
-      toast.error("Failed to fetch data");
+      toast.error("Failed to fetch currency data");
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (token) fetchData();
-  }, [token]);
+    if (token && user?.organisationId) fetchData();
+  }, [token, user?.organisationId]);
 
-  const handleAddCurrency = async () => {
+  const handleEnableCurrency = async (currencyCode: string) => {
     try {
-      const res = await fetch("/api/currencies", {
+      const res = await fetch(`/api/organisations/${user?.organisationId}/currencies`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(newCurrency),
+        body: JSON.stringify({ currencyCode, isBaseCurrency: false }),
       });
 
-      if (!res.ok) {
-        const result = await res.json();
-        throw new Error(result.error || "Failed to add currency");
-      }
-
-      toast.success("Currency added successfully");
-      setIsAddingCurrency(false);
+      if (!res.ok) throw new Error("Failed to enable currency");
+      toast.success(`${currencyCode} enabled for your organisation`);
       fetchData();
     } catch (error: any) {
-      toast.error(error.message || "Error adding currency");
+      toast.error(error.message);
+    }
+  };
+
+  const handleSetBaseCurrency = async (currencyCode: string) => {
+    try {
+      const res = await fetch(`/api/organisations/${user?.organisationId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ baseCurrency: currencyCode }),
+      });
+
+      if (!res.ok) throw new Error("Failed to set base currency");
+      toast.success(`${currencyCode} is now your base currency`);
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message);
     }
   };
 
@@ -122,20 +153,20 @@ export default function CurrenciesPage() {
         }),
       });
 
-      if (!res.ok) {
-        const result = await res.json();
-        throw new Error(result.error || "Failed to add exchange rate");
-      }
+      if (!res.ok) throw new Error("Failed to add exchange rate");
 
       toast.success("Exchange rate added successfully");
       setIsAddingRate(false);
       fetchData();
     } catch (error: any) {
-      toast.error(error.message || "Error adding exchange rate");
+      toast.error(error.message);
     }
   };
 
-  const filteredCurrencies = currencies.filter((c) =>
+  const isEnabled = (code: string) => orgCurrencies.some(oc => oc.currencyCode === code);
+  const isBase = (code: string) => orgCurrencies.find(oc => oc.currencyCode === code)?.isBaseCurrency;
+
+  const filteredCurrencies = systemCurrencies.filter((c) =>
     `${c.code} ${c.name}`.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -145,61 +176,15 @@ export default function CurrenciesPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Currencies & Exchange Rates</h1>
           <p className="text-muted-foreground">
-            Manage system currencies and maintain exchange rate history.
+            Manage your organisation's currencies and exchange rates.
           </p>
         </div>
         <div className="flex gap-2">
-          <Dialog open={isAddingCurrency} onOpenChange={setIsAddingCurrency}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Currency
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Currency</DialogTitle>
-                <DialogDescription>
-                  Define a new currency for use in the system.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="code">Currency Code (e.g. USD, ZWG)</Label>
-                  <Input
-                    id="code"
-                    value={newCurrency.code}
-                    onChange={(e) => setNewCurrency({ ...newCurrency, code: e.target.value.toUpperCase() })}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Currency Name</Label>
-                  <Input
-                    id="name"
-                    value={newCurrency.name}
-                    onChange={(e) => setNewCurrency({ ...newCurrency, name: e.target.value })}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="symbol">Symbol</Label>
-                  <Input
-                    id="symbol"
-                    value={newCurrency.symbol}
-                    onChange={(e) => setNewCurrency({ ...newCurrency, symbol: e.target.value })}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button onClick={handleAddCurrency}>Save Currency</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
           <Dialog open={isAddingRate} onOpenChange={setIsAddingRate}>
             <DialogTrigger asChild>
               <Button>
                 <ArrowRightLeft className="w-4 h-4 mr-2" />
-                New Rate
+                New Exchange Rate
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -229,7 +214,7 @@ export default function CurrenciesPage() {
                   </div>
                 </div>
                 <div className="grid gap-2">
-                  <Label>Rate</Label>
+                  <Label>Rate (1 Unit of From = X Units of To)</Label>
                   <Input
                     type="number"
                     step="0.000001"
@@ -254,41 +239,89 @@ export default function CurrenciesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-1">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Supported Currencies</CardTitle>
-            <div className="relative mt-2">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search..."
-                className="pl-8"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Organisation Currencies</CardTitle>
+                <CardDescription>Currencies active for your school.</CardDescription>
+              </div>
+              <div className="relative w-64">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search currencies..."
+                  className="pl-8"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
             </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="flex justify-center py-4"><Loader2 className="animate-spin" /></div>
+              <div className="flex justify-center py-8"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Name</TableHead>
+                    <TableHead>Currency</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredCurrencies.map((c) => (
-                    <TableRow key={c.code}>
-                      <TableCell className="font-bold">{c.code}</TableCell>
-                      <TableCell>{c.name}</TableCell>
+                    <TableRow key={c.code} className={isBase(c.code) ? "bg-muted/30" : ""}>
                       <TableCell>
-                        <Badge variant={c.isActive ? "success" : "secondary"}>
-                          {c.isActive ? "Active" : "Inactive"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold w-12">{c.code}</span>
+                          <span className="text-sm text-muted-foreground">{c.name}</span>
+                          {isBase(c.code) && (
+                            <Badge variant="secondary" className="ml-2 gap-1">
+                              <Star className="w-3 h-3 fill-primary text-primary" />
+                              Base
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {isEnabled(c.code) ? (
+                          <Badge variant="success" className="gap-1">
+                            <Check className="w-3 h-3" /> Enabled
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline">Disabled</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            {!isEnabled(c.code) && (
+                              <DropdownMenuItem onClick={() => handleEnableCurrency(c.code)}>
+                                <Check className="w-4 h-4 mr-2" />
+                                Enable for Org
+                              </DropdownMenuItem>
+                            )}
+                            {isEnabled(c.code) && !isBase(c.code) && (
+                              <DropdownMenuItem onClick={() => handleSetBaseCurrency(c.code)}>
+                                <Star className="w-4 h-4 mr-2" />
+                                Set as Base
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem disabled>
+                              <Settings2 className="w-4 h-4 mr-2" />
+                              Configure
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -298,46 +331,32 @@ export default function CurrenciesPage() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2">
+        <Card>
           <CardHeader>
             <CardTitle>Recent Exchange Rates</CardTitle>
-            <CardDescription>Historical exchange rates used for conversions.</CardDescription>
+            <CardDescription>Last 10 rates recorded.</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="flex justify-center py-4"><Loader2 className="animate-spin" /></div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Pair</TableHead>
-                    <TableHead>Rate</TableHead>
-                    <TableHead>Effective Date</TableHead>
-                    <TableHead>Source</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {exchangeRates.map((r) => (
-                    <TableRow key={r.id}>
-                      <TableCell>
-                        {r.fromCurrencyCode} / {r.toCurrencyCode}
-                      </TableCell>
-                      <TableCell className="font-mono">{r.rate}</TableCell>
-                      <TableCell>{new Date(r.effectiveDate).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{r.source}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {exchangeRates.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                        No exchange rates recorded yet.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+              <div className="space-y-4">
+                {exchangeRates.slice(0, 10).map((r) => (
+                  <div key={r.id} className="flex items-center justify-between p-2 border rounded-lg text-sm">
+                    <div className="flex flex-col">
+                      <span className="font-medium">{r.fromCurrencyCode} → {r.toCurrencyCode}</span>
+                      <span className="text-xs text-muted-foreground">{new Date(r.effectiveDate).toLocaleDateString()}</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-mono font-bold">{Number(r.rate).toFixed(4)}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase">{r.source || 'Manual'}</div>
+                    </div>
+                  </div>
+                ))}
+                {exchangeRates.length === 0 && (
+                  <p className="text-center text-sm text-muted-foreground py-4">No exchange rates found.</p>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>

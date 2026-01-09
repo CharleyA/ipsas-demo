@@ -69,6 +69,36 @@ export class OrganisationService {
       data,
     });
 
+    // If base currency changed, sync with OrganisationCurrency
+    if (data.baseCurrency && data.baseCurrency !== oldOrg?.baseCurrency) {
+      await prisma.$transaction([
+        // Ensure the new base currency is added to the organisation
+        prisma.organisationCurrency.upsert({
+          where: {
+            organisationId_currencyCode: {
+              organisationId: id,
+              currencyCode: data.baseCurrency,
+            },
+          },
+          update: { isBaseCurrency: true, isActive: true },
+          create: {
+            organisationId: id,
+            currencyCode: data.baseCurrency,
+            isBaseCurrency: true,
+          },
+        }),
+        // Set all other currencies as not base
+        prisma.organisationCurrency.updateMany({
+          where: {
+            organisationId: id,
+            currencyCode: { not: data.baseCurrency },
+            isBaseCurrency: true,
+          },
+          data: { isBaseCurrency: false },
+        }),
+      ]);
+    }
+
     await AuditService.log({
       userId: actorId,
       organisationId: id,
@@ -114,10 +144,16 @@ export class OrganisationService {
 
   static async addCurrency(organisationId: string, currencyCode: string, isBaseCurrency: boolean, actorId: string) {
     if (isBaseCurrency) {
-      await prisma.organisationCurrency.updateMany({
-        where: { organisationId, isBaseCurrency: true },
-        data: { isBaseCurrency: false },
-      });
+      await prisma.$transaction([
+        prisma.organisationCurrency.updateMany({
+          where: { organisationId, isBaseCurrency: true },
+          data: { isBaseCurrency: false },
+        }),
+        prisma.organisation.update({
+          where: { id: organisationId },
+          data: { baseCurrency: currencyCode },
+        }),
+      ]);
     }
 
     const orgCurrency = await prisma.organisationCurrency.create({
