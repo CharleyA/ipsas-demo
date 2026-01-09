@@ -1,5 +1,4 @@
 import * as jose from "jose";
-import jwt from "jsonwebtoken";
 import { NextRequest } from "next/server";
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-for-dev";
@@ -12,8 +11,12 @@ export interface JWTPayload {
   role: string;
 }
 
-export function signToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "8h" });
+export async function signToken(payload: JWTPayload): Promise<string> {
+  return await new jose.SignJWT({ ...payload } as any)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("8h")
+    .sign(encodedSecret);
 }
 
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
