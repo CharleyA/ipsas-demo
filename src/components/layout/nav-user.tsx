@@ -5,13 +5,14 @@ import {
   Bell,
   ChevronsUpDown,
   LogOut,
-  User as UserIcon,
+  Moon,
+  Sun,
+  Monitor,
 } from "lucide-react";
 
 import {
   Avatar,
   AvatarFallback,
-  AvatarImage,
 } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -21,6 +22,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
@@ -29,10 +34,12 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/components/providers/auth-provider";
+import { useTheme } from "@/components/providers/theme-provider";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
   const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   if (!user) return null;
 
@@ -76,15 +83,46 @@ export function NavUser() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck className="mr-2 size-4" />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell className="mr-2 size-4" />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
+                <DropdownMenuItem>
+                  <BadgeCheck className="mr-2 size-4" />
+                  Account
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Bell className="mr-2 size-4" />
+                  Notifications
+                </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    {theme === "dark" ? (
+                      <Moon className="mr-2 size-4" />
+                    ) : theme === "light" ? (
+                      <Sun className="mr-2 size-4" />
+                    ) : (
+                      <Monitor className="mr-2 size-4" />
+                    )}
+                    Theme
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem onClick={() => setTheme("light")}>
+                        <Sun className="mr-2 size-4" />
+                        Light
+                        {theme === "light" && <span className="ml-auto text-primary">✓</span>}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setTheme("dark")}>
+                        <Moon className="mr-2 size-4" />
+                        Dark
+                        {theme === "dark" && <span className="ml-auto text-primary">✓</span>}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setTheme("system")}>
+                        <Monitor className="mr-2 size-4" />
+                        System
+                        {theme === "system" && <span className="ml-auto text-primary">✓</span>}
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+              </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>
               <LogOut className="mr-2 size-4" />

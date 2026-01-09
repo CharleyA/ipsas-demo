@@ -3,6 +3,7 @@ import "./globals.css";
 import { VisualEditsMessenger } from "orchids-visual-edits";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 
 export const metadata: Metadata = {
   title: "IPSAS Accounting System",
@@ -15,13 +16,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
-        <AuthProvider>
-          {children}
-          <Toaster />
-          <VisualEditsMessenger />
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+            <Toaster />
+            <VisualEditsMessenger />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
