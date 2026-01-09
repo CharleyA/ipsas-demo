@@ -41,7 +41,7 @@ export class AuthService {
       organisationId: activeOrgUser.organisationId 
     };
 
-    const token = signToken(payload);
+    const token = await signToken(payload);
 
     return {
       token,
