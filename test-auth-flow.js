@@ -1,7 +1,7 @@
 
 const loginData = {
-  email: "admin@ipsas.ac.zw",
-  password: "Password123!"
+  email: "admin@school.ac.zw",
+  password: "Admin@123"
 };
 
 async function testLogin() {
