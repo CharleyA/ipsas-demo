@@ -25,6 +25,54 @@ export class CurrencyService {
     return currency;
   }
 
+  static async update(id: string, data: Partial<CreateCurrencyInput> & { isActive?: boolean }, actorId: string) {
+    const oldCurrency = await prisma.currency.findUnique({ where: { id } });
+    if (!oldCurrency) throw new Error("Currency not found");
+
+    const currency = await prisma.currency.update({
+      where: { id },
+      data: {
+        code: data.code?.toUpperCase(),
+        name: data.name,
+        symbol: data.symbol,
+        decimals: data.decimals,
+        isActive: data.isActive,
+      },
+    });
+
+    await AuditService.log({
+      userId: actorId,
+      action: "UPDATE",
+      entityType: "Currency",
+      entityId: id,
+      oldValues: oldCurrency,
+      newValues: currency,
+    });
+
+    return currency;
+  }
+
+  static async delete(id: string, actorId: string) {
+    const currency = await prisma.currency.findUnique({ where: { id } });
+    if (!currency) throw new Error("Currency not found");
+
+    // Check if in use
+    const inUse = await prisma.voucherLine.count({ where: { currencyCode: currency.code } });
+    if (inUse > 0) throw new Error("Currency is in use and cannot be deleted");
+
+    await prisma.currency.delete({ where: { id } });
+
+    await AuditService.log({
+      userId: actorId,
+      action: "DELETE",
+      entityType: "Currency",
+      entityId: id,
+      oldValues: currency,
+    });
+
+    return true;
+  }
+
   static async findByCode(code: string) {
     return prisma.currency.findUnique({
       where: { code: code.toUpperCase() },

@@ -176,6 +176,47 @@ export class OrganisationService {
     return orgCurrency;
   }
 
+  static async updateCurrency(organisationId: string, currencyCode: string, data: { isActive?: boolean; isBaseCurrency?: boolean }, actorId: string) {
+    const oldOrgCurrency = await prisma.organisationCurrency.findUnique({
+      where: { organisationId_currencyCode: { organisationId, currencyCode } },
+    });
+
+    if (!oldOrgCurrency) throw new Error("Organisation currency not found");
+
+    if (data.isBaseCurrency && !oldOrgCurrency.isBaseCurrency) {
+      await prisma.$transaction([
+        prisma.organisationCurrency.updateMany({
+          where: { organisationId, isBaseCurrency: true },
+          data: { isBaseCurrency: false },
+        }),
+        prisma.organisation.update({
+          where: { id: organisationId },
+          data: { baseCurrency: currencyCode },
+        }),
+      ]);
+    }
+
+    const orgCurrency = await prisma.organisationCurrency.update({
+      where: { organisationId_currencyCode: { organisationId, currencyCode } },
+      data: {
+        isActive: data.isActive,
+        isBaseCurrency: data.isBaseCurrency,
+      },
+    });
+
+    await AuditService.log({
+      userId: actorId,
+      organisationId,
+      action: "UPDATE_CURRENCY",
+      entityType: "OrganisationCurrency",
+      entityId: orgCurrency.id,
+      oldValues: oldOrgCurrency,
+      newValues: orgCurrency,
+    });
+
+    return orgCurrency;
+  }
+
   static async getCurrencies(organisationId: string) {
     return prisma.organisationCurrency.findMany({
       where: { organisationId, isActive: true },

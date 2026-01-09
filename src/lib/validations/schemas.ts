@@ -71,6 +71,10 @@ export const createCurrencySchema = z.object({
   decimals: z.number().int().min(0).max(8).default(2),
 });
 
+export const updateCurrencySchema = createCurrencySchema.partial().extend({
+  isActive: z.boolean().optional(),
+});
+
 export const createExchangeRateSchema = z.object({
   fromCurrencyCode: z.string().length(3),
   toCurrencyCode: z.string().length(3),

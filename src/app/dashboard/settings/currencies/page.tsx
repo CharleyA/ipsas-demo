@@ -59,6 +59,8 @@ export default function CurrenciesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [isAddingRate, setIsAddingRate] = useState(false);
+  const [isConfiguring, setIsConfiguring] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<any>(null);
 
   const [newRate, setNewRate] = useState({
     fromCurrencyCode: "",
@@ -67,12 +69,18 @@ export default function CurrenciesPage() {
     effectiveDate: new Date().toISOString().split("T")[0],
   });
 
+  const [configData, setConfigData] = useState({
+    name: "",
+    symbol: "",
+    decimals: 2,
+  });
+
   const fetchData = async () => {
     if (!token || !user?.organisationId) return;
     setIsLoading(true);
     try {
       const [sysRes, orgRes, rateRes] = await Promise.all([
-        fetch("/api/currencies", {
+        fetch("/api/currencies?activeOnly=false", {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`/api/organisations/${user.organisationId}/currencies`, {
@@ -120,6 +128,25 @@ export default function CurrenciesPage() {
     }
   };
 
+  const handleDisableCurrency = async (currencyCode: string) => {
+    try {
+      const res = await fetch(`/api/organisations/${user?.organisationId}/currencies/${currencyCode}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ isActive: false }),
+      });
+
+      if (!res.ok) throw new Error("Failed to disable currency");
+      toast.success(`${currencyCode} disabled for your organisation`);
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
   const handleSetBaseCurrency = async (currencyCode: string) => {
     try {
       const res = await fetch(`/api/organisations/${user?.organisationId}`, {
@@ -133,6 +160,46 @@ export default function CurrenciesPage() {
 
       if (!res.ok) throw new Error("Failed to set base currency");
       toast.success(`${currencyCode} is now your base currency`);
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleUpdateCurrency = async () => {
+    if (!selectedCurrency) return;
+    try {
+      const res = await fetch(`/api/currencies/${selectedCurrency.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(configData),
+      });
+
+      if (!res.ok) throw new Error("Failed to update currency");
+      toast.success("Currency updated successfully");
+      setIsConfiguring(false);
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleDeleteCurrency = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this currency? This action cannot be undone and will fail if the currency is in use.")) return;
+    try {
+      const res = await fetch(`/api/currencies/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete currency");
+      }
+      toast.success("Currency deleted");
       fetchData();
     } catch (error: any) {
       toast.error(error.message);
@@ -239,6 +306,50 @@ export default function CurrenciesPage() {
         </div>
       </div>
 
+      <Dialog open={isConfiguring} onOpenChange={setIsConfiguring}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Configure Currency: {selectedCurrency?.code}</DialogTitle>
+            <DialogDescription>
+              Update global currency definitions. These changes affect all organisations.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Currency Name</Label>
+              <Input
+                value={configData.name}
+                onChange={(e) => setConfigData({ ...configData, name: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Symbol</Label>
+              <Input
+                value={configData.symbol}
+                onChange={(e) => setConfigData({ ...configData, symbol: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Decimal Places</Label>
+              <Input
+                type="number"
+                value={configData.decimals}
+                onChange={(e) => setConfigData({ ...configData, decimals: parseInt(e.target.value) })}
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex justify-between sm:justify-between">
+            <Button variant="destructive" onClick={() => {
+              setIsConfiguring(false);
+              handleDeleteCurrency(selectedCurrency.id);
+            }}>
+              Delete Currency
+            </Button>
+            <Button onClick={handleUpdateCurrency}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <CardHeader>
@@ -303,11 +414,18 @@ export default function CurrenciesPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            {!isEnabled(c.code) && (
+                            {!isEnabled(c.code) ? (
                               <DropdownMenuItem onClick={() => handleEnableCurrency(c.code)}>
                                 <Check className="w-4 h-4 mr-2" />
                                 Enable for Org
                               </DropdownMenuItem>
+                            ) : (
+                              !isBase(c.code) && (
+                                <DropdownMenuItem onClick={() => handleDisableCurrency(c.code)}>
+                                  <StarOff className="w-4 h-4 mr-2" />
+                                  Disable for Org
+                                </DropdownMenuItem>
+                              )
                             )}
                             {isEnabled(c.code) && !isBase(c.code) && (
                               <DropdownMenuItem onClick={() => handleSetBaseCurrency(c.code)}>
@@ -316,7 +434,15 @@ export default function CurrenciesPage() {
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem disabled>
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedCurrency(c);
+                              setConfigData({
+                                name: c.name,
+                                symbol: c.symbol,
+                                decimals: c.decimals,
+                              });
+                              setIsConfiguring(true);
+                            }}>
                               <Settings2 className="w-4 h-4 mr-2" />
                               Configure
                             </DropdownMenuItem>
