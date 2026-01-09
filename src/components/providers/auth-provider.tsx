@@ -60,15 +60,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [token, isLoading, pathname, router, user?.role]);
 
   const login = (newToken: string, newUser: User) => {
+    console.log("Login initiated", { newToken: !!newToken, newUser });
     setToken(newToken);
     setUser(newUser);
     localStorage.setItem("auth_token", newToken);
     localStorage.setItem("auth_user", JSON.stringify(newUser));
     document.cookie = `token=${newToken}; path=/; max-age=86400; SameSite=Lax`;
+    
     toast.success("Logged in successfully");
     
     const redirectPath = newUser.role === "ADMIN" ? "/dashboard/admin" : "/dashboard";
-    window.location.href = redirectPath;
+    console.log("Redirecting to:", redirectPath);
+    
+    // Use router.push for a smoother transition, 
+    // but window.location.href as a backup to ensure cookie is picked up by middleware
+    router.push(redirectPath);
+    setTimeout(() => {
+      if (window.location.pathname === "/login") {
+        window.location.href = redirectPath;
+      }
+    }, 500);
   };
 
   const logout = () => {
