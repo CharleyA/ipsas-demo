@@ -302,10 +302,15 @@ function NewARInvoiceForm() {
   );
 }
 
+const NewARInvoicePageContent = dynamic(
+  () => Promise.resolve(NewARInvoiceForm),
+  { ssr: false }
+);
+
 export default function NewARInvoicePage() {
   return (
     <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
-      <NewARInvoiceForm />
+      <NewARInvoicePageContent />
     </Suspense>
   );
 }
