@@ -326,5 +326,3 @@ export class BankService {
     });
   }
 }
-
-}
