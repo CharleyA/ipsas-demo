@@ -2,12 +2,12 @@
   "name": "nextjs-new",
   "version": "0.1.0",
   "private": true,
-    "scripts": {
-      "dev": "next dev --turbopack",
-      "build": "prisma generate && next build",
-      "start": "next start",
-      "lint": "eslint"
-    },
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.2.0",
