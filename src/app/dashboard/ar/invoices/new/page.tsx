@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,7 +33,7 @@ import {
 import { toast } from "sonner";
 import Link from "next/link";
 
-export default function NewARInvoicePage() {
+function NewARInvoiceForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { token, user } = useAuth();
@@ -298,5 +298,13 @@ export default function NewARInvoicePage() {
         </form>
       </Form>
     </div>
+  );
+}
+
+export default function NewARInvoicePage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
+      <NewARInvoiceForm />
+    </Suspense>
   );
 }
