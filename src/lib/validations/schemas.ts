@@ -109,6 +109,23 @@ export const createAccountingPeriodSchema = z.object({
   endDate: z.string().datetime().or(z.date()),
 });
 
+export const createFiscalPeriodSchema = createAccountingPeriodSchema;
+
+export const approveVoucherSchema = z.object({
+  approvalNotes: z.string().max(500).optional(),
+});
+
+export const rejectVoucherSchema = z.object({
+  rejectionReason: z.string().min(1).max(500),
+});
+
+export const createVoucherTypeSchema = z.object({
+  code: z.string().min(1).max(20),
+  name: z.string().min(1).max(200),
+  prefix: z.string().min(1).max(10).optional(),
+  description: z.string().max(500).optional(),
+});
+
 export const voucherLineSchema = z.object({
   lineNumber: z.number().int().positive(),
   description: z.string().max(500).optional(),

@@ -47,3 +47,7 @@ export function enforceRole(payload: JWTPayload | null, allowedRoles: string[]) 
     throw new Error("Forbidden");
   }
 }
+
+export async function getAuthContext(req: NextRequest): Promise<JWTPayload | null> {
+  return verifyAuth(req);
+}

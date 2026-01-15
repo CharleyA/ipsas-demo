@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/db';
 
-const prisma = new PrismaClient();
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
@@ -27,7 +27,5 @@ export async function GET() {
       }, 
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
