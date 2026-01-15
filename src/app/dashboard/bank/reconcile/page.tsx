@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -38,12 +39,11 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Loader2, 
   Upload, 
-  CheckCircle2, 
-  XCircle, 
   AlertCircle,
   FileSpreadsheet,
   Download,
-  Link as LinkIcon
+  Link as LinkIcon,
+  ArrowRightLeft
 } from "lucide-react";
 import { toast } from "sonner";
 import Papa from "papaparse";
@@ -366,7 +366,7 @@ export default function ReconcilePage() {
                         </div>
 
                         <Button variant="outline" className="w-full" asChild>
-                            <a href="/dashboard/vouchers/new">Create Manual Voucher</a>
+                            <Link href="/dashboard/vouchers/new">Create Manual Voucher</Link>
                         </Button>
                     </div>
                   )}
