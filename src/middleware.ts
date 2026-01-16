@@ -19,10 +19,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Check for token in multiple places for iframe compatibility
   const authHeader = request.headers.get("authorization");
   const token = authHeader?.startsWith("Bearer ") 
     ? authHeader.split(" ")[1] 
     : request.cookies.get("token")?.value;
+
+  // For page requests (not API), allow through and let client-side handle auth
+  // This prevents redirect loops in iframe environments where cookies may not work
+  if (!token && !pathname.startsWith("/api/")) {
+    // Let the client-side auth provider handle the redirect
+    // It can read from localStorage which works in iframes
+    return NextResponse.next();
+  }
 
   if (!token) {
     if (pathname.startsWith("/api/")) {
