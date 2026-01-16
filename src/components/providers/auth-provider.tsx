@@ -65,21 +65,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(newUser);
     localStorage.setItem("auth_token", newToken);
     localStorage.setItem("auth_user", JSON.stringify(newUser));
-    document.cookie = `token=${newToken}; path=/; max-age=86400; SameSite=Lax`;
+    // Use SameSite=None; Secure for iframe compatibility
+    document.cookie = `token=${newToken}; path=/; max-age=86400; SameSite=None; Secure`;
     
     toast.success("Logged in successfully");
     
     const redirectPath = newUser.role === "ADMIN" ? "/dashboard/admin" : "/dashboard";
     console.log("Redirecting to:", redirectPath);
     
-    // Use router.push for a smoother transition, 
-    // but window.location.href as a backup to ensure cookie is picked up by middleware
-    router.push(redirectPath);
-    setTimeout(() => {
-      if (window.location.pathname === "/login") {
-        window.location.href = redirectPath;
-      }
-    }, 500);
+    // Force navigation using window.location for reliability in iframe
+    window.location.href = redirectPath;
   };
 
   const logout = () => {
