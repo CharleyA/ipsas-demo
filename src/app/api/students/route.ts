@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
         organisationId: authReq.user.organisationId,
       });
       
-      const student = await StudentService.create(validatedData, authReq.user.id);
+      const student = await StudentService.create(validatedData, authReq.user.userId);
       return NextResponse.json(student);
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 400 });
