@@ -18,6 +18,9 @@ import {
   Wrench,
   FileSpreadsheet,
   AlertTriangle,
+  Package,
+  Boxes,
+  ClipboardList,
 } from "lucide-react";
 
 
