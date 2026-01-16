@@ -1,9 +1,6 @@
 import prisma from "@/lib/db";
 import { AuditService } from "./audit.service";
 import { ARService } from "./ar.service";
-import { Prisma } from "@prisma/client";
-
-const { Decimal } = Prisma;
 
 export class FeeTemplateService {
   static async create(
