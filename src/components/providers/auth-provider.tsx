@@ -37,9 +37,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
-      // Sync cookie if missing
+      // Sync cookie if missing - use SameSite=None; Secure for iframe compatibility
       if (!document.cookie.includes("token=")) {
-        document.cookie = `token=${storedToken}; path=/; max-age=86400; SameSite=Lax`;
+        document.cookie = `token=${storedToken}; path=/; max-age=86400; SameSite=None; Secure`;
       }
     }
     setIsLoading(false);
