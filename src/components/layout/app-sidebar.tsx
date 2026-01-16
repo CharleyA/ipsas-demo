@@ -87,6 +87,24 @@ const menuItems = [
             roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR"],
           },
           {
+            title: "Invoices",
+            href: "/dashboard/ar/invoices",
+            icon: Receipt,
+            roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR"],
+          },
+          {
+            title: "Receipts",
+            href: "/dashboard/ar/receipts",
+            icon: CreditCard,
+            roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR"],
+          },
+          {
+            title: "Fee Templates",
+            href: "/dashboard/ar/fee-templates",
+            icon: FileStack,
+            roles: ["ADMIN", "BURSAR"],
+          },
+          {
             title: "Suppliers (AP)",
             href: "/dashboard/suppliers",
             icon: Building2,
