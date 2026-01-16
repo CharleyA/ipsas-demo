@@ -21,6 +21,9 @@ import {
   Package,
   Boxes,
   ClipboardList,
+  Receipt,
+  CreditCard,
+  FileStack,
 } from "lucide-react";
 
 
