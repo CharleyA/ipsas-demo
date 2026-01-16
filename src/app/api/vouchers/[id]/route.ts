@@ -30,7 +30,7 @@ export async function PATCH(
       const body = await authReq.json();
       const validatedData = updateVoucherSchema.parse(body);
       
-      const voucher = await VoucherService.update(params.id, validatedData, authReq.user.id);
+      const voucher = await VoucherService.update(params.id, validatedData, authReq.user.userId);
       return NextResponse.json(voucher);
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 400 });
