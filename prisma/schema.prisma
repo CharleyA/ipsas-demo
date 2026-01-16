@@ -798,3 +798,308 @@ enum ReportType {
   FINANCIAL_PERFORMANCE
   CASH_FLOW
 }
+
+// ============================================
+// PROCUREMENT MODULE
+// ============================================
+
+model PurchaseOrder {
+  id              String              @id @default(cuid())
+  organisationId  String
+  poNumber        String
+  supplierId      String
+  procurementRef  String?
+  quotationRef    String?
+  orderDate       DateTime            @db.Date
+  expectedDate    DateTime?           @db.Date
+  totalAmount     Decimal             @db.Decimal(18, 4)
+  currencyCode    String              @default("USD")
+  status          POStatus            @default(DRAFT)
+  notes           String?
+  approvedById    String?
+  approvedAt      DateTime?
+  createdById     String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  organisation    Organisation        @relation(fields: [organisationId], references: [id])
+  supplier        Supplier            @relation(fields: [supplierId], references: [id])
+  lines           PurchaseOrderLine[]
+  grns            GoodsReceivedNote[]
+
+  @@unique([organisationId, poNumber])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderLine {
+  id                String              @id @default(cuid())
+  poId              String
+  lineNumber        Int
+  description       String
+  itemType          ProcurementItemType @default(DIRECT_EXPENSE)
+  inventoryItemId   String?
+  assetCategoryId   String?
+  accountId         String
+  quantity          Decimal             @db.Decimal(18, 4)
+  unitPrice         Decimal             @db.Decimal(18, 4)
+  amount            Decimal             @db.Decimal(18, 4)
+  qtyReceived       Decimal             @default(0) @db.Decimal(18, 4)
+  qtyReturned       Decimal             @default(0) @db.Decimal(18, 4)
+  purchaseOrder     PurchaseOrder       @relation(fields: [poId], references: [id], onDelete: Cascade)
+  inventoryItem     InventoryItem?      @relation(fields: [inventoryItemId], references: [id])
+  assetCategory     AssetCategory?      @relation(fields: [assetCategoryId], references: [id])
+  grnLines          GRNLine[]
+
+  @@map("purchase_order_lines")
+}
+
+model GoodsReceivedNote {
+  id              String            @id @default(cuid())
+  organisationId  String
+  grnNumber       String
+  poId            String
+  supplierId      String
+  receivedDate    DateTime          @db.Date
+  deliveryNoteRef String?
+  inspectedById   String?
+  inspectionNotes String?
+  status          GRNStatus         @default(PENDING_INSPECTION)
+  createdById     String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  organisation    Organisation      @relation(fields: [organisationId], references: [id])
+  purchaseOrder   PurchaseOrder     @relation(fields: [poId], references: [id])
+  supplier        Supplier          @relation(fields: [supplierId], references: [id])
+  lines           GRNLine[]
+  apBills         APBill[]
+
+  @@unique([organisationId, grnNumber])
+  @@map("goods_received_notes")
+}
+
+model GRNLine {
+  id              String            @id @default(cuid())
+  grnId           String
+  poLineId        String
+  qtyDelivered    Decimal           @db.Decimal(18, 4)
+  qtyAccepted     Decimal           @db.Decimal(18, 4)
+  qtyRejected     Decimal           @default(0) @db.Decimal(18, 4)
+  qtyReturned     Decimal           @default(0) @db.Decimal(18, 4)
+  rejectionReason String?
+  grn             GoodsReceivedNote @relation(fields: [grnId], references: [id], onDelete: Cascade)
+  poLine          PurchaseOrderLine @relation(fields: [poLineId], references: [id])
+
+  @@map("grn_lines")
+}
+
+enum POStatus {
+  DRAFT
+  APPROVED
+  PARTIALLY_RECEIVED
+  FULLY_RECEIVED
+  CLOSED
+  CANCELLED
+}
+
+enum GRNStatus {
+  PENDING_INSPECTION
+  INSPECTED
+  PARTIALLY_RETURNED
+  CLOSED
+}
+
+enum ProcurementItemType {
+  CAPITAL_ITEM
+  INVENTORY
+  DIRECT_EXPENSE
+}
+
+// ============================================
+// FIXED ASSETS MODULE
+// ============================================
+
+model AssetCategory {
+  id                      String              @id @default(cuid())
+  organisationId          String
+  code                    String
+  name                    String
+  assetAccountId          String
+  depreciationAccountId   String
+  accumulatedDepAccountId String
+  depreciationMethod      DepreciationMethod  @default(STRAIGHT_LINE)
+  usefulLifeMonths        Int
+  residualValuePercent    Decimal             @default(0) @db.Decimal(5, 2)
+  isActive                Boolean             @default(true)
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+  organisation            Organisation        @relation(fields: [organisationId], references: [id])
+  assets                  Asset[]
+  pendingAssets           PendingAsset[]
+  poLines                 PurchaseOrderLine[]
+  apBillLines             APBillLine[]
+
+  @@unique([organisationId, code])
+  @@map("asset_categories")
+}
+
+model Asset {
+  id                      String               @id @default(cuid())
+  organisationId          String
+  categoryId              String
+  assetNumber             String
+  description             String
+  serialNumber            String?
+  location                String?
+  custodian               String?
+  acquisitionDate         DateTime             @db.Date
+  acquisitionCost         Decimal              @db.Decimal(18, 4)
+  residualValue           Decimal              @db.Decimal(18, 4)
+  accumulatedDepreciation Decimal              @default(0) @db.Decimal(18, 4)
+  netBookValue            Decimal              @db.Decimal(18, 4)
+  status                  AssetStatus          @default(ACTIVE)
+  disposalDate            DateTime?            @db.Date
+  disposalAmount          Decimal?             @db.Decimal(18, 4)
+  disposalNotes           String?
+  disposalVoucherId       String?
+  sourceApBillLineId      String?
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  organisation            Organisation         @relation(fields: [organisationId], references: [id])
+  category                AssetCategory        @relation(fields: [categoryId], references: [id])
+  depreciationEntries     DepreciationEntry[]
+
+  @@unique([organisationId, assetNumber])
+  @@map("assets")
+}
+
+model PendingAsset {
+  id              String        @id @default(cuid())
+  organisationId  String
+  apBillLineId    String        @unique
+  categoryId      String
+  description     String
+  acquisitionCost Decimal       @db.Decimal(18, 4)
+  quantity        Int           @default(1)
+  status          PendingAssetStatus @default(PENDING)
+  processedAt     DateTime?
+  assetIds        String[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  organisation    Organisation  @relation(fields: [organisationId], references: [id])
+  apBillLine      APBillLine    @relation(fields: [apBillLineId], references: [id])
+  category        AssetCategory @relation(fields: [categoryId], references: [id])
+
+  @@map("pending_assets")
+}
+
+model DepreciationEntry {
+  id               String       @id @default(cuid())
+  assetId          String
+  periodId         String
+  depreciationDate DateTime     @db.Date
+  amount           Decimal      @db.Decimal(18, 4)
+  voucherId        String?
+  createdAt        DateTime     @default(now())
+  asset            Asset        @relation(fields: [assetId], references: [id])
+  period           FiscalPeriod @relation(fields: [periodId], references: [id])
+
+  @@unique([assetId, periodId])
+  @@map("depreciation_entries")
+}
+
+enum DepreciationMethod {
+  STRAIGHT_LINE
+  REDUCING_BALANCE
+}
+
+enum AssetStatus {
+  ACTIVE
+  DISPOSED
+  WRITTEN_OFF
+  TRANSFERRED
+}
+
+enum PendingAssetStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+// ============================================
+// INVENTORY MODULE
+// ============================================
+
+model InventoryCategory {
+  id                 String          @id @default(cuid())
+  organisationId     String
+  code               String
+  name               String
+  inventoryAccountId String
+  expenseAccountId   String
+  reorderLevel       Decimal?        @db.Decimal(18, 4)
+  isActive           Boolean         @default(true)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  organisation       Organisation    @relation(fields: [organisationId], references: [id])
+  items              InventoryItem[]
+
+  @@unique([organisationId, code])
+  @@map("inventory_categories")
+}
+
+model InventoryItem {
+  id                String              @id @default(cuid())
+  organisationId    String
+  categoryId        String
+  code              String
+  name              String
+  unitOfMeasure     String              @default("EACH")
+  lastPurchasePrice Decimal?            @db.Decimal(18, 4)
+  averageCost       Decimal             @default(0) @db.Decimal(18, 4)
+  quantityOnHand    Decimal             @default(0) @db.Decimal(18, 4)
+  reorderLevel      Decimal?            @db.Decimal(18, 4)
+  isActive          Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  organisation      Organisation        @relation(fields: [organisationId], references: [id])
+  category          InventoryCategory   @relation(fields: [categoryId], references: [id])
+  movements         InventoryMovement[]
+  poLines           PurchaseOrderLine[]
+  apBillLines       APBillLine[]
+
+  @@unique([organisationId, code])
+  @@map("inventory_items")
+}
+
+model InventoryMovement {
+  id              String            @id @default(cuid())
+  organisationId  String
+  itemId          String
+  movementType    MovementType
+  movementDate    DateTime          @db.Date
+  quantity        Decimal           @db.Decimal(18, 4)
+  unitCost        Decimal           @db.Decimal(18, 4)
+  totalCost       Decimal           @db.Decimal(18, 4)
+  balanceQty      Decimal           @db.Decimal(18, 4)
+  balanceValue    Decimal           @db.Decimal(18, 4)
+  referenceType   String?
+  referenceId     String?
+  voucherId       String?
+  issuedTo        String?
+  notes           String?
+  createdById     String
+  createdAt       DateTime          @default(now())
+  organisation    Organisation      @relation(fields: [organisationId], references: [id])
+  item            InventoryItem     @relation(fields: [itemId], references: [id])
+
+  @@index([itemId, movementDate])
+  @@map("inventory_movements")
+}
+
+enum MovementType {
+  RECEIPT
+  ISSUE
+  ADJUSTMENT_IN
+  ADJUSTMENT_OUT
+  RETURN_TO_SUPPLIER
+  OPENING_BALANCE
+}
