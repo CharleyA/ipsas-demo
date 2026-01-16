@@ -536,33 +536,43 @@ model Supplier {
 }
 
 model APBill {
-  id             String         @id @default(cuid())
+  id             String            @id @default(cuid())
   organisationId String
-  voucherId      String         @unique
+  voucherId      String            @unique
   supplierId     String
   currencyCode   String
-  amount         Decimal        @db.Decimal(18, 4)
-  balance        Decimal        @db.Decimal(18, 4)
-  dueDate        DateTime       @db.Date
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  amount         Decimal           @db.Decimal(18, 4)
+  balance        Decimal           @db.Decimal(18, 4)
+  dueDate        DateTime          @db.Date
+  poId           String?
+  grnId          String?
+  matchStatus    MatchStatus3Way   @default(UNMATCHED)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
   allocations    APAllocation[]
   lines          APBillLine[]
-  currency       Currency       @relation(fields: [currencyCode], references: [code])
-  supplier       Supplier       @relation(fields: [supplierId], references: [id])
-  voucher        Voucher        @relation(fields: [voucherId], references: [id])
+  currency       Currency          @relation(fields: [currencyCode], references: [code])
+  supplier       Supplier          @relation(fields: [supplierId], references: [id])
+  voucher        Voucher           @relation(fields: [voucherId], references: [id])
+  grn            GoodsReceivedNote? @relation(fields: [grnId], references: [id])
 
   @@map("ap_bills")
 }
 
 model APBillLine {
-  id          String  @id @default(cuid())
-  billId      String
-  description String
-  quantity    Decimal @db.Decimal(18, 4)
-  unitPrice   Decimal @db.Decimal(18, 4)
-  amount      Decimal @db.Decimal(18, 4)
-  bill        APBill  @relation(fields: [billId], references: [id], onDelete: Cascade)
+  id              String              @id @default(cuid())
+  billId          String
+  description     String
+  quantity        Decimal             @db.Decimal(18, 4)
+  unitPrice       Decimal             @db.Decimal(18, 4)
+  amount          Decimal             @db.Decimal(18, 4)
+  itemType        ProcurementItemType @default(DIRECT_EXPENSE)
+  assetCategoryId String?
+  inventoryItemId String?
+  bill            APBill              @relation(fields: [billId], references: [id], onDelete: Cascade)
+  assetCategory   AssetCategory?      @relation(fields: [assetCategoryId], references: [id])
+  inventoryItem   InventoryItem?      @relation(fields: [inventoryItemId], references: [id])
+  pendingAsset    PendingAsset?
 
   @@map("ap_bill_lines")
 }
