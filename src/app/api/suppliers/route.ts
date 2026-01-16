@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
         organisationId: authReq.user.organisationId,
       });
       
-      const supplier = await SupplierService.create(validatedData, authReq.user.id);
+      const supplier = await SupplierService.create(validatedData, authReq.user.userId);
       return NextResponse.json(supplier);
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 400 });
