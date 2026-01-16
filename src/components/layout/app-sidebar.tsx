@@ -92,6 +92,29 @@ const menuItems = [
         ],
       },
       {
+        title: "Procurement",
+        items: [
+          {
+            title: "Purchase Orders",
+            href: "/dashboard/procurement",
+            icon: ClipboardList,
+            roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR"],
+          },
+          {
+            title: "Fixed Assets",
+            href: "/dashboard/assets",
+            icon: Package,
+            roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR"],
+          },
+          {
+            title: "Inventory",
+            href: "/dashboard/inventory",
+            icon: Boxes,
+            roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR"],
+          },
+        ],
+      },
+      {
         title: "Banking",
         items: [
           {
