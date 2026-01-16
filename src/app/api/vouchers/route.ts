@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       // Force organisationId to match user's organisation
       validatedData.organisationId = authReq.user.organisationId;
       
-      const voucher = await VoucherService.create(validatedData, authReq.user.id);
+      const voucher = await VoucherService.create(validatedData, authReq.user.userId);
       return NextResponse.json(voucher, { status: 201 });
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 400 });
