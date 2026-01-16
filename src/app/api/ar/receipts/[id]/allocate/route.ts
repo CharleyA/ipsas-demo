@@ -13,7 +13,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
         receiptId: params.id
       });
       
-      const result = await ARService.allocate(validatedData, authReq.user.id);
+      const result = await ARService.allocate(validatedData, authReq.user.userId);
       return NextResponse.json(result);
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 400 });
