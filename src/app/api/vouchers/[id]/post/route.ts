@@ -8,7 +8,7 @@ export async function POST(
 ) {
   return withAuth(req, async (authReq) => {
     try {
-      const voucher = await VoucherService.post(params.id, authReq.user.id);
+      const voucher = await VoucherService.post(params.id, authReq.user.userId);
       return NextResponse.json(voucher);
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 400 });
