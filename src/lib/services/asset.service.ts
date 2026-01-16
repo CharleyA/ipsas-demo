@@ -1,6 +1,5 @@
 import prisma from "@/lib/db";
 import { AuditService } from "./audit.service";
-import { Decimal } from "@prisma/client/runtime/library";
 
 export class AssetCategoryService {
   static async create(
