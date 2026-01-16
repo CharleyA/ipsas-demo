@@ -1,6 +1,6 @@
 import prisma from "@/lib/db";
 import { Prisma, VoucherStatus, AccountType } from "@prisma/client";
-import { subDays, startOfMonth, endOfMonth } from "date-fns";
+import { startOfMonth } from "date-fns";
 import { ExceptionReportService } from "./exception-report.service";
 import { ReportService } from "./report.service";
 
@@ -11,12 +11,18 @@ export class DashboardService {
     const now = new Date();
     const monthStart = startOfMonth(now);
 
-    // 1. Cash at bank (Sum of all BANK type accounts)
+    // 1. Cash at bank (Sum of all bank accounts linked to GL accounts)
+    const bankAccounts = await prisma.bankAccount.findMany({
+      where: { organisationId },
+      select: { accountId: true }
+    });
+    const bankAccountIds = bankAccounts.map(ba => ba.accountId);
+
     const bankBalances = await prisma.gLEntry.groupBy({
       by: ["accountId"],
       where: {
         glHeader: { organisationId },
-        account: { type: AccountType.BANK }
+        accountId: { in: bankAccountIds }
       },
       _sum: { debitLc: true, creditLc: true }
     });
@@ -26,19 +32,40 @@ export class DashboardService {
       return acc.add(bal);
     }, new Decimal(0));
 
-    // 2. Fees Arrears Ageing Summary (Total receivables balance)
+    // 2. Cash in Hand (Sum of accounts marked as isCashAccount)
+    const cashAccounts = await prisma.account.findMany({
+      where: { organisationId, isCashAccount: true },
+      select: { id: true }
+    });
+    const cashAccountIds = cashAccounts.map(ca => ca.id);
+
+    const cashBalances = await prisma.gLEntry.groupBy({
+      by: ["accountId"],
+      where: {
+        glHeader: { organisationId },
+        accountId: { in: cashAccountIds }
+      },
+      _sum: { debitLc: true, creditLc: true }
+    });
+
+    const cashInHand = cashBalances.reduce((acc, b) => {
+      const bal = (b._sum.debitLc || new Decimal(0)).minus(b._sum.creditLc || new Decimal(0));
+      return acc.add(bal);
+    }, new Decimal(0));
+
+    // 3. Fees Arrears Ageing Summary (Total receivables balance)
     const receivablesAgg = await prisma.aRInvoice.aggregate({
       where: { organisationId, balance: { gt: 0 } },
       _sum: { balance: true }
     });
     const feesArrears = receivablesAgg._sum.balance || new Decimal(0);
 
-    // 3. Approvals Pending
+    // 4. Approvals Pending
     const pendingApprovals = await prisma.voucher.count({
       where: { organisationId, status: VoucherStatus.SUBMITTED }
     });
 
-    // 4. Top spending categories (Expenses by Account Type / Name)
+    // 5. Top spending categories (Expenses by Account Type / Name)
     const expenseEntries = await prisma.gLEntry.groupBy({
       by: ["accountId"],
       where: {
@@ -68,16 +95,26 @@ export class DashboardService {
     .sort((a, b) => b.amount.comparedTo(a.amount))
     .slice(0, 5);
 
-    // 5. Budget Utilisation (Mocked for now since budget model is simple)
-    // In a real scenario, we'd compare GL actuals vs Budget lines
-    const budgetUtilisation = 65; // Percentage
+    // 6. Budget Utilisation (Mocked for now since budget model is simple)
+    const budgetUtilisation = 65;
+
+    // 7. Student count
+    const studentCount = await prisma.student.count({
+      where: { organisationId, isActive: true }
+    });
+
+    // 8. Total Liquidity (Bank + Cash)
+    const totalLiquidity = cashAtBank.add(cashInHand);
 
     return {
       cashAtBank: cashAtBank.toNumber(),
+      cashInHand: cashInHand.toNumber(),
+      totalLiquidity: totalLiquidity.toNumber(),
       feesArrears: feesArrears.toNumber(),
       pendingApprovals,
       topSpending: topSpending.map(s => ({ name: s.name, amount: s.amount.toNumber() })),
-      budgetUtilisation
+      budgetUtilisation,
+      studentCount
     };
   }
 
