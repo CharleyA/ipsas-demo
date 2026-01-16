@@ -813,6 +813,13 @@ enum MatchingStatus {
   EXCLUDED
 }
 
+enum MatchStatus3Way {
+  UNMATCHED
+  MATCHED
+  MISMATCH
+  EXCEPTION
+}
+
 enum ReportType {
   FINANCIAL_POSITION
   FINANCIAL_PERFORMANCE
