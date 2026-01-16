@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       
       validatedData.organisationId = authReq.user.organisationId;
       
-      const invoice = await ARService.createInvoice(validatedData, authReq.user.id);
+      const invoice = await ARService.createInvoice(validatedData, authReq.user.userId);
       return NextResponse.json(invoice, { status: 201 });
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 400 });
