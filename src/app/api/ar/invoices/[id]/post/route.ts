@@ -6,7 +6,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   const params = await props.params;
   return withAuth(req, async (authReq) => {
     try {
-      const result = await ARService.postInvoice(params.id, authReq.user.id);
+      const result = await ARService.postInvoice(params.id, authReq.user.userId);
       return NextResponse.json(result);
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 400 });
