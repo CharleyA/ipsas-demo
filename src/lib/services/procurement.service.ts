@@ -1,6 +1,5 @@
 import prisma from "@/lib/db";
 import { AuditService } from "./audit.service";
-import { Prisma } from "@prisma/client";
 
 export class PurchaseOrderService {
   static async generatePONumber(organisationId: string): Promise<string> {
