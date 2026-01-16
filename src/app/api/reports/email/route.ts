@@ -197,7 +197,7 @@ export async function POST(req: NextRequest) {
 
         await AuditService.log({
           organisationId: orgId,
-          userId: authReq.user.id,
+          userId: authReq.user.userId,
           action: "EMAIL_REPORT",
           entityType: "Report",
           entityId: reportName,
