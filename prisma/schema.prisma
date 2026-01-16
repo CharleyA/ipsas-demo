@@ -397,14 +397,15 @@ model FiscalPeriod {
   name           String
   startDate      DateTime           @db.Date
   endDate        DateTime           @db.Date
-  status         FiscalPeriodStatus @default(OPEN)
-  lockedAt       DateTime?
-  lockedBy       String?
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  organisation   Organisation       @relation(fields: [organisationId], references: [id])
-  glHeaders      GLHeader[]
-  vouchers       Voucher[]
+  status              FiscalPeriodStatus  @default(OPEN)
+  lockedAt            DateTime?
+  lockedBy            String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  organisation        Organisation        @relation(fields: [organisationId], references: [id])
+  glHeaders           GLHeader[]
+  vouchers            Voucher[]
+  depreciationEntries DepreciationEntry[]
 
   @@unique([organisationId, year, period])
   @@map("fiscal_periods")
