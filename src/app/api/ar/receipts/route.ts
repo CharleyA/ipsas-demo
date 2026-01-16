@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       
       validatedData.organisationId = authReq.user.organisationId;
       
-      const receipt = await ARService.createReceipt(validatedData, authReq.user.id);
+      const receipt = await ARService.createReceipt(validatedData, authReq.user.userId);
       return NextResponse.json(receipt, { status: 201 });
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 400 });
