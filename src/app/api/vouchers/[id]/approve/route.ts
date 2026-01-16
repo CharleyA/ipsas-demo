@@ -9,7 +9,7 @@ export async function POST(
   return withAuth(req, async (authReq) => {
     try {
       const { notes } = await authReq.json().catch(() => ({}));
-      const voucher = await VoucherService.approve(params.id, authReq.user.id, notes);
+      const voucher = await VoucherService.approve(params.id, authReq.user.userId, notes);
       return NextResponse.json(voucher);
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 400 });
