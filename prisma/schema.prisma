@@ -42,6 +42,14 @@ model Organisation {
   students              Student[]
   suppliers             Supplier[]
   vouchers              Voucher[]
+  purchaseOrders        PurchaseOrder[]
+  goodsReceivedNotes    GoodsReceivedNote[]
+  assetCategories       AssetCategory[]
+  assets                Asset[]
+  pendingAssets         PendingAsset[]
+  inventoryCategories   InventoryCategory[]
+  inventoryItems        InventoryItem[]
+  inventoryMovements    InventoryMovement[]
 
   @@map("organisations")
 }
