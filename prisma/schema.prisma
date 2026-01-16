@@ -516,18 +516,20 @@ model ARAllocation {
 }
 
 model Supplier {
-  id             String       @id @default(cuid())
-  organisationId String
-  code           String
-  name           String
-  taxNumber      String?
-  isActive       Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  apBills        APBill[]
-  apPayments     APPayment[]
-  organisation   Organisation @relation(fields: [organisationId], references: [id])
-  vouchers       Voucher[]
+  id                 String              @id @default(cuid())
+  organisationId     String
+  code               String
+  name               String
+  taxNumber          String?
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  apBills            APBill[]
+  apPayments         APPayment[]
+  organisation       Organisation        @relation(fields: [organisationId], references: [id])
+  vouchers           Voucher[]
+  purchaseOrders     PurchaseOrder[]
+  goodsReceivedNotes GoodsReceivedNote[]
 
   @@unique([organisationId, code])
   @@map("suppliers")
