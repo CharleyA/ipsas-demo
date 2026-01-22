@@ -89,7 +89,13 @@ export class ReportService {
     
     // The currency we are actually reporting in
     const reportingCurrency = filters.reportingCurrency || accountCurrency;
-    const shouldConvert = reportingCurrency !== accountCurrency;
+    
+    // Determine which fields to use based on reporting currency
+    const useFc = reportingCurrency === "USD";
+    const useLc = reportingCurrency === baseCurrency;
+    
+    // If it's a currency we don't have direct fields for, we'd need conversion
+    // But for now, we'll support USD and Base (ZWG)
 
     const openingBalAgg = await prisma.gLEntry.aggregate({
       where: {
