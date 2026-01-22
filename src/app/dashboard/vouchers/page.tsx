@@ -37,6 +37,8 @@ export default function VouchersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<string>("ALL");
   const [type, setType] = useState<string>("ALL");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [search, setSearch] = useState("");
 
   const fetchVouchers = async () => {
@@ -45,6 +47,8 @@ export default function VouchersPage() {
       const params = new URLSearchParams();
       if (status !== "ALL") params.append("status", status);
       if (type !== "ALL") params.append("type", type);
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
 
       const response = await fetch(`/api/vouchers?${params.toString()}`, {
         headers: { "Authorization": `Bearer ${token}` }
