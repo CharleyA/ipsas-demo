@@ -69,7 +69,13 @@ export class ReportService {
     };
   }
 
-  static async getGeneralLedger(organisationId: string, accountId: string, startDate: Date, endDate: Date, filters: { voucherId?: string } = {}) {
+  static async getGeneralLedger(
+    organisationId: string, 
+    accountId: string, 
+    startDate: Date, 
+    endDate: Date, 
+    filters: { voucherId?: string; page?: number; pageSize?: number } = {}
+  ) {
     const account = await prisma.account.findUnique({ where: { id: accountId } });
     if (!account) throw new Error("Account not found");
 
@@ -95,82 +101,176 @@ export class ReportService {
       ? (openingBalAgg._sum.debitFc || new Decimal(0)).minus(openingBalAgg._sum.creditFc || new Decimal(0))
       : (openingBalAgg._sum.debitLc || new Decimal(0)).minus(openingBalAgg._sum.creditLc || new Decimal(0));
 
-    const entries = await prisma.gLEntry.findMany({
-      where: {
-        accountId,
-        glHeader: {
-          organisationId,
-          entryDate: { gte: startDate, lte: endDate },
-          ...(filters.voucherId ? { voucherId: filters.voucherId } : {}),
-        },
+    const baseWhere: Prisma.GLEntryWhereInput = {
+      accountId,
+      glHeader: {
+        organisationId,
+        entryDate: { gte: startDate, lte: endDate },
+        ...(filters.voucherId ? { voucherId: filters.voucherId } : {}),
       },
+    };
+
+    const totalCount = await prisma.gLEntry.count({ where: baseWhere });
+
+    // Fetch entries for the specific page if pagination is provided
+    const { page, pageSize } = filters;
+    const skip = page && pageSize ? (page - 1) * pageSize : undefined;
+    const take = pageSize;
+
+    const entries = await prisma.gLEntry.findMany({
+      where: baseWhere,
       include: {
         glHeader: {
           include: { voucher: true },
         },
       },
-      orderBy: { glHeader: { entryDate: "asc" } },
+      orderBy: [
+        { glHeader: { entryDate: "asc" } },
+        { glHeader: { entryNumber: "asc" } },
+        { id: "asc" }
+      ],
+      skip,
+      take,
     });
 
+    // To calculate the running balance for paginated results, we need the sum of movements before the current skip
     let runningBalance = openingBalance;
+    if (skip && skip > 0) {
+      const priorMovements = await prisma.gLEntry.aggregate({
+        where: baseWhere,
+        _sum: {
+          debitLc: true,
+          creditLc: true,
+          debitFc: true,
+          creditFc: true,
+        },
+        orderBy: [
+          { glHeader: { entryDate: "asc" } },
+          { glHeader: { entryNumber: "asc" } },
+          { id: "asc" }
+        ],
+        take: skip,
+      });
+
+      const priorDr = isUsdAccount ? (priorMovements._sum.debitFc || new Decimal(0)) : (priorMovements._sum.debitLc || new Decimal(0));
+      const priorCr = isUsdAccount ? (priorMovements._sum.creditFc || new Decimal(0)) : (priorMovements._sum.creditLc || new Decimal(0));
+      runningBalance = runningBalance.add(priorDr).minus(priorCr);
+    }
+
+    const pageOpeningBalance = runningBalance;
+
     const rows = entries.map((entry) => {
       const dr = (isUsdAccount ? entry.debitFc : entry.debitLc) || new Decimal(0);
       const cr = (isUsdAccount ? entry.creditFc : entry.creditLc) || new Decimal(0);
       runningBalance = runningBalance.add(dr).minus(cr);
 
-        return {
-          id: entry.id,
-          date: entry.glHeader.entryDate,
-          entryNumber: entry.glHeader.entryNumber,
-          voucherId: entry.glHeader.voucher?.id,
-          voucherNumber: entry.glHeader.voucher?.number,
-          description: entry.description || entry.glHeader.description,
-          debit: dr,
-          credit: cr,
-          balance: runningBalance,
-          currency: isUsdAccount ? "USD" : "ZWG",
-        };
+      return {
+        id: entry.id,
+        date: entry.glHeader.entryDate,
+        entryNumber: entry.glHeader.entryNumber,
+        voucherId: entry.glHeader.voucher?.id,
+        voucherNumber: entry.glHeader.voucher?.number,
+        description: entry.description || entry.glHeader.description,
+        debit: dr,
+        credit: cr,
+        balance: runningBalance,
+        currency: isUsdAccount ? "USD" : "ZWG",
+      };
     });
 
-    const totalDebits = rows.reduce((acc, r) => acc.add(r.debit), new Decimal(0));
-    const totalCredits = rows.reduce((acc, r) => acc.add(r.credit), new Decimal(0));
-    const netMovement = runningBalance.minus(openingBalance);
-
-    // Group for Daily Activity Chart
-    const dailyMap = new Map<string, { date: string, debits: number, credits: number }>();
-    rows.forEach(r => {
-      const d = r.date.toISOString().split("T")[0];
-      const existing = dailyMap.get(d) || { date: d, debits: 0, credits: 0 };
-      existing.debits += r.debit.toNumber();
-      existing.credits += r.credit.toNumber();
-      dailyMap.set(d, existing);
+    // Summary and charts should ideally be based on ALL data for the period
+    const periodAgg = await prisma.gLEntry.aggregate({
+      where: baseWhere,
+      _sum: {
+        debitLc: true,
+        creditLc: true,
+        debitFc: true,
+        creditFc: true,
+      },
     });
 
-    // Balance Evolution
-    const evolutionMap = new Map<string, number>();
-    rows.forEach(r => {
-      const d = r.date.toISOString().split("T")[0];
-      evolutionMap.set(d, r.balance.toNumber());
+    const totalDebits = isUsdAccount ? (periodAgg._sum.debitFc || new Decimal(0)) : (periodAgg._sum.debitLc || new Decimal(0));
+    const totalCredits = isUsdAccount ? (periodAgg._sum.creditFc || new Decimal(0)) : (periodAgg._sum.creditLc || new Decimal(0));
+    const closingBalance = openingBalance.add(totalDebits).minus(totalCredits);
+    const netMovement = totalDebits.minus(totalCredits);
+
+    // Chart data (Daily Activity) - we might need to group by date to keep it efficient
+    const dailyMovements = await prisma.gLEntry.groupBy({
+      by: ["accountId"],
+      where: baseWhere,
+      _sum: {
+        debitLc: true,
+        creditLc: true,
+        debitFc: true,
+        creditFc: true,
+      },
+      // Note: Grouping by date in Prisma is tricky without raw query or specific fields
+      // For now, if entries are few, we can fetch all and group in JS, but for many, it's better to fetch date-wise aggregates.
+      // Since GL can have many entries, let's just fetch simplified data for charts.
     });
+
+    // Refined Chart Data fetching (only if not exporting or if small enough)
+    // For now, let's keep the JS grouping but limit to a reasonable number of days or entries
+    // Alternatively, let's just return the paginated rows and the overall summary.
+    // BUT the user wants charts.
+    
+    let chartData = { dailyActivity: [] as any[], balanceEvolution: [] as any[] };
+    if (!page || totalCount < 1000) {
+      // If no page (export) or small count, fetch all for charts
+      const allEntries = await prisma.gLEntry.findMany({
+        where: baseWhere,
+        select: {
+          debitLc: true,
+          creditLc: true,
+          debitFc: true,
+          creditFc: true,
+          glHeader: { select: { entryDate: true } }
+        },
+        orderBy: { glHeader: { entryDate: "asc" } }
+      });
+
+      const dailyMap = new Map<string, { date: string, debits: number, credits: number }>();
+      let evolutionBal = openingBalance;
+      const evolution: { date: string, balance: number }[] = [];
+
+      allEntries.forEach(e => {
+        const d = e.glHeader.entryDate.toISOString().split("T")[0];
+        const dr = isUsdAccount ? (e.debitFc || 0) : (e.debitLc || 0);
+        const cr = isUsdAccount ? (e.creditFc || 0) : (e.creditLc || 0);
+        
+        const existing = dailyMap.get(d) || { date: d, debits: 0, credits: 0 };
+        existing.debits += Number(dr);
+        existing.credits += Number(cr);
+        dailyMap.set(d, existing);
+
+        evolutionBal = evolutionBal.add(dr).minus(cr);
+        evolution.push({ date: d, balance: evolutionBal.toNumber() });
+      });
+
+      chartData = {
+        dailyActivity: Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date)),
+        balanceEvolution: evolution,
+      };
+    }
 
     return {
       account,
       startDate,
       endDate,
       openingBalance,
+      pageOpeningBalance,
       entries: rows,
-      closingBalance: runningBalance,
+      closingBalance,
+      totalCount,
+      page: page || 1,
+      pageSize: pageSize || totalCount,
+      totalPages: pageSize ? Math.ceil(totalCount / pageSize) : 1,
       summary: {
         totalDebits,
         totalCredits,
         netMovement,
       },
-      chartData: {
-        dailyActivity: Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date)),
-        balanceEvolution: Array.from(evolutionMap.entries())
-          .map(([date, balance]) => ({ date, balance }))
-          .sort((a, b) => a.date.localeCompare(b.date)),
-      }
+      chartData
     };
   }
 
