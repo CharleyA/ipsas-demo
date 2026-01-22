@@ -25,12 +25,31 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { 
-  Loader2, 
-  ArrowLeft,
-Eye,
-FileText
+    Loader2, 
+    ArrowLeft,
+    Eye,
+    FileText,
+    TrendingUp,
+    TrendingDown,
+    ArrowUpRight,
+    ArrowDownRight,
+    Wallet,
+    CalendarDays
 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  Legend
+} from "recharts";
 import Link from "next/link";
+
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
 import { ReportToolbar } from "@/components/reports/report-toolbar";
