@@ -342,9 +342,11 @@ function GeneralLedgerContent() {
                       <FileText className="w-3.5 h-3.5 text-primary" />
                     </div>
                   </div>
-                  <p className="text-xl font-black font-mono tracking-tight text-primary">
-                    {parseFloat(data.closingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </p>
+                    <p className="text-xl font-black font-mono tracking-tight text-primary">
+                      <span className="text-[10px] mr-1 opacity-50">{data.reportingCurrency}</span>
+                      {parseFloat(data.closingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </p>
+
                 </CardContent>
               </Card>
             </div>
