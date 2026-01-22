@@ -27,15 +27,25 @@ import {
   Loader2,
   CreditCard,
   DollarSign,
+  Filter,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function ReceiptsPage() {
   const { token } = useAuth();
   const [receipts, setReceipts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [methodFilter, setMethodFilter] = useState<string>("ALL");
 
   const fetchReceipts = async () => {
     setIsLoading(true);
@@ -56,11 +66,16 @@ export default function ReceiptsPage() {
     if (token) fetchReceipts();
   }, [token]);
 
-  const filteredReceipts = receipts.filter((rec) =>
-    `${rec.voucher?.number} ${rec.student?.firstName} ${rec.student?.lastName} ${rec.student?.studentNumber}`
+  const filteredReceipts = receipts.filter((rec) => {
+    const matchesSearch = `${rec.voucher?.number} ${rec.student?.firstName} ${rec.student?.lastName} ${rec.student?.studentNumber}`
       .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+      .includes(search.toLowerCase());
+    
+    const matchesStatus = statusFilter === "ALL" || rec.voucher?.status === statusFilter;
+    const matchesMethod = methodFilter === "ALL" || rec.paymentMethod === methodFilter;
+    
+    return matchesSearch && matchesStatus && matchesMethod;
+  });
 
   const totalReceived = receipts.reduce(
     (sum, rec) => sum + Number(rec.amount || 0),
