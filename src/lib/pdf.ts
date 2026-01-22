@@ -56,6 +56,12 @@ export async function generatePDF(
   doc.setFontSize(9);
   doc.setFont("helvetica", "italic");
   doc.text(`Generated: ${(options.generatedAt || new Date()).toLocaleString()}`, pageWidth / 2, currentY, { align: "center" });
+  currentY += 6;
+
+  // Add a professional horizontal line
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.5);
+  doc.line(15, currentY, pageWidth - 15, currentY);
   currentY += 10;
 
   // Summary Table (if provided)
