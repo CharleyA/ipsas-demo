@@ -183,12 +183,15 @@ export class VoucherService {
     if (!voucher) throw new Error("Voucher not found");
     if (voucher.status !== "DRAFT") throw new Error("Only draft vouchers can be submitted");
 
-    // Find approvers (Headmasters and Bursars)
+    // Find approvers (Explicitly designated approvers OR Headmasters/Bursars)
     const approvers = await prisma.organisationUser.findMany({
       where: {
         organisationId: voucher.organisationId,
-        role: { in: ["HEADMASTER", "BURSAR"] },
         isActive: true,
+        OR: [
+          { isApprover: true },
+          { role: { in: ["HEADMASTER", "BURSAR"] } }
+        ]
       },
     });
 
