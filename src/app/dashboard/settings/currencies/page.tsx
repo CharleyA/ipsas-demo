@@ -510,10 +510,15 @@ export default function CurrenciesPage() {
                       <span className="font-medium">{r.fromCurrencyCode} → {r.toCurrencyCode}</span>
                       <span className="text-xs text-muted-foreground">{new Date(r.effectiveDate).toLocaleDateString()}</span>
                     </div>
-                    <div className="text-right">
-                      <div className="font-mono font-bold">{Number(r.rate).toFixed(4)}</div>
-                      <div className="text-[10px] text-muted-foreground uppercase">{r.source || 'Manual'}</div>
-                    </div>
+                      <div className="text-right">
+                        <div className="font-mono font-bold">{Number(r.rate).toFixed(4)}</div>
+                        <Badge 
+                          variant={r.source?.toUpperCase() === "MANUAL" ? "default" : "secondary"} 
+                          className="text-[10px] px-1 h-4 uppercase"
+                        >
+                          {r.source || 'MANUAL'}
+                        </Badge>
+                      </div>
                   </div>
                 ))}
                 {exchangeRates.length === 0 && (
