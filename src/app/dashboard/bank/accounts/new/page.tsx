@@ -145,15 +145,16 @@ export default function NewBankAccountPage() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="currency">Currency *</Label>
+              <Label htmlFor="currency">Currency</Label>
               <Select 
                 value={formData.currencyCode} 
                 onValueChange={(val) => setFormData({ ...formData, currencyCode: val })}
               >
                 <SelectTrigger id="currency">
-                  <SelectValue placeholder="Select currency" />
+                  <SelectValue placeholder="System Default (Organisation Base Currency)" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">System Default (Organisation Base Currency)</SelectItem>
                   {isLoadingCurrencies ? (
                     <div className="flex items-center justify-center p-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -167,13 +168,16 @@ export default function NewBankAccountPage() {
                   )}
                 </SelectContent>
               </Select>
+              <p className="text-[10px] text-muted-foreground italic">
+                Defaults to the organisation&apos;s base currency if not specified.
+              </p>
             </div>
 
             <div className="pt-4 border-t space-y-4">
               <div className="space-y-1">
                 <h3 className="text-sm font-medium">Ledger Integration</h3>
                 <p className="text-xs text-muted-foreground">
-                  Specify the General Ledger account for this bank. If left blank, a new one will be created automatically.
+                  Specify the General Ledger account for this bank. If left blank, a new one will be created automatically using the bank details and currency.
                 </p>
               </div>
 
@@ -186,6 +190,9 @@ export default function NewBankAccountPage() {
                     value={formData.glAccountCode}
                     onChange={(e) => setFormData({ ...formData, glAccountCode: e.target.value })}
                   />
+                  <p className="text-[10px] text-muted-foreground italic">
+                    Auto-generated: BANK-XXXX.suffix (e.g. .usd)
+                  </p>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="glAccountName">GL Name (Optional)</Label>
@@ -195,9 +202,13 @@ export default function NewBankAccountPage() {
                     value={formData.glAccountName}
                     onChange={(e) => setFormData({ ...formData, glAccountName: e.target.value })}
                   />
+                  <p className="text-[10px] text-muted-foreground italic">
+                    Auto-generated: Bank Name (Account Number) [CUR]
+                  </p>
                 </div>
               </div>
             </div>
+
           </CardContent>
           <div className="flex items-center justify-end gap-3 p-6 border-t bg-muted/50">
             <Button variant="outline" asChild disabled={isSubmitting}>
