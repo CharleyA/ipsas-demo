@@ -69,9 +69,11 @@ export class ReportService {
     };
   }
 
-  static async getGeneralLedger(organisationId: string, accountId: string, startDate: Date, endDate: Date) {
+  static async getGeneralLedger(organisationId: string, accountId: string, startDate: Date, endDate: Date, filters: { voucherId?: string } = {}) {
     const account = await prisma.account.findUnique({ where: { id: accountId } });
     if (!account) throw new Error("Account not found");
+
+    const isUsdAccount = account.code.endsWith(".USD");
 
     const openingBalAgg = await prisma.gLEntry.aggregate({
       where: {
@@ -84,12 +86,14 @@ export class ReportService {
       _sum: {
         debitLc: true,
         creditLc: true,
+        debitFc: true,
+        creditFc: true,
       },
     });
 
-    const openingBalance = (openingBalAgg._sum.debitLc || new Decimal(0)).minus(
-      openingBalAgg._sum.creditLc || new Decimal(0)
-    );
+    const openingBalance = isUsdAccount 
+      ? (openingBalAgg._sum.debitFc || new Decimal(0)).minus(openingBalAgg._sum.creditFc || new Decimal(0))
+      : (openingBalAgg._sum.debitLc || new Decimal(0)).minus(openingBalAgg._sum.creditLc || new Decimal(0));
 
     const entries = await prisma.gLEntry.findMany({
       where: {
@@ -97,6 +101,7 @@ export class ReportService {
         glHeader: {
           organisationId,
           entryDate: { gte: startDate, lte: endDate },
+          ...(filters.voucherId ? { voucherId: filters.voucherId } : {}),
         },
       },
       include: {
@@ -109,8 +114,8 @@ export class ReportService {
 
     let runningBalance = openingBalance;
     const rows = entries.map((entry) => {
-      const dr = entry.debitLc || new Decimal(0);
-      const cr = entry.creditLc || new Decimal(0);
+      const dr = (isUsdAccount ? entry.debitFc : entry.debitLc) || new Decimal(0);
+      const cr = (isUsdAccount ? entry.creditFc : entry.creditLc) || new Decimal(0);
       runningBalance = runningBalance.add(dr).minus(cr);
 
       return {
@@ -122,6 +127,7 @@ export class ReportService {
         debit: dr,
         credit: cr,
         balance: runningBalance,
+        currency: isUsdAccount ? "USD" : "ZWG",
       };
     });
 
