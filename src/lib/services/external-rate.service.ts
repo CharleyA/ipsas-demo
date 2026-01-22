@@ -29,8 +29,10 @@ export class ExternalRateService {
     // ZimRate returns an array of sources. We want the one where source is 'rbz' or similar.
     // Usually it has 'rbz_interbank' or 'rbz'.
     const rbzData = data.find((item: any) => 
+      item.currency?.toLowerCase() === "rbz" ||
       item.source?.toLowerCase().includes("rbz") || 
-      item.name?.toLowerCase().includes("rbz")
+      item.name?.toLowerCase().includes("rbz") ||
+      item.name?.toLowerCase().includes("reserve bank")
     );
 
     if (!rbzData || !rbzData.rate) {
