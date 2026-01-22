@@ -229,13 +229,13 @@ export default function InvoicesPage() {
                         {invoice.voucher?.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" asChild>
-                        <Link href={`/dashboard/ar/invoices/${invoice.id}`}>
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                      </Button>
-                    </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link href={`/dashboard/vouchers/${invoice.voucherId}`}>
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                      </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
