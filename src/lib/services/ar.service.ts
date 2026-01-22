@@ -66,7 +66,7 @@ export class ARService {
             {
               lineNumber: 1,
               accountId: receivableAccount.id,
-              description: `Fees Receivable (${data.currencyCode}) - ${studentName}`,
+              description: `Fees Receivable - ${studentName}`,
               currencyCode: data.currencyCode,
               amountFc: totalAmountFc,
               fxRate: fxRate,
@@ -79,7 +79,7 @@ export class ARService {
             {
               lineNumber: 2,
               accountId: revenueAccount.id,
-              description: `Fees Revenue (${data.currencyCode}) - ${studentName}`,
+              description: `Fees Revenue - ${studentName}`,
               currencyCode: data.currencyCode,
               amountFc: totalAmountFc,
               fxRate: fxRate,
