@@ -13,8 +13,9 @@ export async function GET(req: NextRequest) {
     const dateStr = searchParams.get("date");
     const exportFormat = (searchParams.get("format") || "json") as ExportFormat;
     const date = dateStr ? new Date(dateStr) : new Date();
+    const reportingCurrency = searchParams.get("reportingCurrency") || undefined;
 
-    const report = await ReportService.getFinancialPosition(authReq.user.organisationId, date);
+    const report = await ReportService.getFinancialPosition(authReq.user.organisationId, date, { reportingCurrency });
 
     if (exportFormat === "json") {
       return NextResponse.json(report);
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
     const columns: ExportColumn[] = [
       { header: "Code", key: "code" },
       { header: "Line Name", key: "name", width: 40 },
-      { header: "Amount", key: "amount" },
+      { header: `Amount (${report.reportingCurrency})`, key: "amount" },
     ];
 
     const flattenRows = (rows: any[], level = 0): any[] => {
@@ -52,6 +53,11 @@ export async function GET(req: NextRequest) {
       subtitle: `As at ${format(date, "MMMM d, yyyy")}`,
       organisationName: org?.name || "Organisation",
       orientation: "portrait",
+      summaryData: [
+        { label: `Total Assets (${report.reportingCurrency})`, value: Number(report.summary.totalAssets) },
+        { label: `Total Liabilities (${report.reportingCurrency})`, value: Number(report.summary.totalLiabilities) },
+        { label: `Net Assets/Equity (${report.reportingCurrency})`, value: Number(report.summary.netAssets) },
+      ]
     });
     return ReportExporter.getResponse(exportFormat, content, "Financial Position");
   });
