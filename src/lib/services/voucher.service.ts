@@ -307,13 +307,16 @@ export class VoucherService {
         },
       });
 
-      const updatedVoucher = await tx.voucher.update({
-        where: { id },
-        data: { status: "POSTED" },
+        const updatedVoucher = await tx.voucher.update({
+          where: { id },
+          data: { status: "POSTED" },
+        });
+
+        const affectedAccountIds = [...new Set(voucher.lines.map((l) => l.accountId))];
+
+        return { voucher: updatedVoucher, glHeader, affectedAccountIds };
       });
 
-      return { voucher: updatedVoucher, glHeader };
-    });
 
     await AuditService.log({
       userId: actorId,
