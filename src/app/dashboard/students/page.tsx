@@ -18,7 +18,14 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Eye, FileText, Receipt, Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Search, Eye, FileText, Receipt, Loader2, Filter } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -28,6 +35,8 @@ export default function StudentsPage() {
   const [students, setStudents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [selectedGrade, setSelectedGrade] = useState<string>("all");
+  const [selectedClass, setSelectedClass] = useState<string>("all");
 
   const fetchStudents = async () => {
     setIsLoading(true);
@@ -48,9 +57,16 @@ export default function StudentsPage() {
     if (token) fetchStudents();
   }, [token]);
 
-  const filteredStudents = students.filter(s => 
-    `${s.firstName} ${s.lastName} ${s.studentNumber}`.toLowerCase().includes(search.toLowerCase())
-  );
+  // Extract unique grades and classes
+  const grades = Array.from(new Set(students.map(s => s.grade).filter(Boolean))).sort() as string[];
+  const classes = Array.from(new Set(students.map(s => s.class).filter(Boolean))).sort() as string[];
+
+  const filteredStudents = students.filter(s => {
+    const matchesSearch = `${s.firstName} ${s.lastName} ${s.studentNumber}`.toLowerCase().includes(search.toLowerCase());
+    const matchesGrade = selectedGrade === "all" || s.grade === selectedGrade;
+    const matchesClass = selectedClass === "all" || s.class === selectedClass;
+    return matchesSearch && matchesGrade && matchesClass;
+  });
 
   return (
     <div className="space-y-6">
@@ -71,21 +87,60 @@ export default function StudentsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle>Student Directory</CardTitle>
               <CardDescription>
                 A list of all students registered in the system.
               </CardDescription>
             </div>
-            <div className="relative w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search students..."
-                className="pl-8"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative w-full md:w-64">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search students..."
+                  className="pl-8"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+              
+              <Select value={selectedGrade} onValueChange={setSelectedGrade}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Grade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Grades</SelectItem>
+                  {grades.map(grade => (
+                    <SelectItem key={grade} value={grade}>{grade}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedClass} onValueChange={setSelectedClass}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Class" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Classes</SelectItem>
+                  {classes.map(cls => (
+                    <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {(selectedGrade !== "all" || selectedClass !== "all") && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => {
+                    setSelectedGrade("all");
+                    setSelectedClass("all");
+                  }}
+                >
+                  Clear
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
