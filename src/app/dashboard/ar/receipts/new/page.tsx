@@ -38,6 +38,7 @@ export default function NewARReceiptPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [students, setStudents] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
+  const [currencies, setCurrencies] = useState<any[]>([]);
 
   const studentId = searchParams.get("studentId") || "";
 
