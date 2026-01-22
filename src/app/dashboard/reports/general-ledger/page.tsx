@@ -237,9 +237,9 @@ import { ReportToolbar } from "@/components/reports/report-toolbar";
                     <TableHead>Description</TableHead>
                     <TableHead className="text-right">Debit</TableHead>
                     <TableHead className="text-right">Credit</TableHead>
-                    <TableHead className="text-right">
-                      Balance {data?.entries[0]?.currency && <span className="text-[10px] opacity-70 ml-1">({data.entries[0].currency})</span>}
-                    </TableHead>
+                      <TableHead className="text-right">
+                        Balance {data?.entries?.[0]?.currency && <span className="text-[10px] opacity-70 ml-1">({data.entries[0].currency})</span>}
+                      </TableHead>
                   </TableRow>
                 </TableHeader>
 
