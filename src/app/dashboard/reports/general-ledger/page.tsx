@@ -26,7 +26,8 @@ import {
 } from "@/components/ui/select";
 import { 
   Loader2, 
-  ArrowLeft
+  ArrowLeft,
+  Eye
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
