@@ -22,13 +22,14 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { Eye, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { useCallback } from "react";
 
 export default function ApprovalsPage() {
   const { user, token } = useAuth();
   const [tasks, setTasks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchTasks = async (silent = false) => {
+  const fetchTasks = useCallback(async (silent = false) => {
     if (!silent) setIsLoading(true);
     try {
       const response = await fetch("/api/approvals", {
@@ -42,13 +43,13 @@ export default function ApprovalsPage() {
     } finally {
       if (!silent) setIsLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchTasks();
     const interval = setInterval(() => fetchTasks(true), 10000); // Poll every 10 seconds
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchTasks]);
 
   const handleAction = async (voucherId: string, action: "approve" | "reject") => {
     try {
