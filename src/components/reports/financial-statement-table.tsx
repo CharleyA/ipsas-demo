@@ -38,14 +38,14 @@ function StatementRow({ row, level }: RowProps) {
   );
 }
 
-export function FinancialStatementTable({ data }: { data: any[] }) {
+export function FinancialStatementTable({ data, currency = "ZWG" }: { data: any[], currency?: string }) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead className="w-[100px]">Code</TableHead>
           <TableHead>Classification</TableHead>
-          <TableHead className="text-right">Amount (ZWG)</TableHead>
+          <TableHead className="text-right">Amount ({currency})</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
