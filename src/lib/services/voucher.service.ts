@@ -78,8 +78,13 @@ export class VoucherService {
   }
 
   static async findById(id: string) {
-    return prisma.voucher.findUnique({
-      where: { id },
+    return prisma.voucher.findFirst({
+      where: {
+        OR: [
+          { id: id },
+          { number: id }
+        ]
+      },
       include: {
         lines: {
           include: {
