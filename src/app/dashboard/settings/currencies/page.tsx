@@ -274,8 +274,17 @@ export default function CurrenciesPage() {
             Manage your organisation's currencies and exchange rates.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Dialog open={isAddingRate} onOpenChange={setIsAddingRate}>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleSyncRBZ} disabled={isSyncing}>
+              {isSyncing ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCcw className="w-4 h-4 mr-2" />
+              )}
+              Sync RBZ Rates
+            </Button>
+            <Dialog open={isAddingRate} onOpenChange={setIsAddingRate}>
+
             <DialogTrigger asChild>
               <Button>
                 <ArrowRightLeft className="w-4 h-4 mr-2" />
