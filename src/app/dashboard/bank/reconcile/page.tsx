@@ -402,25 +402,30 @@ export default function ReconcilePage() {
                         <Card className="bg-primary/5">
                             <CardHeader className="pb-2">
                                 <CardDescription>Bank Statement Balance</CardDescription>
-                                <CardTitle className="text-2xl">{new Intl.NumberFormat('en-US', { style: 'currency', currency: report.bankAccount.currencyCode }).format(report.bankStatementBalance)}</CardTitle>
+                                <CardTitle className="text-2xl">
+                                  {report.bankAccount ? new Intl.NumberFormat('en-US', { 
+                                    style: 'currency', 
+                                    currency: report.bankAccount.currencyCode || 'USD' 
+                                  }).format(report.bankStatementBalance || 0) : (report.bankStatementBalance || 0)}
+                                </CardTitle>
                             </CardHeader>
                         </Card>
                         <Card className="bg-green-50">
                             <CardHeader className="pb-2">
                                 <CardDescription>Deposits in Transit</CardDescription>
-                                <CardTitle className="text-2xl text-green-700">+{new Intl.NumberFormat('en-US').format(report.totalInTransit)}</CardTitle>
+                                <CardTitle className="text-2xl text-green-700">+{new Intl.NumberFormat('en-US').format(report.totalInTransit || 0)}</CardTitle>
                             </CardHeader>
                         </Card>
                         <Card className="bg-red-50">
                             <CardHeader className="pb-2">
                                 <CardDescription>Unpresented Checks</CardDescription>
-                                <CardTitle className="text-2xl text-red-700">-{new Intl.NumberFormat('en-US').format(report.totalUnpresented)}</CardTitle>
+                                <CardTitle className="text-2xl text-red-700">-{new Intl.NumberFormat('en-US').format(report.totalUnpresented || 0)}</CardTitle>
                             </CardHeader>
                         </Card>
-                        <Card className={cn(report.difference == 0 ? "bg-blue-50" : "bg-orange-50")}>
+                        <Card className={cn((report.difference || 0) == 0 ? "bg-blue-50" : "bg-orange-50")}>
                             <CardHeader className="pb-2">
                                 <CardDescription>GL Balance</CardDescription>
-                                <CardTitle className="text-2xl">{new Intl.NumberFormat('en-US').format(report.glBalance)}</CardTitle>
+                                <CardTitle className="text-2xl">{new Intl.NumberFormat('en-US').format(report.glBalance || 0)}</CardTitle>
                             </CardHeader>
                         </Card>
                     </div>
@@ -428,24 +433,24 @@ export default function ReconcilePage() {
                     <div className="border rounded-lg p-6 space-y-4">
                         <div className="flex justify-between border-b pb-2">
                             <span>Bank Statement Balance</span>
-                            <span className="font-mono">{new Intl.NumberFormat('en-US').format(report.bankStatementBalance)}</span>
+                            <span className="font-mono">{new Intl.NumberFormat('en-US').format(report.bankStatementBalance || 0)}</span>
                         </div>
                         <div className="flex justify-between border-b pb-2 text-green-600">
                             <span>Add: Deposits in Transit (not yet in bank)</span>
-                            <span className="font-mono">+{new Intl.NumberFormat('en-US').format(report.totalInTransit)}</span>
+                            <span className="font-mono">+{new Intl.NumberFormat('en-US').format(report.totalInTransit || 0)}</span>
                         </div>
                         <div className="flex justify-between border-b pb-2 text-red-600">
                             <span>Less: Unpresented Checks (not yet cleared bank)</span>
-                            <span className="font-mono">-{new Intl.NumberFormat('en-US').format(report.totalUnpresented)}</span>
+                            <span className="font-mono">-{new Intl.NumberFormat('en-US').format(report.totalUnpresented || 0)}</span>
                         </div>
                         <div className="flex justify-between border-b pb-2 font-bold">
                             <span>Adjusted Bank Balance</span>
-                            <span className="font-mono">{new Intl.NumberFormat('en-US').format(parseFloat(report.bankStatementBalance) + parseFloat(report.totalInTransit) - parseFloat(report.totalUnpresented))}</span>
+                            <span className="font-mono">{new Intl.NumberFormat('en-US').format((parseFloat(report.bankStatementBalance) || 0) + (parseFloat(report.totalInTransit) || 0) - (parseFloat(report.totalUnpresented) || 0))}</span>
                         </div>
                         <div className="flex justify-between pt-4 font-bold text-lg">
                             <span>Difference to GL</span>
-                            <span className={cn("font-mono", report.difference == 0 ? "text-green-600" : "text-red-600")}>
-                                {new Intl.NumberFormat('en-US').format(report.difference)}
+                            <span className={cn("font-mono", (report.difference || 0) == 0 ? "text-green-600" : "text-red-600")}>
+                                {new Intl.NumberFormat('en-US').format(report.difference || 0)}
                             </span>
                         </div>
                     </div>
