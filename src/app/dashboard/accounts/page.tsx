@@ -561,11 +561,13 @@ export default function AccountsPage() {
                   <TableRow>
                     <TableHead className="w-[200px]">Code</TableHead>
                     <TableHead>Account Name</TableHead>
-                    <TableHead className="w-[150px]">Type</TableHead>
-                    {viewMode === "table" && <TableHead className="w-[150px]">Parent</TableHead>}
-                    <TableHead className="w-[120px]">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
+                      <TableHead className="w-[150px]">Type</TableHead>
+                      {viewMode === "table" && <TableHead className="w-[150px]">Parent</TableHead>}
+                      <TableHead className="w-[120px]">Status</TableHead>
+                      <TableHead className="w-[80px] text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+
                 <TableBody>
                   {viewMode === "table" ? (
                     filteredAccounts.length > 0 ? (
