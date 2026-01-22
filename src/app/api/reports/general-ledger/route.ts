@@ -63,6 +63,13 @@ export async function GET(req: NextRequest) {
       subtitle: `${report.account.code} - ${report.account.name} | ${format(startDate, "MMM d, yyyy")} to ${format(endDate, "MMM d, yyyy")}`,
       organisationName: org?.name || "Organisation",
       orientation: "landscape",
+      summaryData: [
+        { label: "Opening Balance", value: Number(report.openingBalance) },
+        { label: "Total Debits", value: Number(report.summary.totalDebits) },
+        { label: "Total Credits", value: Number(report.summary.totalCredits) },
+        { label: "Net Movement", value: Number(report.summary.netMovement) },
+        { label: "Closing Balance", value: Number(report.closingBalance) },
+      ]
     });
     return ReportExporter.getResponse(exportFormat, content, reportName);
   });
