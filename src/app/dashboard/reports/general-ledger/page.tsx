@@ -281,6 +281,7 @@ function GeneralLedgerContent() {
                     </div>
                   </div>
                   <p className="text-xl font-bold font-mono tracking-tight">
+                    <span className="text-[10px] mr-1 opacity-50">{data.reportingCurrency}</span>
                     {parseFloat(data.openingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </p>
                 </CardContent>
