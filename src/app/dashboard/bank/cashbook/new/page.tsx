@@ -312,37 +312,63 @@ export default function CashbookEntryPage() {
                             <SelectValue placeholder="Select student" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
-                          {students.map((s) => (
-                            <SelectItem key={s.id} value={s.id}>
-                              {s.firstName} {s.lastName} ({s.studentNumber})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+                          <SelectContent>
+                            {Array.isArray(students) && students.map((s) => (
+                              <SelectItem key={s.id} value={s.id}>
+                                {s.firstName} {s.lastName} ({s.studentNumber})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
-              {counterpartyType === "SUPPLIER" && (
+                {counterpartyType === "SUPPLIER" && (
+                  <FormField
+                    control={form.control}
+                    name="supplierId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Supplier</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select supplier" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Array.isArray(suppliers) && suppliers.map((s) => (
+                              <SelectItem key={s.id} value={s.id}>
+                                {s.name} ({s.code})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
                 <FormField
                   control={form.control}
-                  name="supplierId"
+                  name="accountId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Supplier</FormLabel>
+                      <FormLabel>Offset Account (GL)</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select supplier" />
+                            <SelectValue placeholder="Select account" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {suppliers.map((s) => (
-                            <SelectItem key={s.id} value={s.id}>
-                              {s.name} ({s.code})
+                          {Array.isArray(accounts) && accounts.map((acc) => (
+                            <SelectItem key={acc.id} value={acc.id}>
+                              {acc.code} - {acc.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -351,32 +377,6 @@ export default function CashbookEntryPage() {
                     </FormItem>
                   )}
                 />
-              )}
-
-              <FormField
-                control={form.control}
-                name="accountId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Offset Account (GL)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select account" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {accounts.map((acc) => (
-                          <SelectItem key={acc.id} value={acc.id}>
-                            {acc.code} - {acc.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </CardContent>
           </Card>
 
