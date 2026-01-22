@@ -7,7 +7,7 @@ export async function POST(
   props: { params: Promise<{ id: string }> }
 ) {
   const params = await props.params;
-  const { id } = params;
+  const id = params.id;
 
   return withAuth(req, async (authReq) => {
     try {
