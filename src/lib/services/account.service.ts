@@ -416,9 +416,10 @@ export class AccountService {
       { code: "CF-100", name: "CASH FLOWS FROM OPERATING ACTIVITIES", order: 100, parentCode: null },
       { code: "CF-110", name: "Receipts", order: 110, parentCode: "CF-100" },
       { code: "CF-111", name: "Taxation / Levies", order: 111, parentCode: "CF-110", accounts: ["4110"] },
-      { code: "CF-112", name: "Transfers from other Government Entities", order: 112, parentCode: "CF-110", accounts: ["4120"] },
-      { code: "CF-113", name: "Rendering of Services (Fees)", order: 113, parentCode: "CF-110", accounts: ["4210"] },
-      { code: "CF-114", name: "Sale of Goods", order: 114, parentCode: "CF-110", accounts: ["4220"] },
+        { code: "CF-112", name: "Transfers from other Government Entities", order: 112, parentCode: "CF-110", accounts: ["4120"] },
+        { code: "CF-113", name: "Rendering of Services (Fees)", order: 113, parentCode: "CF-110", accounts: ["4100", "4210"] },
+        { code: "CF-114", name: "Sale of Goods", order: 114, parentCode: "CF-110", accounts: ["4220"] },
+
       { code: "CF-120", name: "Payments", order: 120, parentCode: "CF-100" },
       { code: "CF-121", name: "Wages, Salaries and Employee Benefits", order: 121, parentCode: "CF-120", accounts: ["5100"] },
       { code: "CF-122", name: "Supplies and Consumables", order: 122, parentCode: "CF-120", accounts: ["5200"] },
