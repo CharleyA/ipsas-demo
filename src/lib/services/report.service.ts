@@ -168,8 +168,8 @@ export class ReportService {
         take: skip,
       });
 
-      const priorDr = isUsdAccount ? (priorMovements._sum.debitFc || new Decimal(0)) : (priorMovements._sum.debitLc || new Decimal(0));
-      const priorCr = isUsdAccount ? (priorMovements._sum.creditFc || new Decimal(0)) : (priorMovements._sum.creditLc || new Decimal(0));
+      const priorDr = useFc ? (priorMovements._sum.debitFc || new Decimal(0)) : (priorMovements._sum.debitLc || new Decimal(0));
+      const priorCr = useFc ? (priorMovements._sum.creditFc || new Decimal(0)) : (priorMovements._sum.creditLc || new Decimal(0));
       runningBalance = runningBalance.add(priorDr).minus(priorCr);
     }
 
