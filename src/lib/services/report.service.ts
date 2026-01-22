@@ -337,8 +337,21 @@ export class ReportService {
       orderBy: { order: "asc" },
     });
 
-    // 2. Get balances for all accounts linked to these lines
-    const accountIds = lines.flatMap(l => l.accountMaps.map(m => m.accountId));
+    // 2. Get balances for all accounts linked to these lines (including sub-accounts)
+    const baseAccountIds = lines.flatMap(l => l.accountMaps.map(m => m.accountId));
+    
+    // Fetch all accounts to build a hierarchy map
+    const allAccounts = await prisma.account.findMany({
+      where: { organisationId },
+      select: { id: true, parentId: true }
+    });
+
+    const getDescendants = (parentId: string): string[] => {
+      const children = allAccounts.filter(a => a.parentId === parentId);
+      return [parentId, ...children.flatMap(c => getDescendants(c.id))];
+    };
+
+    const accountIds = Array.from(new Set(baseAccountIds.flatMap(id => getDescendants(id))));
     
     const balances = await prisma.gLEntry.groupBy({
       by: ["accountId"],
@@ -361,12 +374,16 @@ export class ReportService {
     });
 
     const balanceMap = new Map(
-      balances.map((b) => [
-        b.accountId,
-        useFc 
-          ? (b._sum.debitFc || new Decimal(0)).minus(b._sum.creditFc || new Decimal(0))
-          : (b._sum.debitLc || new Decimal(0)).minus(b._sum.creditLc || new Decimal(0))
-      ])
+      balances.map((b) => {
+        const dr = useFc ? (b._sum.debitFc || new Decimal(0)) : (b._sum.debitLc || new Decimal(0));
+        const cr = useFc ? (b._sum.creditFc || new Decimal(0)) : (b._sum.creditLc || new Decimal(0));
+        
+        // For Cash Flow, Receipts (Credit) should be positive, Payments (Debit) negative
+        // So we use Credit - Debit
+        const balance = type === ReportType.CASH_FLOW ? cr.minus(dr) : dr.minus(cr);
+        
+        return [b.accountId, balance];
+      })
     );
 
     // 3. Recursive function to build tree and calculate totals
@@ -377,9 +394,12 @@ export class ReportService {
           const children = buildTree(line.id);
           let amount = new Decimal(0);
 
-          // Sum mapped accounts
+          // Sum mapped accounts and their descendants
           line.accountMaps.forEach(m => {
-            amount = amount.add(balanceMap.get(m.accountId) || new Decimal(0));
+            const descendants = getDescendants(m.accountId);
+            descendants.forEach(dId => {
+              amount = amount.add(balanceMap.get(dId) || new Decimal(0));
+            });
           });
 
           // Sum children
