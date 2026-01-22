@@ -28,15 +28,24 @@ import {
   FileText,
   Users,
   Zap,
+  Filter,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function InvoicesPage() {
   const { token } = useAuth();
   const [invoices, setInvoices] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   const fetchInvoices = async () => {
     setIsLoading(true);
@@ -57,11 +66,15 @@ export default function InvoicesPage() {
     if (token) fetchInvoices();
   }, [token]);
 
-  const filteredInvoices = invoices.filter((inv) =>
-    `${inv.voucher?.number} ${inv.student?.firstName} ${inv.student?.lastName} ${inv.student?.studentNumber}`
+  const filteredInvoices = invoices.filter((inv) => {
+    const matchesSearch = `${inv.voucher?.number} ${inv.student?.firstName} ${inv.student?.lastName} ${inv.student?.studentNumber}`
       .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+      .includes(search.toLowerCase());
+    
+    const matchesStatus = statusFilter === "ALL" || inv.voucher?.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const totalOutstanding = invoices.reduce(
     (sum, inv) => sum + Number(inv.balance || 0),
