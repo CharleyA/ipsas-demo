@@ -110,6 +110,7 @@ export default function NewPurchaseOrderPage() {
   useEffect(() => {
     if (selectedCurrency === "USD") {
       form.setValue("fxRate", 1);
+      setRateSource("Base Currency");
       return;
     }
 
@@ -118,13 +119,20 @@ export default function NewPurchaseOrderPage() {
         const res = await fetch(`/api/currencies/exchange-rates?from=${selectedCurrency}&to=USD&limit=1`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        if (!res.ok) return;
+        if (!res.ok) {
+          setRateSource("Manual Entry Required");
+          return;
+        }
         const rates = await res.json();
         if (rates && Array.isArray(rates) && rates.length > 0) {
           form.setValue("fxRate", parseFloat(rates[0].rate));
+          setRateSource(rates[0].source || "System Rate");
+        } else {
+          setRateSource("Manual Entry Required");
         }
       } catch (error) {
         console.error("Failed to fetch exchange rate", error);
+        setRateSource("Error fetching rate");
       }
     };
 
