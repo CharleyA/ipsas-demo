@@ -28,51 +28,44 @@ export default function ApprovalsPage() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchTasks = async () => {
-    setIsLoading(true);
+  const fetchTasks = async (silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
-      // In a real app, fetch from /api/vouchers with status=SUBMITTED
-      // For now, we'll mock it
-      setTasks([
-        {
-          id: "1",
-          voucher: {
-            id: "v1",
-            number: "JV-2026-001",
-            type: "JOURNAL",
-            date: "2026-01-08",
-            description: "Correcting term 1 fees allocation",
-            organisationId: user?.organisationId,
-          },
-          status: "PENDING",
-        },
-        {
-          id: "2",
-          voucher: {
-            id: "v2",
-            number: "PV-2026-042",
-            type: "PAYMENT",
-            date: "2026-01-07",
-            description: "Electricity bill - December",
-            organisationId: user?.organisationId,
-          },
-          status: "PENDING",
-        }
-      ]);
+      const response = await fetch("/api/approvals");
+      if (!response.ok) throw new Error("Failed to fetch");
+      const data = await response.json();
+      setTasks(data);
     } catch (error) {
-      toast.error("Failed to fetch approval tasks");
+      if (!silent) toast.error("Failed to fetch approval tasks");
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchTasks();
+    const interval = setInterval(() => fetchTasks(true), 10000); // Poll every 10 seconds
+    return () => clearInterval(interval);
   }, []);
 
-  const handleAction = async (id: string, action: "approve" | "reject") => {
-    toast.info(`Voucher ${action}d (Mock action)`);
-    setTasks(tasks.filter(t => t.id !== id));
+  const handleAction = async (voucherId: string, action: "approve" | "reject") => {
+    try {
+      const response = await fetch(`/api/vouchers/${voucherId}/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes: `Voucher ${action}d via approvals inbox` }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || `Failed to ${action} voucher`);
+      }
+
+      toast.success(`Voucher ${action}d successfully`);
+      setTasks(tasks.filter(t => t.voucherId !== voucherId));
+    } catch (error: any) {
+      toast.error(error.message);
+    }
   };
 
   return (
