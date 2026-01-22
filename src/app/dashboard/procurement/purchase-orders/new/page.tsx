@@ -245,7 +245,7 @@ export default function NewPurchaseOrderPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {suppliers.map((s) => (
+                        {Array.isArray(suppliers) && suppliers.map((s) => (
                           <SelectItem key={s.id} value={s.id}>
                             {s.name} ({s.code})
                           </SelectItem>
@@ -270,12 +270,12 @@ export default function NewPurchaseOrderPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {currencies.map((c) => (
+                        {Array.isArray(currencies) && currencies.map((c) => (
                           <SelectItem key={c.code} value={c.code}>
                             {c.code} - {c.name}
                           </SelectItem>
                         ))}
-                        {currencies.length === 0 && (
+                        {(!Array.isArray(currencies) || currencies.length === 0) && (
                           <>
                             <SelectItem value="USD">USD</SelectItem>
                             <SelectItem value="ZWG">ZWG</SelectItem>
@@ -293,15 +293,29 @@ export default function NewPurchaseOrderPage() {
                   name="fxRate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>FX Rate (to Base)</FormLabel>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>FX Rate (to Base)</FormLabel>
+                        {rateSource && (
+                          <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
+                            Source: {rateSource}
+                          </span>
+                        )}
+                      </div>
                       <FormControl>
                         <Input
                           type="number"
                           step="0.0001"
                           {...field}
+                          readOnly={user?.role === "BURSAR" && selectedCurrency !== "USD"}
+                          className={cn(user?.role === "BURSAR" && selectedCurrency !== "USD" && "bg-muted cursor-not-allowed")}
                           onChange={(e) => field.onChange(parseFloat(e.target.value))}
                         />
                       </FormControl>
+                      {user?.role === "BURSAR" && selectedCurrency !== "USD" && (
+                        <p className="text-[11px] text-muted-foreground">
+                          Exchange rates are locked to official mid-rates.
+                        </p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
