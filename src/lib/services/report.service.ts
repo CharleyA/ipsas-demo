@@ -113,7 +113,7 @@ export class ReportService {
       },
     });
 
-    const openingBalance = isUsdAccount 
+    const openingBalance = useFc 
       ? (openingBalAgg._sum.debitFc || new Decimal(0)).minus(openingBalAgg._sum.creditFc || new Decimal(0))
       : (openingBalAgg._sum.debitLc || new Decimal(0)).minus(openingBalAgg._sum.creditLc || new Decimal(0));
 
