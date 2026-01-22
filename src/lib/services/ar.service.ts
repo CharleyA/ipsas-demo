@@ -144,6 +144,12 @@ export class ARService {
       throw new Error("Could not resolve Fees Receivable account (1121) for this currency");
     }
 
+    const student = await prisma.student.findUnique({
+      where: { id: data.studentId },
+      select: { firstName: true, lastName: true, regNumber: true }
+    });
+    const studentName = student ? `${student.firstName} ${student.lastName} (${student.regNumber})` : data.studentId;
+
     return await prisma.$transaction(async (tx) => {
       // 1. Create Voucher (AR_RECEIPT)
       const voucher = await VoucherService.create({
@@ -151,7 +157,7 @@ export class ARService {
         type: "AR_RECEIPT",
         periodId: period.id,
         date: new Date(data.date),
-        description: `Fee Payment (${data.currencyCode}) - Student ${data.studentId}`,
+        description: `Fee Payment (${data.currencyCode}) - ${studentName}`,
         reference: data.reference,
         studentId: data.studentId,
           lines: [
@@ -159,7 +165,7 @@ export class ARService {
             {
               lineNumber: 1,
               accountId: data.bankAccountId,
-              description: `Fee Receipt - ${data.paymentMethod || 'Cash'}`,
+              description: `Fee Receipt - ${data.paymentMethod || 'Cash'} - ${studentName}`,
               currencyCode: data.currencyCode,
               amountFc: data.amount,
               fxRate: fxRate,
@@ -170,7 +176,7 @@ export class ARService {
             {
               lineNumber: 2,
               accountId: receivableAccount.id,
-              description: `Unallocated Payment (${data.currencyCode}) - Student ${data.studentId}`,
+              description: `Fee Payment (${data.currencyCode}) - ${studentName}`,
               currencyCode: data.currencyCode,
               amountFc: data.amount,
               fxRate: fxRate,
