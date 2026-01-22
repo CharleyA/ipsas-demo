@@ -34,7 +34,9 @@ export function NotificationBell() {
   const fetchNotifications = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const response = await fetch("/api/notifications");
+      const response = await fetch("/api/notifications", {
+        headers: token ? { "Authorization": `Bearer ${token}` } : {},
+      });
       const data = await response.json();
       if (data.notifications) {
         setNotifications(data.notifications);
@@ -45,7 +47,7 @@ export function NotificationBell() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     fetchNotifications();
@@ -55,7 +57,10 @@ export function NotificationBell() {
 
   const markAsRead = async (id: string) => {
     try {
-      await fetch(`/api/notifications/${id}/read`, { method: "POST" });
+      await fetch(`/api/notifications/${id}/read`, { 
+        method: "POST",
+        headers: token ? { "Authorization": `Bearer ${token}` } : {},
+      });
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );
@@ -67,7 +72,10 @@ export function NotificationBell() {
 
   const markAllAsRead = async () => {
     try {
-      await fetch("/api/notifications", { method: "PATCH" });
+      await fetch("/api/notifications", { 
+        method: "PATCH",
+        headers: token ? { "Authorization": `Bearer ${token}` } : {},
+      });
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
       toast.success("All notifications marked as read");
