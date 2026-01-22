@@ -282,7 +282,7 @@ export default function AccountsPage() {
               </div>
             )}
             <Link 
-              href={`/dashboard/reports/general-ledger?accountCode=${account.code}`}
+              href={`/dashboard/reports/general-ledger?accountId=${account.id}`}
               className="font-bold text-primary hover:underline flex items-center gap-1 ml-1"
             >
               {account.code}
