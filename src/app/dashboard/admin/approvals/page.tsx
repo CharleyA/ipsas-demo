@@ -89,34 +89,36 @@ export default function ApprovalWorkflowPage() {
     fetchUsers();
   }, [token]);
 
-  async function updateUserStatus(userId: string, data: { isApprover?: boolean; role?: string }) {
-    if (!token) return;
+    async function updateUserStatus(userId: string, data: { isApprover?: boolean; role?: string }) {
+      if (!token || !currentUser) return;
 
-    setIsSaving(userId);
-    try {
-      const response = await fetch(`/api/users/organisation/${userId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
+      setIsSaving(userId);
+      try {
+        const response = await fetch(`/api/users/organisation/${userId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            "x-organisation-id": currentUser.organisationId,
+            "x-user-id": currentUser.id
+          },
+          body: JSON.stringify(data),
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (result.success) {
-        setUsers(users.map(u => u.id === userId ? { ...u, ...data } : u));
-        toast.success("User workflow settings updated");
-      } else {
-        toast.error(result.error || "Failed to update user");
+        if (result.success) {
+          setUsers(users.map(u => u.id === userId ? { ...u, ...data } : u));
+          toast.success("User workflow settings updated");
+        } else {
+          toast.error(result.error || "Failed to update user");
+        }
+      } catch (error) {
+        toast.error("An error occurred while saving");
+      } finally {
+        setIsSaving(null);
       }
-    } catch (error) {
-      toast.error("An error occurred while saving");
-    } finally {
-      setIsSaving(null);
     }
-  }
 
   if (isLoading) {
     return (
