@@ -66,11 +66,16 @@ export default function CashbookEntryPage() {
     },
   });
 
+  const isBursar = user?.role === "BURSAR";
+
   // Fetch exchange rate when currency changes
   const selectedCurrency = form.watch("currencyCode");
+  const [rateSource, setRateSource] = useState<string>("");
+
   useEffect(() => {
     if (selectedCurrency === "USD") {
       form.setValue("fxRate", 1);
+      setRateSource("Base Currency");
       return;
     }
 
@@ -82,9 +87,13 @@ export default function CashbookEntryPage() {
         const rates = await res.json();
         if (rates && rates.length > 0) {
           form.setValue("fxRate", parseFloat(rates[0].rate));
+          setRateSource(rates[0].source || "System Rate");
+        } else {
+          setRateSource("Manual Entry Required");
         }
       } catch (error) {
         console.error("Failed to fetch exchange rate", error);
+        setRateSource("Error fetching rate");
       }
     };
 
