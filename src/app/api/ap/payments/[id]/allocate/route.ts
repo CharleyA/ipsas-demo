@@ -7,16 +7,17 @@ export const runtime = "nodejs";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await verifyAuth(req);
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const { id } = await params;
     const body = await req.json();
     const validatedData = allocateAPPaymentSchema.parse({
       ...body,
-      paymentId: params.id,
+      paymentId: id,
     });
 
     const result = await APService.allocate(validatedData, session.userId);
