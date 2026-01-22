@@ -12,6 +12,8 @@ import {
   LC_DECIMALS 
 } from "@/lib/accounting-utils";
 
+import { NotificationService } from "./notification.service";
+
 const Decimal = Prisma.Decimal;
 
 const PERIOD_OVERRIDE_ROLES = ["ADMIN", "HEADMASTER"];
