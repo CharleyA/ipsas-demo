@@ -114,9 +114,29 @@ export class CurrencyService {
     date: Date = new Date()
   ) {
     if (fromCurrency.toUpperCase() === toCurrency.toUpperCase()) {
-      return { rate: 1, effectiveDate: date };
+      return { rate: 1, effectiveDate: date, source: "Fixed" };
     }
 
+    // Try to find a manual rate for this date first (prioritize Manual)
+    const manualRate = await prisma.exchangeRate.findFirst({
+      where: {
+        fromCurrencyCode: fromCurrency.toUpperCase(),
+        toCurrencyCode: toCurrency.toUpperCase(),
+        effectiveDate: { lte: date },
+        source: { contains: "Manual" }
+      },
+      orderBy: { effectiveDate: "desc" },
+    });
+
+    if (manualRate) {
+      return { 
+        rate: Number(manualRate.rate), 
+        effectiveDate: manualRate.effectiveDate, 
+        source: manualRate.source 
+      };
+    }
+
+    // Fall back to any rate (likely RBZ or previous manual)
     const rate = await prisma.exchangeRate.findFirst({
       where: {
         fromCurrencyCode: fromCurrency.toUpperCase(),
@@ -140,11 +160,16 @@ export class CurrencyService {
         return {
           rate: 1 / Number(inverseRate.rate),
           effectiveDate: inverseRate.effectiveDate,
+          source: `Inverse ${inverseRate.source}`
         };
       }
     }
 
-    return rate ? { rate: Number(rate.rate), effectiveDate: rate.effectiveDate } : null;
+    return rate ? { 
+      rate: Number(rate.rate), 
+      effectiveDate: rate.effectiveDate, 
+      source: rate.source 
+    } : null;
   }
 
   static async convertAmount(
