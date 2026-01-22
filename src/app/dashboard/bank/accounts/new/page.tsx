@@ -70,7 +70,10 @@ export default function NewBankAccountPage() {
     fetchCurrencies();
   }, [token]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+  if (!isMounted) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+
       e.preventDefault();
       if (!formData.bankName || !formData.accountNumber) {
         toast.error("Please fill in all required fields");
