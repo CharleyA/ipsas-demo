@@ -237,10 +237,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 8. Create and Post Receipts for 20 students
-    for (let i = 0; i < 20; i++) {
+    // 8. Create and Post Receipts for all students (to show realistic data)
+    let receiptsCreated = 0;
+    for (let i = 0; i < students.length; i++) {
       const student = students[i];
-      const amount = 100 + Math.floor(Math.random() * 120); // $100 - $220
+      // Give some students full payments, some partial, some none
+      const paymentScenario = i % 5; // 0,1,2,3: pay, 4: no pay
+      if (paymentScenario === 4) continue;
+
+      const isFullPayment = i % 2 === 0;
+      const amount = isFullPayment ? 220 : (50 + Math.floor(Math.random() * 100)); // $220 full or partial
 
       const receipt = await ARService.createReceipt({
         organisationId,
@@ -249,13 +255,14 @@ export async function POST(req: NextRequest) {
         amount: amount,
         currencyCode: "USD",
         date: new Date().toISOString(),
-        paymentMethod: "Cash",
+        paymentMethod: i % 2 === 0 ? "Bank Transfer" : "Cash",
         reference: `REC-${Math.random().toString(36).substring(7).toUpperCase()}`
       }, actorId);
 
       await VoucherService.submit(receipt.voucherId, actorId);
       await VoucherService.approve(receipt.voucherId, actorId);
       await VoucherService.post(receipt.voucherId, actorId);
+      receiptsCreated++;
 
       // Allocate to the invoice we just generated
       const studentInv = await prisma.aRInvoice.findFirst({
@@ -278,7 +285,7 @@ export async function POST(req: NextRequest) {
         feeTemplate: template.name,
         batchNumber: batchResult.batch.batchNumber,
         invoicesGenerated: batchResult.results.successful,
-        receiptsCreated: 20
+        receiptsCreated: receiptsCreated
       }
     });
 
