@@ -143,34 +143,59 @@ export default function NewBillPage() {
               Enter the supplier and line items for this bill.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label>Supplier</Label>
-                <Select 
-                  value={formData.supplierId} 
-                  onValueChange={(v) => setFormData({ ...formData, supplierId: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select supplier" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {suppliers.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.name} ({s.code})</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label>Supplier</Label>
+                  <Select 
+                    value={formData.supplierId} 
+                    onValueChange={(v) => setFormData({ ...formData, supplierId: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select supplier" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {suppliers.map(s => (
+                        <SelectItem key={s.id} value={s.id}>{s.name} ({s.code})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Currency</Label>
+                  <Select 
+                    value={formData.currencyCode} 
+                    onValueChange={(v) => setFormData({ ...formData, currencyCode: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {currencies.map(c => (
+                        <SelectItem key={c.currencyCode} value={c.currencyCode}>
+                          {c.currencyCode} {c.isBaseCurrency ? "(Base)" : ""}
+                        </SelectItem>
+                      ))}
+                      {currencies.length === 0 && (
+                        <>
+                          <SelectItem value="ZWG">ZWG</SelectItem>
+                          <SelectItem value="USD">USD</SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Due Date</Label>
+                  <Input
+                    type="date"
+                    value={formData.dueDate}
+                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                    required
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Due Date</Label>
-                <Input
-                  type="date"
-                  value={formData.dueDate}
-                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
+
 
             <div className="space-y-4">
               <Label>Line Items</Label>
