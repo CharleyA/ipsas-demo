@@ -142,6 +142,12 @@ export class APService {
       throw new Error("Could not resolve Trade Payables account (2111) for this currency");
     }
 
+    const supplier = await prisma.supplier.findUnique({
+      where: { id: data.supplierId },
+      select: { name: true, code: true }
+    });
+    const supplierName = supplier ? `${supplier.name} (${supplier.code})` : data.supplierId;
+
     return await prisma.$transaction(async (tx) => {
       // 1. Create Voucher (AP_PAYMENT)
       const voucher = await VoucherService.create({
@@ -149,7 +155,7 @@ export class APService {
         type: "AP_PAYMENT",
         periodId: period.id,
         date: new Date(data.date),
-        description: `Supplier Payment (${data.currencyCode}) - Supplier ${data.supplierId}`,
+        description: `Supplier Payment (${data.currencyCode}) - ${supplierName}`,
         reference: data.reference,
         supplierId: data.supplierId,
         lines: [
@@ -157,7 +163,7 @@ export class APService {
         {
           lineNumber: 1,
           accountId: data.bankAccountId,
-          description: `Supplier Payment - ${data.paymentMethod || 'Transfer'}`,
+          description: `Supplier Payment - ${data.paymentMethod || 'Transfer'} - ${supplierName}`,
           currencyCode: data.currencyCode,
           amountFc: data.amount,
           fxRate: fxRate,
@@ -168,7 +174,7 @@ export class APService {
         {
           lineNumber: 2,
           accountId: payableAccount.id,
-          description: `Payment to Supplier ${data.supplierId} (${data.currencyCode})`,
+          description: `Payment to ${supplierName} (${data.currencyCode})`,
           currencyCode: data.currencyCode,
           amountFc: data.amount,
           fxRate: fxRate,
