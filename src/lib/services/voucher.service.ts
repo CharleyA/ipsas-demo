@@ -568,7 +568,18 @@ export class VoucherService {
 
   private static async generateVoucherNumber(organisationId: string, type: string) {
     const year = new Date().getFullYear();
-    const prefix = type.substring(0, 3).toUpperCase();
+    
+    // Humanised prefixes
+    const prefixes: Record<string, string> = {
+      AR_INVOICE: "INV",
+      AR_RECEIPT: "RCP",
+      AP_BILL: "BIL",
+      AP_PAYMENT: "PAY",
+      JOURNAL: "JV",
+      CASHBOOK: "CB",
+    };
+    
+    const prefix = prefixes[type] || type.substring(0, 3).toUpperCase();
     
     let nextNumber = 0;
     let voucherNumber = "";
@@ -578,14 +589,11 @@ export class VoucherService {
     const count = await prisma.voucher.count({
       where: {
         organisationId,
-        type: type as any,
         number: { startsWith: `${prefix}-${year}` },
       },
     });
     nextNumber = count + 1;
 
-    // Add a random component for demo/concurrency safety if needed, 
-    // or just rely on the existence check loop which we'll make more robust
     while (exists) {
       voucherNumber = `${prefix}-${year}-${String(nextNumber).padStart(6, "0")}`;
       const existing = await prisma.voucher.findUnique({
@@ -596,7 +604,6 @@ export class VoucherService {
         exists = false;
       } else {
         nextNumber++;
-        // If we've tried many times, maybe add a random offset
         if (nextNumber > count + 100) {
           nextNumber += Math.floor(Math.random() * 1000);
         }
