@@ -10,11 +10,14 @@ import {
   ChevronRight,
   AlertCircle,
   Wallet,
-  PiggyBank
+  PiggyBank,
+  ArrowRightLeft,
+  Building2
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
 
 interface HeadmasterDashboardProps {
   data: {
@@ -26,13 +29,67 @@ interface HeadmasterDashboardProps {
     topSpending: Array<{ name: string; amount: number }>;
     budgetUtilisation: number;
     studentCount?: number;
+    exchangeRate?: {
+      rate: number;
+      effectiveDate: string;
+      lastSync: string;
+    } | null;
+    organisationInfo?: {
+      name: string;
+      baseCurrency: string;
+    } | null;
   };
 }
 
 export function HeadmasterDashboard({ data }: HeadmasterDashboardProps) {
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="bg-primary/5 border-primary/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">RBZ Exchange Rate</CardTitle>
+            <ArrowRightLeft className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            {data.exchangeRate ? (
+              <>
+                <div className="text-2xl font-bold">1 USD : {data.exchangeRate.rate.toFixed(4)} ZWG</div>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Synced: {format(new Date(data.exchangeRate.lastSync), "dd MMM yyyy, HH:mm")}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">No exchange rate data available.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-primary/5 border-primary/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Organisation Profile</CardTitle>
+            <Building2 className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl font-bold truncate">{data.organisationInfo?.name || "Loading..."}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Base Currency: <span className="font-semibold">{data.organisationInfo?.baseCurrency}</span>
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-primary/5 border-primary/20 lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Liquidity</CardTitle>
+            <PiggyBank className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">{formatCurrency(data.totalLiquidity)}</div>
+            <p className="text-xs text-muted-foreground">Combined Bank + Cash holdings</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Cash at Bank</CardTitle>
@@ -51,16 +108,6 @@ export function HeadmasterDashboard({ data }: HeadmasterDashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(data.cashInHand)}</div>
             <p className="text-xs text-muted-foreground">Petty cash & physical</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-primary/5 border-primary/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Liquidity</CardTitle>
-            <PiggyBank className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary">{formatCurrency(data.totalLiquidity)}</div>
-            <p className="text-xs text-muted-foreground">Bank + Cash combined</p>
           </CardContent>
         </Card>
         <Card>
