@@ -409,4 +409,96 @@ export class AccountService {
 
     return results;
   }
+
+  static async seedCashFlowLines(organisationId: string, actorId: string) {
+    const cashFlowLines = [
+      // Operating Activities
+      { code: "CF-100", name: "CASH FLOWS FROM OPERATING ACTIVITIES", order: 100, parentCode: null },
+      { code: "CF-110", name: "Receipts", order: 110, parentCode: "CF-100" },
+      { code: "CF-111", name: "Taxation / Levies", order: 111, parentCode: "CF-110", accounts: ["4110"] },
+      { code: "CF-112", name: "Transfers from other Government Entities", order: 112, parentCode: "CF-110", accounts: ["4120"] },
+      { code: "CF-113", name: "Rendering of Services (Fees)", order: 113, parentCode: "CF-110", accounts: ["4210"] },
+      { code: "CF-114", name: "Sale of Goods", order: 114, parentCode: "CF-110", accounts: ["4220"] },
+      { code: "CF-120", name: "Payments", order: 120, parentCode: "CF-100" },
+      { code: "CF-121", name: "Wages, Salaries and Employee Benefits", order: 121, parentCode: "CF-120", accounts: ["5100"] },
+      { code: "CF-122", name: "Supplies and Consumables", order: 122, parentCode: "CF-120", accounts: ["5200"] },
+      { code: "CF-123", name: "Other Payments", order: 123, parentCode: "CF-120", accounts: ["5400"] },
+      
+      // Investing Activities
+      { code: "CF-200", name: "CASH FLOWS FROM INVESTING ACTIVITIES", order: 200, parentCode: null },
+      { code: "CF-210", name: "Purchase of Property, Plant and Equipment", order: 210, parentCode: "CF-200", accounts: ["1210"] },
+      { code: "CF-220", name: "Proceeds from Sale of PPE", order: 220, parentCode: "CF-200" },
+      
+      // Financing Activities
+      { code: "CF-300", name: "CASH FLOWS FROM FINANCING ACTIVITIES", order: 300, parentCode: null },
+      { code: "CF-310", name: "Proceeds from Borrowings", order: 310, parentCode: "CF-300" },
+      { code: "CF-320", name: "Repayment of Borrowings", order: 320, parentCode: "CF-300" },
+    ];
+
+    const results = [];
+    const codeToId: Record<string, string> = {};
+
+    for (const item of cashFlowLines) {
+      const existing = await prisma.statementLine.findUnique({
+        where: { 
+          organisationId_reportType_code: { 
+            organisationId, 
+            reportType: "CASH_FLOW", 
+            code: item.code 
+          } 
+        }
+      });
+
+      if (!existing) {
+        const line = await prisma.statementLine.create({
+          data: {
+            organisationId,
+            reportType: "CASH_FLOW",
+            code: item.code,
+            name: item.name,
+            order: item.order,
+          }
+        });
+        codeToId[item.code] = line.id;
+        
+        // Link accounts if any
+        if (item.accounts) {
+          for (const accCode of item.accounts) {
+            const acc = await prisma.account.findUnique({
+              where: { organisationId_code: { organisationId, code: accCode } }
+            });
+            if (acc) {
+              await prisma.accountStatementMap.create({
+                data: {
+                  accountId: acc.id,
+                  statementLineId: line.id
+                }
+              });
+            }
+          }
+        }
+        results.push(line);
+      } else {
+        codeToId[item.code] = existing.id;
+      }
+    }
+
+    // Second pass: set parentIds
+    for (const item of cashFlowLines) {
+      if (item.parentCode) {
+        await prisma.statementLine.update({
+          where: { 
+            organisationId_reportType_code: { 
+              organisationId, 
+              reportType: "CASH_FLOW", 
+              code: item.code 
+            } 
+          },
+          data: { parentId: codeToId[item.parentCode] }
+        });
+      }
+    }
+
+    return results;
+  }
 }
