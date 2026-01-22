@@ -184,7 +184,7 @@ export class ReportService {
         debit: dr,
         credit: cr,
         balance: runningBalance,
-        currency: isUsdAccount ? "USD" : "ZWG",
+        currency: reportingCurrency,
       };
     });
 
