@@ -101,7 +101,7 @@ export default function AccountsPage() {
     description: "",
   });
 
-  const fetchAccounts = async () => {
+  const fetchAccounts = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch("/api/accounts", {
@@ -114,11 +114,11 @@ export default function AccountsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) fetchAccounts();
-  }, [token]);
+  }, [token, fetchAccounts]);
 
   const handleAddAccount = async () => {
     try {
