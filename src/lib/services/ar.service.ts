@@ -27,12 +27,13 @@ export class ARService {
     return await prisma.$transaction(async (tx) => {
       // 1. Create Voucher (AR_INVOICE)
       // Note: We'll create the voucher via VoucherService or manually to link it correctly
-      const voucher = await VoucherService.create({
-        organisationId: data.organisationId,
-        type: "AR_INVOICE",
-        periodId: period.id,
-        date: new Date(),
-        description: data.description || `Invoice for student ${data.studentId}`,
+        const voucher = await VoucherService.create({
+          organisationId: data.organisationId,
+          type: "AR_INVOICE",
+          periodId: period.id,
+          date: new Date(),
+          description: data.description || `Invoice for student ${data.studentId}`,
+          studentId: data.studentId,
           lines: [
             // DR Fees Receivable
             {
