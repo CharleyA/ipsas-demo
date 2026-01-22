@@ -74,12 +74,22 @@ export class ReportService {
     accountId: string, 
     startDate: Date, 
     endDate: Date, 
-    filters: { voucherId?: string; page?: number; pageSize?: number } = {}
+    filters: { voucherId?: string; page?: number; pageSize?: number; reportingCurrency?: string } = {}
   ) {
     const account = await prisma.account.findUnique({ where: { id: accountId } });
     if (!account) throw new Error("Account not found");
 
+    const org = await prisma.organisation.findUnique({ where: { id: organisationId } });
+    const baseCurrency = org?.baseCurrency || "ZWG";
+
+    // Detect if this is a foreign currency account
+    // For now, we use the .USD convention, but we could also check bankAccount or entries
     const isUsdAccount = account.code.endsWith(".USD");
+    const accountCurrency = isUsdAccount ? "USD" : baseCurrency;
+    
+    // The currency we are actually reporting in
+    const reportingCurrency = filters.reportingCurrency || accountCurrency;
+    const shouldConvert = reportingCurrency !== accountCurrency;
 
     const openingBalAgg = await prisma.gLEntry.aggregate({
       where: {
