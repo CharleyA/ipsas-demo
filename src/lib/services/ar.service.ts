@@ -8,6 +8,8 @@ import {
 import { VoucherService } from "./voucher.service";
 import { FiscalPeriodService } from "./fiscal-period.service";
 import { AuditService } from "./audit.service";
+import { CurrencyService } from "./currency.service";
+import { AccountService } from "./account.service";
 
 export class ARService {
   static async createInvoice(data: CreateARInvoiceInput, actorId: string) {
@@ -15,54 +17,72 @@ export class ARService {
       where: { id: data.organisationId },
     });
     if (!org) throw new Error("Organisation not found");
-    if (!org.arReceivableAccountId || !org.arRevenueAccountId) {
-      throw new Error("AR accounts not configured for this organisation");
-    }
 
     const period = await FiscalPeriodService.getCurrentPeriod(data.organisationId);
     if (!period) throw new Error("No open fiscal period found for today");
 
-    const totalAmount = data.lines.reduce((sum, line) => sum + line.amount, 0);
+    // Fetch exchange rate
+    const fxInfo = await CurrencyService.getExchangeRate(data.currencyCode, org.baseCurrency);
+    if (!fxInfo) throw new Error(`Exchange rate not found for ${data.currencyCode} to ${org.baseCurrency}`);
+    
+    const fxRate = fxInfo.rate;
+    const totalAmountFc = data.lines.reduce((sum, line) => sum + line.amount, 0);
+    const totalAmountLc = totalAmountFc * fxRate;
+
+    // Resolve dynamic accounts
+    const receivableAccount = await AccountService.resolveAccountByCurrency(
+      data.organisationId,
+      "1121", // Fees Receivable Parent
+      data.currencyCode
+    );
+
+    const revenueAccount = await AccountService.resolveAccountByCurrency(
+      data.organisationId,
+      "4210", // Fees Revenue Parent
+      data.currencyCode
+    );
+
+    if (!receivableAccount || !revenueAccount) {
+      throw new Error("Could not resolve AR accounts (1121 or 4210) for this currency");
+    }
 
     return await prisma.$transaction(async (tx) => {
       // 1. Create Voucher (AR_INVOICE)
-      // Note: We'll create the voucher via VoucherService or manually to link it correctly
-        const voucher = await VoucherService.create({
-          organisationId: data.organisationId,
-          type: "AR_INVOICE",
-          periodId: period.id,
-          date: new Date(),
-          description: data.description || `Invoice for student ${data.studentId}`,
-          studentId: data.studentId,
-          lines: [
-            // DR Fees Receivable
-            {
-              lineNumber: 1,
-              accountId: org.arReceivableAccountId!,
-              description: `Fees Receivable - Student ${data.studentId}`,
-              currencyCode: data.currencyCode,
-              amountFc: totalAmount,
-              fxRate: 1, // Simplified for MVP
-              amountLc: totalAmount,
-              debit: totalAmount,
-              fundId: data.fundId,
-              projectId: data.projectId,
-            },
-            // CR Fees Revenue (multiple lines if needed, but here we sum)
-            {
-              lineNumber: 2,
-              accountId: org.arRevenueAccountId!,
-              description: `Fees Revenue - Student ${data.studentId}`,
-              currencyCode: data.currencyCode,
-              amountFc: totalAmount,
-              fxRate: 1,
-              amountLc: totalAmount,
-              credit: totalAmount,
-              fundId: data.fundId,
-              projectId: data.projectId,
-            }
-          ]
-
+      const voucher = await VoucherService.create({
+        organisationId: data.organisationId,
+        type: "AR_INVOICE",
+        periodId: period.id,
+        date: new Date(),
+        description: data.description || `Invoice for student ${data.studentId}`,
+        studentId: data.studentId,
+        lines: [
+          // DR Fees Receivable
+          {
+            lineNumber: 1,
+            accountId: receivableAccount.id,
+            description: `Fees Receivable (${data.currencyCode}) - Student ${data.studentId}`,
+            currencyCode: data.currencyCode,
+            amountFc: totalAmountFc,
+            fxRate: fxRate,
+            amountLc: totalAmountLc,
+            debit: totalAmountLc,
+            fundId: data.fundId,
+            projectId: data.projectId,
+          },
+          // CR Fees Revenue
+          {
+            lineNumber: 2,
+            accountId: revenueAccount.id,
+            description: `Fees Revenue (${data.currencyCode}) - Student ${data.studentId}`,
+            currencyCode: data.currencyCode,
+            amountFc: totalAmountFc,
+            fxRate: fxRate,
+            amountLc: totalAmountLc,
+            credit: totalAmountLc,
+            fundId: data.fundId,
+            projectId: data.projectId,
+          }
+        ]
       }, actorId);
 
       // 2. Create ARInvoice
@@ -73,8 +93,8 @@ export class ARService {
           studentId: data.studentId,
           currencyCode: data.currencyCode,
           term: data.term,
-          amount: new Decimal(totalAmount),
-          balance: new Decimal(totalAmount),
+          amount: new Decimal(totalAmountFc),
+          balance: new Decimal(totalAmountFc),
           dueDate: new Date(data.dueDate),
           lines: {
             create: data.lines.map(line => ({
@@ -96,12 +116,27 @@ export class ARService {
       where: { id: data.organisationId },
     });
     if (!org) throw new Error("Organisation not found");
-    if (!org.arReceivableAccountId) {
-      throw new Error("AR Receivable account not configured");
-    }
 
     const period = await FiscalPeriodService.getCurrentPeriod(data.organisationId);
     if (!period) throw new Error("No open fiscal period found");
+
+    // Fetch exchange rate
+    const fxInfo = await CurrencyService.getExchangeRate(data.currencyCode, org.baseCurrency);
+    if (!fxInfo) throw new Error(`Exchange rate not found for ${data.currencyCode} to ${org.baseCurrency}`);
+    
+    const fxRate = fxInfo.rate;
+    const amountLc = data.amount * fxRate;
+
+    // Resolve dynamic accounts
+    const receivableAccount = await AccountService.resolveAccountByCurrency(
+      data.organisationId,
+      "1121", // Fees Receivable Parent
+      data.currencyCode
+    );
+
+    if (!receivableAccount) {
+      throw new Error("Could not resolve Fees Receivable account (1121) for this currency");
+    }
 
     return await prisma.$transaction(async (tx) => {
       // 1. Create Voucher (AR_RECEIPT)
@@ -110,7 +145,7 @@ export class ARService {
         type: "AR_RECEIPT",
         periodId: period.id,
         date: new Date(data.date),
-        description: `Fee Payment - Student ${data.studentId}`,
+        description: `Fee Payment (${data.currencyCode}) - Student ${data.studentId}`,
         reference: data.reference,
         studentId: data.studentId,
         lines: [
@@ -121,20 +156,20 @@ export class ARService {
             description: `Fee Receipt - ${data.paymentMethod || 'Cash'}`,
             currencyCode: data.currencyCode,
             amountFc: data.amount,
-            fxRate: 1,
-            amountLc: data.amount,
-            debit: data.amount,
+            fxRate: fxRate,
+            amountLc: amountLc,
+            debit: amountLc,
           },
           // CR Fees Receivable
           {
             lineNumber: 2,
-            accountId: org.arReceivableAccountId!,
-            description: `Unallocated Payment - Student ${data.studentId}`,
+            accountId: receivableAccount.id,
+            description: `Unallocated Payment (${data.currencyCode}) - Student ${data.studentId}`,
             currencyCode: data.currencyCode,
             amountFc: data.amount,
-            fxRate: 1,
-            amountLc: data.amount,
-            credit: data.amount,
+            fxRate: fxRate,
+            amountLc: amountLc,
+            credit: amountLc,
           }
         ]
       }, actorId);
