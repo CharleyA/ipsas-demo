@@ -14,9 +14,11 @@ export async function GET(req: NextRequest) {
     const startDateStr = searchParams.get("startDate");
     const endDateStr = searchParams.get("endDate");
     const voucherId = searchParams.get("voucherId");
-    const page = searchParams.get("page") ? parseInt(searchParams.get("page")!) : undefined;
-    const pageSize = searchParams.get("pageSize") ? parseInt(searchParams.get("pageSize")!) : undefined;
-    const exportFormat = (searchParams.get("format") || "json") as ExportFormat;
+      const page = searchParams.get("page") ? parseInt(searchParams.get("page")!) : undefined;
+      const pageSize = searchParams.get("pageSize") ? parseInt(searchParams.get("pageSize")!) : undefined;
+      const reportingCurrency = searchParams.get("reportingCurrency") || undefined;
+      const exportFormat = (searchParams.get("format") || "json") as ExportFormat;
+
 
     if (!accountId || !startDateStr || !endDateStr) {
       return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
