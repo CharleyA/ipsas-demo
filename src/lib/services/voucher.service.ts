@@ -56,6 +56,8 @@ export class VoucherService {
         date: new Date(data.date),
         description: data.description,
         reference: data.reference,
+        studentId: data.studentId,
+        supplierId: data.supplierId,
         status: "DRAFT",
         createdById: creatorId,
         lines: { create: processedLines },
