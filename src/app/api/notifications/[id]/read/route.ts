@@ -1,19 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { NotificationService } from "@/lib/services/notification.service";
-import { AuthService } from "@/lib/services/auth.service";
+import { verifyAuth } from "@/lib/auth";
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const user = await AuthService.getCurrentUser();
+    const user = await verifyAuth(request);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = params;
-    await NotificationService.markAsRead(id, user.id);
+    await NotificationService.markAsRead(id, user.userId);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
