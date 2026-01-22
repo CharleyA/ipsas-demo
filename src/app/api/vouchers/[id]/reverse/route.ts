@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAuth, AuthenticatedRequest } from "@/lib/middleware-utils";
+import { withAuth } from "@/lib/middleware-utils";
 import { VoucherService } from "@/lib/services/voucher.service";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
+  const { id } = params;
+
   return withAuth(req, async (authReq) => {
     try {
-      const { id } = await params;
       const voucher = await VoucherService.reverse(id, authReq.user.userId);
       return NextResponse.json(voucher);
     } catch (error: any) {
