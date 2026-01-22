@@ -205,14 +205,14 @@ export default function ReconcilePage() {
         { header: "Amount", key: "amount", width: 20 },
     ];
 
-    sheet.addRow({ desc: `Bank Reconciliation Report - ${report.bankAccount.bankName}`, amount: "" });
+    sheet.addRow({ desc: `Bank Reconciliation Report - ${report.bankAccount?.bankName || 'Unknown'}`, amount: "" });
     sheet.addRow({ desc: `As of ${format(new Date(), "PPP")}`, amount: "" });
     sheet.addRow({});
 
     sheet.addRow({ desc: "Bank Statement Balance", amount: report.bankStatementBalance });
     sheet.addRow({ desc: "Add: Deposits in Transit", amount: report.totalInTransit });
-    sheet.addRow({ desc: "Less: Unpresented Checks", amount: report.totalUnpresented.negated() });
-    sheet.addRow({ desc: "Adjusted Bank Balance", amount: report.bankStatementBalance + report.totalInTransit - report.totalUnpresented });
+    sheet.addRow({ desc: "Less: Unpresented Checks", amount: -report.totalUnpresented });
+    sheet.addRow({ desc: "Adjusted Bank Balance", amount: (parseFloat(report.bankStatementBalance) || 0) + (parseFloat(report.totalInTransit) || 0) - (parseFloat(report.totalUnpresented) || 0) });
     sheet.addRow({});
     sheet.addRow({ desc: "General Ledger Balance", amount: report.glBalance });
     sheet.addRow({ desc: "Difference", amount: report.difference });
@@ -222,9 +222,11 @@ export default function ReconcilePage() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `Reconciliation_${report.bankAccount.bankName}_${format(new Date(), "yyyyMMdd")}.xlsx`;
+    a.download = `Reconciliation_${report.bankAccount?.bankName || 'Bank'}_${format(new Date(), "yyyyMMdd")}.xlsx`;
     a.click();
   };
+
+  if (!isMounted) return null;
 
   return (
     <div className="space-y-6">
