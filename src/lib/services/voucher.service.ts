@@ -499,6 +499,16 @@ export class VoucherService {
       newValues: { status: "REJECTED", notes },
     });
 
+    // Notify creator
+    await NotificationService.create({
+      organisationId: voucher.organisationId,
+      userId: voucher.createdById,
+      type: "VOUCHER_REJECTED",
+      title: "Voucher Rejected",
+      message: `Your voucher ${voucher.number} has been rejected.`,
+      metadata: { voucherId: id, voucherNumber: voucher.number, notes },
+    });
+
     return result;
   }
 
