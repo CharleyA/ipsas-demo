@@ -78,10 +78,11 @@ export default function VoucherDetailPage() {
             description: "You can now view the impact on the affected ledgers.",
             action: {
               label: "View Ledgers",
-              onClick: () => {
-                const firstAccountId = data.affectedAccountIds[0];
-                router.push(`/dashboard/reports/general-ledger?accountId=${firstAccountId}&voucherId=${id}&startDate=${new Date(voucher.date).toISOString().split('T')[0]}&endDate=${new Date(voucher.date).toISOString().split('T')[0]}`);
-              }
+                onClick: () => {
+                  const firstAccountId = data.affectedAccountIds[0];
+                  const dateStr = voucher.date ? new Date(voucher.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+                  router.push(`/dashboard/reports/general-ledger?accountId=${firstAccountId}&voucherId=${id}&startDate=${dateStr}&endDate=${dateStr}`);
+                }
             }
           });
         } else {
