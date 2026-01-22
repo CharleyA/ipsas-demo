@@ -160,183 +160,127 @@ export async function POST(req: NextRequest) {
     }
     const libraryProject = projects.find(p => p.code === "LIB-2025")!;
 
-    // 4. Create Students
-    const studentNames = [
-      { first: "John", last: "Doe", num: "ST001", grade: "Grade 1", class: "A" },
-      { first: "Jane", last: "Smith", num: "ST002", grade: "Grade 1", class: "B" },
-      { first: "Michael", last: "Brown", num: "ST003", grade: "Grade 2", class: "A" },
-      { first: "Emily", last: "Davis", num: "ST004", grade: "Grade 2", class: "C" },
-      { first: "Sarah", last: "Wilson", num: "ST005", grade: "Grade 3", class: "B" },
-    ];
+    // 4. Create Students (50 students)
+    const firstNames = ["John", "Jane", "Michael", "Emily", "Sarah", "David", "Emma", "James", "Olivia", "William", "Sophia", "Robert", "Isabella", "Joseph", "Mia", "Thomas", "Charlotte", "Charles", "Amelia", "Daniel", "Evelyn", "Matthew", "Abigail", "Anthony", "Harper", "Mark", "Emily", "Steven", "Elizabeth", "Paul", "Sofia", "Andrew", "Avery", "Kenneth", "Ella", "Joshua", "Scarlett", "Kevin", "Madison", "Brian", "Layla", "George", "Victoria", "Edward", "Aria", "Ronald", "Grace", "Timothy", "Chloe", "Jason"];
+    const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin", "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson", "Walker", "Young", "Allen", "King", "Wright", "Scott", "Torres", "Nguyen", "Hill", "Flores", "Green", "Adams", "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell", "Carter", "Roberts"];
+    const grades = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7"];
+    const classes = ["A", "B", "C"];
 
     const students = [];
-    for (const s of studentNames) {
-      const existing = await prisma.$queryRaw`SELECT id FROM students WHERE "organisationId" = ${organisationId} AND "studentNumber" = ${s.num}`;
+    for (let i = 0; i < 50; i++) {
+      const sNum = `ST${String(i + 1).padStart(3, "0")}`;
+      const fName = firstNames[i % firstNames.length];
+      const lName = lastNames[i % lastNames.length];
+      const grade = grades[i % grades.length];
+      const cls = classes[i % classes.length];
+
+      const existing = await prisma.$queryRaw`SELECT id FROM students WHERE "organisationId" = ${organisationId} AND "studentNumber" = ${sNum}`;
       let student = (existing as any[])[0];
       
       if (!student) {
-        // Use raw insert to bypass stale Prisma client 'class' field issue
-        const id = `stu-${s.num.toLowerCase()}`;
+        const id = `stu-${sNum.toLowerCase()}`;
         await prisma.$executeRaw`
           INSERT INTO students (id, "organisationId", "studentNumber", "firstName", "lastName", grade, class, "updatedAt")
-          VALUES (${id}, ${organisationId}, ${s.num}, ${s.first}, ${s.last}, ${s.grade}, ${s.class}, NOW())
+          VALUES (${id}, ${organisationId}, ${sNum}, ${fName}, ${lName}, ${grade}, ${cls}, NOW())
         `;
         student = { id };
       }
       students.push(student);
     }
 
-    // 3. Create Suppliers
-    const supplierNames = [
-      { name: "Global Books & Stationery", code: "SUP001" },
-      { name: "Fresh Foods Catering", code: "SUP002" },
-      { name: "ZESA Holdings", code: "SUP003" },
-      { name: "City of Bulawayo", code: "SUP004" },
-    ];
+    // 5. Create Fee Template
+    let template = await prisma.feeTemplate.findFirst({
+      where: { organisationId, academicYear: 2026, term: "Term 1" }
+    });
 
-    const suppliers = [];
-    for (const s of supplierNames) {
-      const existing = await prisma.$queryRaw`SELECT id FROM suppliers WHERE "organisationId" = ${organisationId} AND code = ${s.code}`;
-      let supplier = (existing as any[])[0];
+    if (!template) {
+      template = await prisma.feeTemplate.create({
+        data: {
+          organisationId,
+          name: "General Fees 2026 T1",
+          academicYear: 2026,
+          term: "Term 1",
+          grades: grades,
+          currencyCode: "USD",
+          items: {
+            create: [
+              { description: "Tuition Fees", amount: 150, order: 0 },
+              { description: "Development Levy", amount: 50, order: 1 },
+              { description: "Sports Fee", amount: 20, order: 2 }
+            ]
+          }
+        },
+        include: { items: true }
+      });
+    }
 
-      if (!supplier) {
-        const id = `sup-${s.code.toLowerCase()}`;
-        await prisma.$executeRaw`
-          INSERT INTO suppliers (id, "organisationId", code, name, "updatedAt")
-          VALUES (${id}, ${organisationId}, ${s.code}, ${s.name}, NOW())
-        `;
-        supplier = { id };
+    // 6. Generate Bulk Invoices (Fee Batch)
+    const { FeeGenerationService } = await import("@/lib/services/fee-generation.service");
+    const batchResult = await FeeGenerationService.generate({
+      organisationId,
+      templateId: template.id,
+      grades: grades
+    }, actorId);
+
+    // 7. Post the generated invoices
+    const batchInvoices = await prisma.aRInvoice.findMany({
+      where: { batchId: batchResult.batch.id }
+    });
+
+    for (const inv of batchInvoices) {
+      try {
+        await VoucherService.submit(inv.voucherId, actorId);
+        await VoucherService.approve(inv.voucherId, actorId);
+        await VoucherService.post(inv.voucherId, actorId);
+      } catch (e) {
+        console.error(`Failed to post invoice ${inv.id}:`, e);
       }
-      suppliers.push(supplier);
     }
 
-    // 4. Create and Post Invoices (Mixed USD/ZWG)
-    let invCount = 0;
-    for (const student of students) {
-      const isUSD = invCount % 2 === 0;
-      const amount = isUSD ? 50 : 1250;
-      const levy = isUSD ? 10 : 250;
-      const currencyCode = isUSD ? "USD" : "ZWG";
-
-      const invoice = await ARService.createInvoice({
-        organisationId,
-        studentId: student.id,
-        currencyCode,
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        description: `Term 1 School Fees (${currencyCode})`,
-        fundId: generalFund.id,
-        lines: [
-          { description: "Tuition Fees", quantity: 1, unitPrice: amount, amount: amount },
-          { description: "Levy", quantity: 1, unitPrice: levy, amount: levy }
-        ]
-      }, actorId);
-
-      // Submit and Approve and Post Voucher
-      await VoucherService.submit(invoice.voucherId, actorId);
-      await VoucherService.approve(invoice.voucherId, actorId);
-      await VoucherService.post(invoice.voucherId, actorId);
-      invCount++;
-    }
-
-    // 5. Create and Post Receipts (Mixed USD/ZWG)
-    for (let i = 0; i < 3; i++) {
+    // 8. Create and Post Receipts for 20 students
+    for (let i = 0; i < 20; i++) {
       const student = students[i];
-      const isUSD = i % 2 === 0;
-      const amount = isUSD ? 40 : 1000;
-      const currencyCode = isUSD ? "USD" : "ZWG";
+      const amount = 100 + Math.floor(Math.random() * 120); // $100 - $220
 
       const receipt = await ARService.createReceipt({
         organisationId,
         studentId: student.id,
         bankAccountId: bankAcc.id,
         amount: amount,
-        currencyCode: currencyCode,
+        currencyCode: "USD",
         date: new Date().toISOString(),
-        paymentMethod: "Bank Transfer",
-        reference: `TXN-${Math.random().toString(36).substring(7).toUpperCase()}`
+        paymentMethod: "Cash",
+        reference: `REC-${Math.random().toString(36).substring(7).toUpperCase()}`
       }, actorId);
 
       await VoucherService.submit(receipt.voucherId, actorId);
       await VoucherService.approve(receipt.voucherId, actorId);
       await VoucherService.post(receipt.voucherId, actorId);
 
-      // Allocate to first invoice
+      // Allocate to the invoice we just generated
       const studentInv = await prisma.aRInvoice.findFirst({
-        where: { studentId: student.id, balance: { gt: 0 }, currencyCode: currencyCode }
+        where: { studentId: student.id, batchId: batchResult.batch.id, balance: { gt: 0 } }
       });
+      
       if (studentInv) {
+        const allocAmount = Math.min(amount, Number(studentInv.balance));
         await ARService.allocate({
           receiptId: receipt.id,
-          allocations: [{ invoiceId: studentInv.id, amount: amount }]
+          allocations: [{ invoiceId: studentInv.id, amount: allocAmount }]
         }, actorId);
       }
     }
 
-    // 6. Create and Post Bills (Suppliers + Utilities)
-    let billCount = 0;
-    for (const supplier of suppliers) {
-      const isUtility = supplier.name.includes("ZESA") || supplier.name.includes("City");
-      const isUSD = !isUtility && (billCount % 2 === 0);
-      const currencyCode = isUSD ? "USD" : "ZWG";
-      
-      const bill = await APService.createBill({
-        organisationId,
-        supplierId: supplier.id,
-        currencyCode: currencyCode,
-        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        description: isUtility ? `Monthly Utility: ${supplier.name}` : "Monthly Supplies",
-        fundId: generalFund.id,
-        lines: [
-          { 
-            accountId: isUtility ? utilityExpenseAcc.id : expenseAcc.id, 
-            description: isUtility ? "Consumption Charges" : "General Supplies", 
-            quantity: 1, 
-            unitPrice: isUSD ? 100 : 2500, 
-            amount: isUSD ? 100 : 2500 
-          }
-        ]
-      }, actorId);
-
-      await VoucherService.submit(bill.voucherId, actorId);
-      await VoucherService.approve(bill.voucherId, actorId);
-      await VoucherService.post(bill.voucherId, actorId);
-      billCount++;
-    }
-
-    // 7. Create Funding (Grant) - Journal Entry
-    const grantVoucher = await VoucherService.create({
-      organisationId,
-      type: "JOURNAL",
-      date: new Date().toISOString(),
-      description: "UNESCO Library Grant Funding (USD)",
-      status: "DRAFT",
-      lines: [
-        {
-          accountId: bankAcc.id,
-          description: "Grant Funding Received",
-          currencyCode: "USD",
-          debitFc: new Decimal(5000),
-          fxRate: new Decimal(25),
-          fundId: grantFund.id,
-          projectId: libraryProject.id
-        },
-        {
-          accountId: grantRevenueAcc.id,
-          description: "Unesco Grant Revenue",
-          currencyCode: "USD",
-          creditFc: new Decimal(5000),
-          fxRate: new Decimal(25),
-          fundId: grantFund.id,
-          projectId: libraryProject.id
-        }
-      ]
-    }, actorId);
-
-    await VoucherService.submit(grantVoucher.id, actorId);
-    await VoucherService.approve(grantVoucher.id, actorId);
-    await VoucherService.post(grantVoucher.id, actorId);
-
-    return NextResponse.json({ message: "Demo data with multi-currency, funding, and utilities generated successfully" });
+    return NextResponse.json({ 
+      message: "Demo data generated successfully",
+      summary: {
+        students: students.length,
+        feeTemplate: template.name,
+        batchNumber: batchResult.batch.batchNumber,
+        invoicesGenerated: batchResult.results.successful,
+        receiptsCreated: 20
+      }
+    });
 
   } catch (error: any) {
     console.error("Seed Error:", error);
