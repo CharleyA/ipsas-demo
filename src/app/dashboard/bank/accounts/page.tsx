@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus, Import, ArrowRightLeft, Loader2, Wallet, Building2 } from "lucide-react";
+import { Plus, Import, ArrowRightLeft, Loader2, Wallet, Building2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -26,17 +26,27 @@ export default function BankAccountsPage() {
   const { token, user } = useAuth();
   const [accounts, setAccounts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const canCreate = user?.role === "ADMIN" || user?.role === "HEADMASTER" || user?.role === "ACCOUNTANT";
 
   const fetchAccounts = async () => {
+    if (!token) return;
     setIsLoading(true);
     try {
       const response = await fetch("/api/bank/accounts", {
         headers: { "Authorization": `Bearer ${token}` }
       });
       const data = await response.json();
-      setAccounts(Array.isArray(data) ? data : []);
+      if (response.ok) {
+        setAccounts(Array.isArray(data) ? data : []);
+      } else {
+        toast.error(data.error || "Failed to fetch accounts");
+      }
     } catch (error) {
       toast.error("Failed to fetch bank accounts");
     } finally {
@@ -47,6 +57,8 @@ export default function BankAccountsPage() {
   useEffect(() => {
     if (token) fetchAccounts();
   }, [token]);
+
+  if (!isMounted) return null;
 
   return (
     <div className="space-y-6">
@@ -122,7 +134,7 @@ export default function BankAccountsPage() {
                   <TableRow key={acc.id}>
                     <TableCell className="font-medium">
                       <div>{acc.bankName}</div>
-                      <div className="text-xs text-muted-foreground">{acc.account.name}</div>
+                      <div className="text-xs text-muted-foreground">{acc.account?.name || "No GL Account"}</div>
                     </TableCell>
                     <TableCell>{acc.accountNumber}</TableCell>
                     <TableCell>{acc.currencyCode}</TableCell>
