@@ -38,9 +38,9 @@ export async function GET(req: NextRequest) {
     });
 
     const columns: ExportColumn[] = [
-      { header: "Code", key: "code" },
-      { header: "Line Name", key: "name", width: 40 },
-      { header: "Amount", key: "amount" },
+      { header: "Code", key: "code", width: 15 },
+      { header: "IPSAS Classification", key: "name", width: 50 },
+      { header: `Amount (${report.reportingCurrency})`, key: "amount", width: 20 },
     ];
 
     const flattenRows = (rows: any[], level = 0): any[] => {
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
         result.push({
           code: row.code,
           name: "  ".repeat(level) + row.name,
-          amount: row.amount,
+          amount: Number(row.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
         });
         if (row.children && row.children.length > 0) {
           result.push(...flattenRows(row.children, level + 1));
@@ -62,9 +62,10 @@ export async function GET(req: NextRequest) {
 
     const content = await ReportExporter.export(exportFormat, data, columns, "Statement of Financial Performance", {
       title: "Statement of Financial Performance",
-      subtitle: `For the period ${format(startDate, "MMM d, yyyy")} to ${format(endDate, "MMM d, yyyy")}`,
+      subtitle: `For the period ending ${format(endDate, "MMMM d, yyyy")} (Compared to ${format(startDate, "MMMM d, yyyy")})`,
       organisationName: org?.name || "Organisation",
-      orientation: "portrait",
+      orientation: "landscape",
+      currency: report.reportingCurrency,
     });
     return ReportExporter.getResponse(exportFormat, content, "Financial Performance");
   });
