@@ -57,9 +57,9 @@ export async function GET(req: NextRequest) {
       { header: "Entry #", key: "entryNumber" },
       { header: "Voucher #", key: "voucherNumber" },
       { header: "Description", key: "description", width: 40 },
-      { header: "Debit", key: "debit" },
-      { header: "Credit", key: "credit" },
-      { header: "Balance", key: "balance" },
+      { header: `Debit (${report.reportingCurrency})`, key: "debit" },
+      { header: `Credit (${report.reportingCurrency})`, key: "credit" },
+      { header: `Balance (${report.reportingCurrency})`, key: "balance" },
     ];
 
     const reportName = `General Ledger - ${report.account.name}`;
