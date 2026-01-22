@@ -34,6 +34,7 @@ export function NotificationBell() {
   const [loading, setLoading] = useState(false);
 
   const fetchNotifications = useCallback(async (silent = false) => {
+    if (!token) return;
     if (!silent) setLoading(true);
     try {
       const response = await fetch("/api/notifications", {
