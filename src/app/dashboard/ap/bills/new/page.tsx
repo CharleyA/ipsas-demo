@@ -269,7 +269,7 @@ export default function NewBillPage() {
             <div className="flex justify-end pt-4">
               <div className="text-right space-y-1">
                 <div className="text-sm text-muted-foreground">Total Amount</div>
-                <div className="text-2xl font-bold">ZWG {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                <div className="text-2xl font-bold">{formData.currencyCode} {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
               </div>
             </div>
           </CardContent>
