@@ -41,7 +41,6 @@ export async function GET(req: NextRequest) {
           pageSize: isExport ? undefined : pageSize,
           reportingCurrency
         }
-
     );
 
     if (exportFormat === "json") {
