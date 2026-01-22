@@ -26,7 +26,7 @@ import {
   ClipboardList,
   PackageCheck,
   Clock,
-  FileText,
+  FileText as LucideFileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
