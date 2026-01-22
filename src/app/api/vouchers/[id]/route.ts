@@ -5,10 +5,12 @@ import { updateVoucherSchema } from "@/lib/validations/schemas";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
+  const { id } = params;
+  
   return withAuth(req, async (authReq) => {
-    const { id } = await params;
     const voucher = await VoucherService.findById(id);
     if (!voucher) {
       return NextResponse.json({ error: "Voucher not found" }, { status: 404 });
@@ -24,11 +26,13 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
+  const { id } = params;
+
   return withAuth(req, async (authReq) => {
     try {
-      const { id } = await params;
       const body = await authReq.json();
       const validatedData = updateVoucherSchema.parse(body);
       
