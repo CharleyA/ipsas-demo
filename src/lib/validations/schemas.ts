@@ -42,6 +42,13 @@ export const createOrganisationSchema = z.object({
 
 export const updateOrganisationSchema = createOrganisationSchema.partial().extend({
   isActive: z.boolean().optional(),
+  arReceivableAccountId: z.string().nullable().optional(),
+  arRevenueAccountId: z.string().nullable().optional(),
+  arBankAccountId: z.string().nullable().optional(),
+  apPayableAccountId: z.string().nullable().optional(),
+  apExpenseAccountId: z.string().nullable().optional(),
+  apBankAccountId: z.string().nullable().optional(),
+  cashInHandAccountId: z.string().nullable().optional(),
 });
 
 export const loginSchema = z.object({
