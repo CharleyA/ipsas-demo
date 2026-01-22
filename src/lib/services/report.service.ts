@@ -524,35 +524,43 @@ export class ReportService {
     return this.getFinancialStatement(organisationId, ReportType.CASH_FLOW, endDate, startDate, options);
   }
 
-  static async getARAgeing(organisationId: string, date: Date) {
+  static async getARAgeing(organisationId: string, date: Date, options: { reportingCurrency?: string } = {}) {
+    const org = await prisma.organisation.findUnique({ where: { id: organisationId } });
+    const reportingCurrency = options.reportingCurrency || org?.baseCurrency || "ZWG";
+
     const invoices = await prisma.aRInvoice.findMany({
       where: {
         organisationId,
         voucher: { status: "POSTED" },
         balance: { gt: 0 },
-        createdAt: { lte: date }
+        createdAt: { lte: date },
+        ...(options.reportingCurrency ? { currencyCode: options.reportingCurrency } : {})
       },
       include: { student: true }
     });
 
-    return this.calculateAgeing(invoices, date, "student");
+    return this.calculateAgeing(invoices, date, "student", reportingCurrency);
   }
 
-  static async getAPAgeing(organisationId: string, date: Date) {
+  static async getAPAgeing(organisationId: string, date: Date, options: { reportingCurrency?: string } = {}) {
+    const org = await prisma.organisation.findUnique({ where: { id: organisationId } });
+    const reportingCurrency = options.reportingCurrency || org?.baseCurrency || "ZWG";
+
     const bills = await prisma.aPBill.findMany({
       where: {
         organisationId,
         voucher: { status: "POSTED" },
         balance: { gt: 0 },
-        createdAt: { lte: date }
+        createdAt: { lte: date },
+        ...(options.reportingCurrency ? { currencyCode: options.reportingCurrency } : {})
       },
       include: { supplier: true }
     });
 
-    return this.calculateAgeing(bills, date, "supplier");
+    return this.calculateAgeing(bills, date, "supplier", reportingCurrency);
   }
 
-  private static calculateAgeing(items: any[], date: Date, entityKey: string) {
+  private static calculateAgeing(items: any[], date: Date, entityKey: string, reportingCurrency: string) {
     const ageingRows: any[] = [];
     const entities = new Map<string, any>();
 
@@ -583,17 +591,54 @@ export class ReportService {
       else row.p120 = row.p120.add(amount);
     });
 
+    const rows = Array.from(entities.values());
+    const totals = {
+      total: items.reduce((acc, i) => acc.add(i.balance), new Decimal(0)),
+      current: rows.reduce((acc, r) => acc.add(r.current), new Decimal(0)),
+      p30: rows.reduce((acc, r) => acc.add(r.p30), new Decimal(0)),
+      p60: rows.reduce((acc, r) => acc.add(r.p60), new Decimal(0)),
+      p90: rows.reduce((acc, r) => acc.add(r.p90), new Decimal(0)),
+      p120: rows.reduce((acc, r) => acc.add(r.p120), new Decimal(0)),
+    };
+
+    const overdueAmount = totals.p30.add(totals.p60).add(totals.p90).add(totals.p120);
+    const criticalAmount = totals.p90.add(totals.p120);
+    
+    const summary = {
+      totalOutstanding: totals.total,
+      currentAmount: totals.current,
+      overdueAmount,
+      criticalAmount,
+      collectionRisk: totals.total.gt(0) ? criticalAmount.div(totals.total).mul(100) : new Decimal(0),
+      averageAge: items.length > 0 
+        ? items.reduce((acc, i) => acc + Math.floor((date.getTime() - i.createdAt.getTime()) / (1000 * 60 * 60 * 24)), 0) / items.length 
+        : 0
+    };
+
+    const chartData = {
+      distribution: [
+        { name: "Current", value: Number(totals.current) },
+        { name: "31-60 Days", value: Number(totals.p30) },
+        { name: "61-90 Days", value: Number(totals.p60) },
+        { name: "91-120 Days", value: Number(totals.p90) },
+        { name: "121+ Days", value: Number(totals.p120) },
+      ],
+      topEntities: rows
+        .sort((a, b) => b.total.minus(a.total).toNumber())
+        .slice(0, 5)
+        .map(r => ({
+          name: r.name,
+          value: Number(r.total)
+        }))
+    };
+
     return {
       asOf: date,
-      rows: Array.from(entities.values()),
-      totals: {
-        total: items.reduce((acc, i) => acc.add(i.balance), new Decimal(0)),
-        current: Array.from(entities.values()).reduce((acc, r) => acc.add(r.current), new Decimal(0)),
-        p30: Array.from(entities.values()).reduce((acc, r) => acc.add(r.p30), new Decimal(0)),
-        p60: Array.from(entities.values()).reduce((acc, r) => acc.add(r.p60), new Decimal(0)),
-        p90: Array.from(entities.values()).reduce((acc, r) => acc.add(r.p90), new Decimal(0)),
-        p120: Array.from(entities.values()).reduce((acc, r) => acc.add(r.p120), new Decimal(0)),
-      }
+      rows,
+      totals,
+      summary,
+      chartData,
+      reportingCurrency
     };
   }
 }
