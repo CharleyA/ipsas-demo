@@ -31,11 +31,13 @@ import {
     FileText,
     TrendingUp,
     TrendingDown,
-    ArrowUpRight,
-    ArrowDownRight,
-    Wallet,
-    CalendarDays
-} from "lucide-react";
+      ArrowUpRight,
+      ArrowDownRight,
+      Wallet,
+      CalendarDays,
+      Coins
+  } from "lucide-react";
+
 import {
   BarChart,
   Bar,
