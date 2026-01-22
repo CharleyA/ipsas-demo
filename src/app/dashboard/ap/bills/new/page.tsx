@@ -33,6 +33,7 @@ export default function NewBillPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
+  const [currencies, setCurrencies] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
     supplierId: searchParams.get("supplierId") || "",
