@@ -13,7 +13,8 @@ export async function GET(req: NextRequest) {
     const accountId = searchParams.get("accountId");
     const startDateStr = searchParams.get("startDate");
     const endDateStr = searchParams.get("endDate");
-    const voucherId = searchParams.get("voucherId") || undefined;
+    const page = searchParams.get("page") ? parseInt(searchParams.get("page")!) : undefined;
+    const pageSize = searchParams.get("pageSize") ? parseInt(searchParams.get("pageSize")!) : undefined;
     const exportFormat = (searchParams.get("format") || "json") as ExportFormat;
 
     if (!accountId || !startDateStr || !endDateStr) {
@@ -23,12 +24,19 @@ export async function GET(req: NextRequest) {
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
 
+    // For exports, we fetch all records. For JSON, we use pagination if provided.
+    const isExport = exportFormat !== "json";
+    
     const report = await ReportService.getGeneralLedger(
       authReq.user.organisationId,
       accountId,
       startDate,
       endDate,
-      { voucherId }
+      { 
+        voucherId, 
+        page: isExport ? undefined : page, 
+        pageSize: isExport ? undefined : pageSize 
+      }
     );
 
     if (exportFormat === "json") {
