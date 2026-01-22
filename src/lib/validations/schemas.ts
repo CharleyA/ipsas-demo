@@ -299,6 +299,13 @@ export const addUserToOrganisationSchema = z.object({
   userId: z.string().min(1),
   organisationId: z.string().min(1),
   role: UserRole,
+  isApprover: z.boolean().default(false),
+});
+
+export const updateOrganisationUserSchema = z.object({
+  role: UserRole.optional(),
+  isApprover: z.boolean().optional(),
+  isActive: z.boolean().optional(),
 });
 
 export type CreateOrganisationInput = z.infer<typeof createOrganisationSchema>;
