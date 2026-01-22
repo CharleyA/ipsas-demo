@@ -60,8 +60,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 })}
               </BreadcrumbList>
             </Breadcrumb>
-          </div>
-        </header>
+            </div>
+            <div className="ml-auto flex items-center gap-2 px-4">
+              <NotificationBell />
+            </div>
+          </header>
+
         <main className="flex-1 overflow-y-auto p-4 pt-0">
           {children}
         </main>
