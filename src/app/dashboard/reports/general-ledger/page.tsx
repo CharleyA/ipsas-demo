@@ -250,11 +250,11 @@ import { ReportToolbar } from "@/components/reports/report-toolbar";
                     {parseFloat(data.openingBalance).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </TableCell>
                 </TableRow>
-                {data.entries.map((entry: any) => (
-                  <TableRow key={entry.id}>
-                    <TableCell className="whitespace-nowrap">
-                      {new Date(entry.date).toLocaleDateString()}
-                    </TableCell>
+                  {data?.entries && Array.isArray(data.entries) && data.entries.map((entry: any) => (
+                    <TableRow key={entry.id}>
+                      <TableCell className="whitespace-nowrap">
+                        {entry.date ? new Date(entry.date).toLocaleDateString() : "-"}
+                      </TableCell>
                     <TableCell className="font-mono text-xs">{entry.entryNumber}</TableCell>
                       <TableCell className="font-mono text-xs">
                         {entry.voucherNumber ? (
