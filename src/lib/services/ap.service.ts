@@ -114,6 +114,7 @@ export class APService {
         date: new Date(data.date),
         description: `Supplier Payment - Supplier ${data.supplierId}`,
         reference: data.reference,
+        supplierId: data.supplierId,
         lines: [
           // CR Bank/Cash
           {
