@@ -53,7 +53,7 @@ export class APService {
         {
           lineNumber: data.lines.length + 1,
           accountId: payableAccount.id,
-          description: `Trade Payable (${data.currencyCode}) - ${supplierName}`,
+          description: `Trade Payable - ${supplierName}`,
           currencyCode: data.currencyCode,
           amountFc: totalAmountFc,
           fxRate: fxRate,
