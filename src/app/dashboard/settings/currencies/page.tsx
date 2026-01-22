@@ -233,6 +233,31 @@ export default function CurrenciesPage() {
     }
   };
 
+  const handleSyncRBZ = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch("/api/currencies/exchange-rates/sync-rbz", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to sync RBZ rates");
+      }
+
+      const data = await res.json();
+      toast.success(`Synced RBZ Rate: 1 USD = ${data.rate} ZWG`);
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const isEnabled = (code: string) => orgCurrencies.some(oc => oc.currencyCode === code);
   const isBase = (code: string) => orgCurrencies.find(oc => oc.currencyCode === code)?.isBaseCurrency;
 
