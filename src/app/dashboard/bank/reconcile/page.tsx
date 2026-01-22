@@ -50,6 +50,7 @@ import Papa from "papaparse";
 import { format } from "date-fns";
 import { useAuth } from "@/components/providers/auth-provider";
 import * as ExcelJS from "exceljs";
+import { cn } from "@/lib/utils";
 
 export default function ReconcilePage() {
   const { token } = useAuth();
@@ -60,6 +61,11 @@ export default function ReconcilePage() {
   const [selectedRow, setSelectedRow] = useState<any>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [report, setReport] = useState<any>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!token) return;
