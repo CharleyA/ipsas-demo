@@ -247,7 +247,7 @@ import { ReportToolbar } from "@/components/reports/report-toolbar";
                 <TableRow className="bg-muted/30 italic">
                   <TableCell colSpan={6}>Opening Balance</TableCell>
                   <TableCell className="text-right font-medium">
-                    {parseFloat(data.openingBalance).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {parseFloat(data.openingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </TableCell>
                 </TableRow>
                   {data?.entries && Array.isArray(data.entries) && data.entries.map((entry: any) => (
