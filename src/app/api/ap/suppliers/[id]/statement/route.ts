@@ -13,7 +13,7 @@ export async function GET(
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const params = await props.params;
-    const { id } = params;
+    const id = params.id;
     
     const statement = await APService.getSupplierStatement(id);
     return NextResponse.json(statement);
