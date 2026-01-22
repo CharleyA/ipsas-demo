@@ -359,7 +359,7 @@ function GeneralLedgerContent() {
                     </ResponsiveContainer>
                   </div>
                 </CardContent>
-              </AreaChart>
+              </Card>
             </div>
 
             {/* Table */}
