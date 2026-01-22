@@ -48,9 +48,9 @@ export class ARService {
 
     const student = await prisma.student.findUnique({
       where: { id: data.studentId },
-      select: { firstName: true, lastName: true, regNumber: true }
+      select: { firstName: true, lastName: true, studentNumber: true }
     });
-    const studentName = student ? `${student.firstName} ${student.lastName} (${student.regNumber})` : data.studentId;
+    const studentName = student ? `${student.firstName} ${student.lastName} (${student.studentNumber})` : data.studentId;
 
     return await prisma.$transaction(async (tx) => {
       // 1. Create Voucher (AR_INVOICE)
@@ -146,9 +146,9 @@ export class ARService {
 
     const student = await prisma.student.findUnique({
       where: { id: data.studentId },
-      select: { firstName: true, lastName: true, regNumber: true }
+      select: { firstName: true, lastName: true, studentNumber: true }
     });
-    const studentName = student ? `${student.firstName} ${student.lastName} (${student.regNumber})` : data.studentId;
+    const studentName = student ? `${student.firstName} ${student.lastName} (${student.studentNumber})` : data.studentId;
 
     return await prisma.$transaction(async (tx) => {
       // 1. Create Voucher (AR_RECEIPT)
