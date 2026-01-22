@@ -244,60 +244,76 @@ function GeneralLedgerContent() {
         </div>
       ) : data && !data.error ? (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <Card className="border-border/50 bg-card/30">
-              <CardContent className="p-4">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Opening Balance</p>
-                <p className="text-xl font-bold font-mono">
-                  {parseFloat(data.openingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-border/50 bg-card/30">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Debits</p>
-                  <ArrowUpRight className="w-3 h-3 text-emerald-500" />
-                </div>
-                <p className="text-xl font-bold font-mono text-emerald-600">
-                  {parseFloat(data.summary.totalDebits || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-border/50 bg-card/30">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Credits</p>
-                  <ArrowDownRight className="w-3 h-3 text-rose-500" />
-                </div>
-                <p className="text-xl font-bold font-mono text-rose-600">
-                  {parseFloat(data.summary.totalCredits || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-border/50 bg-card/30">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Net Movement</p>
-                  {parseFloat(data.summary.netMovement) >= 0 ? 
-                    <TrendingUp className="w-3 h-3 text-emerald-500" /> : 
-                    <TrendingDown className="w-3 h-3 text-rose-500" />
-                  }
-                </div>
-                <p className={`text-xl font-bold font-mono ${parseFloat(data.summary.netMovement) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  {parseFloat(data.summary.netMovement || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-primary/20 bg-primary/5">
-              <CardContent className="p-4">
-                <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Closing Balance</p>
-                <p className="text-xl font-black font-mono">
-                  {parseFloat(data.closingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <Card className="border-border/50 bg-card/30 shadow-sm transition-all hover:shadow-md">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Opening Balance</p>
+                    <div className="p-1.5 rounded-md bg-muted/50">
+                      <Wallet className="w-3.5 h-3.5 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <p className="text-xl font-bold font-mono tracking-tight">
+                    {parseFloat(data.openingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-emerald-500/20 bg-emerald-500/5 shadow-sm transition-all hover:shadow-md">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Total Debits</p>
+                    <div className="p-1.5 rounded-md bg-emerald-500/20">
+                      <ArrowUpRight className="w-3.5 h-3.5 text-emerald-600" />
+                    </div>
+                  </div>
+                  <p className="text-xl font-bold font-mono text-emerald-600 tracking-tight">
+                    {parseFloat(data.summary.totalDebits || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-rose-500/20 bg-rose-500/5 shadow-sm transition-all hover:shadow-md">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-bold text-rose-600 uppercase tracking-widest">Total Credits</p>
+                    <div className="p-1.5 rounded-md bg-rose-500/20">
+                      <ArrowDownRight className="w-3.5 h-3.5 text-rose-600" />
+                    </div>
+                  </div>
+                  <p className="text-xl font-bold font-mono text-rose-600 tracking-tight">
+                    {parseFloat(data.summary.totalCredits || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-blue-500/20 bg-blue-500/5 shadow-sm transition-all hover:shadow-md">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Net Movement</p>
+                    <div className={`p-1.5 rounded-md ${parseFloat(data.summary.netMovement) >= 0 ? 'bg-emerald-500/20' : 'bg-rose-500/20'}`}>
+                      {parseFloat(data.summary.netMovement) >= 0 ? 
+                        <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> : 
+                        <TrendingDown className="w-3.5 h-3.5 text-rose-600" />
+                      }
+                    </div>
+                  </div>
+                  <p className={`text-xl font-bold font-mono tracking-tight ${parseFloat(data.summary.netMovement) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {parseFloat(data.summary.netMovement || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-primary/20 bg-primary/10 shadow-sm transition-all hover:shadow-md">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Closing Balance</p>
+                    <div className="p-1.5 rounded-md bg-primary/20">
+                      <FileText className="w-3.5 h-3.5 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-xl font-black font-mono tracking-tight text-primary">
+                    {parseFloat(data.closingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="border-border/50 shadow-sm">
