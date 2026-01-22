@@ -67,77 +67,76 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Bank name and account number are required" }, { status: 400 });
     }
 
-    // Fetch organisation to get base currency if currencyCode is missing
-    const organisation = await prisma.organisation.findUnique({
-      where: { id: user.organisationId },
-      select: { baseCurrency: true }
-    });
+      // Fetch organisation to get base currency if currencyCode is missing
+      const organisation = await prisma.organisation.findUnique({
+        where: { id: user.organisationId },
+        select: { baseCurrency: true }
+      });
 
-    if (!currencyCode) {
-      currencyCode = organisation?.baseCurrency || "ZWG";
-    }
+      if (!currencyCode) {
+        currencyCode = (organisation?.baseCurrency || "ZWG").trim().toUpperCase();
+      } else {
+        currencyCode = currencyCode.trim().toUpperCase();
+      }
 
-    // Start a transaction to create both Account and BankAccount
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Create or find the GL Account
-      let account;
-      if (glAccountCode) {
+      // Start a transaction to create both Account and BankAccount
+      const result = await prisma.$transaction(async (tx) => {
+        // 1. Create or find the GL Account
+        let account;
+        
+        const suffix = `.${currencyCode.toLowerCase()}`;
+        const defaultCode = `BANK-${accountNumber.trim().slice(-4)}${suffix}`;
+        const defaultName = `${bankName.trim()} (${accountNumber.trim()}) [${currencyCode}]`;
+        
+        let code = (glAccountCode || defaultCode).trim();
+        // Ensure code has currency suffix if not already present
+        if (!code.toLowerCase().endsWith(suffix)) {
+          code = `${code}${suffix}`;
+        }
+
+        let name = (glAccountName || defaultName).trim();
+        // Ensure name has currency indicator if not already present
+        const nameSuffix = `[${currencyCode}]`;
+        if (!name.toUpperCase().includes(nameSuffix)) {
+          name = `${name} ${nameSuffix}`;
+        }
+
+        // Try to find the account with the processed code
         account = await tx.account.findUnique({
           where: {
             organisationId_code: {
               organisationId: user.organisationId,
-              code: glAccountCode,
+              code: code,
             }
           }
         });
-      }
 
         if (!account) {
-          // Create new GL account if not found
-          // Use bank name and account number as defaults if not provided
-          // Append currency suffix to code and name for better identification
-          const suffix = `.${currencyCode.toLowerCase()}`;
-          const defaultCode = `BANK-${accountNumber.slice(-4)}${suffix}`;
-          
-          let code = glAccountCode || defaultCode;
-          // Ensure code has currency suffix if not already present
-          if (!code.toLowerCase().endsWith(suffix)) {
-            code = `${code}${suffix}`;
-          }
-
-          const defaultName = `${bankName} (${accountNumber}) [${currencyCode.toUpperCase()}]`;
-          let name = glAccountName || defaultName;
-          // Ensure name has currency indicator if not already present
-          const nameSuffix = `[${currencyCode.toUpperCase()}]`;
-          if (!name.toUpperCase().includes(nameSuffix)) {
-            name = `${name} ${nameSuffix}`;
-          }
-          
           account = await tx.account.create({
+            data: {
+              organisationId: user.organisationId,
+              code,
+              name,
+              type: glAccountType,
+              isCashAccount: true,
+              isSystemAccount: false,
+            }
+          });
+        }
+
+        // 2. Create the BankAccount
+        const bankAccount = await tx.bankAccount.create({
           data: {
             organisationId: user.organisationId,
-            code,
-            name,
-            type: glAccountType,
-            isCashAccount: true,
-            isSystemAccount: false,
+            accountId: account.id,
+            bankName: bankName.trim(),
+            accountNumber: accountNumber.trim(),
+            currencyCode,
+          },
+          include: {
+            account: true
           }
         });
-      }
-
-      // 2. Create the BankAccount
-      const bankAccount = await tx.bankAccount.create({
-        data: {
-          organisationId: user.organisationId,
-          accountId: account.id,
-          bankName,
-          accountNumber,
-          currencyCode,
-        },
-        include: {
-          account: true
-        }
-      });
 
       return bankAccount;
     });
