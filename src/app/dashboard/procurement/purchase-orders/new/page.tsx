@@ -459,14 +459,14 @@ export default function NewPurchaseOrderPage() {
                                 <SelectValue placeholder="Account" />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent>
-                              {accounts.map((acc) => (
-                                <SelectItem key={acc.id} value={acc.id}>
-                                  {acc.code} - {acc.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                              <SelectContent>
+                                {Array.isArray(accounts) && accounts.map((acc) => (
+                                  <SelectItem key={acc.id} value={acc.id}>
+                                    {acc.code} - {acc.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           <FormMessage />
                         </FormItem>
                       )}
