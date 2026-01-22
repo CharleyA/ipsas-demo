@@ -92,18 +92,28 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      if (!account) {
-        // Create new GL account if not found
-        // Use bank name and account number as defaults if not provided
-        // Append currency suffix to code and name for better identification
-        const suffix = `.${currencyCode.toLowerCase()}`;
-        const defaultCode = `BANK-${accountNumber.slice(-4)}${suffix}`;
-        const defaultName = `${bankName} (${accountNumber}) [${currencyCode.toUpperCase()}]`;
-        
-        const code = glAccountCode || defaultCode;
-        const name = glAccountName || defaultName;
-        
-        account = await tx.account.create({
+        if (!account) {
+          // Create new GL account if not found
+          // Use bank name and account number as defaults if not provided
+          // Append currency suffix to code and name for better identification
+          const suffix = `.${currencyCode.toLowerCase()}`;
+          const defaultCode = `BANK-${accountNumber.slice(-4)}${suffix}`;
+          
+          let code = glAccountCode || defaultCode;
+          // Ensure code has currency suffix if not already present
+          if (!code.toLowerCase().endsWith(suffix)) {
+            code = `${code}${suffix}`;
+          }
+
+          const defaultName = `${bankName} (${accountNumber}) [${currencyCode.toUpperCase()}]`;
+          let name = glAccountName || defaultName;
+          // Ensure name has currency indicator if not already present
+          const nameSuffix = `[${currencyCode.toUpperCase()}]`;
+          if (!name.toUpperCase().includes(nameSuffix)) {
+            name = `${name} ${nameSuffix}`;
+          }
+          
+          account = await tx.account.create({
           data: {
             organisationId: user.organisationId,
             code,
