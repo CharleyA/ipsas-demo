@@ -42,24 +42,25 @@ export default function NewBankAccountPage() {
   useEffect(() => {
     if (!token) return;
 
-    const fetchCurrencies = async () => {
-      try {
-        const res = await fetch("/api/currencies", {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        const data = await res.json();
-        setCurrencies(Array.isArray(data) ? data : []);
-        
-        // Auto-select base currency if possible
-        if (Array.isArray(data) && data.length > 0) {
-          setFormData(prev => ({ ...prev, currencyCode: data[0].code }));
+      const fetchCurrencies = async () => {
+        try {
+          const res = await fetch("/api/currencies", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          const data = await res.json();
+          const currencyList = data.data || (Array.isArray(data) ? data : []);
+          setCurrencies(currencyList);
+          
+          // Auto-select base currency if possible
+          if (currencyList.length > 0) {
+            setFormData(prev => ({ ...prev, currencyCode: currencyList[0].code }));
+          }
+        } catch (error) {
+          toast.error("Failed to fetch currencies");
+        } finally {
+          setIsLoadingCurrencies(false);
         }
-      } catch (error) {
-        toast.error("Failed to fetch currencies");
-      } finally {
-        setIsLoadingCurrencies(false);
-      }
-    };
+      };
 
     fetchCurrencies();
   }, [token]);
