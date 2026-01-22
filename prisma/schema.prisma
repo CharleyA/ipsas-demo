@@ -72,11 +72,13 @@ model User {
   auditLogs       AuditLog[]
   uploadedFiles   FileAttachment[]
   importJobs      ImportJob[]
-  organisations   OrganisationUser[]
-  createdVouchers Voucher[]          @relation("VoucherCreatedBy")
+    organisations   OrganisationUser[]
+    createdVouchers Voucher[]          @relation("VoucherCreatedBy")
+    notifications   Notification[]
 
-  @@map("users")
+    @@map("users")
 }
+
 
 model ImportJob {
   id             String              @id @default(cuid())
