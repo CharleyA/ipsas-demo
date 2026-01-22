@@ -8,6 +8,7 @@ export async function POST(request: NextRequest) {
     const organisationId = requireOrganisationId(request);
     
     const results = await AccountService.seedIPSAS(organisationId, actorId);
+    await AccountService.seedCashFlowLines(organisationId, actorId);
     return successResponse(results, 201);
   } catch (error) {
     return handleApiError(error);
