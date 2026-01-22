@@ -89,6 +89,9 @@ export default function AccountsPage() {
   const [isSeeding, setIsSeeding] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  const [editingAccount, setEditingAccount] = useState<any | null>(null);
+  const [isDeletingAccount, setIsDeletingAccount] = useState<any | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const [newAccount, setNewAccount] = useState({
     code: "",
