@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
     const accountId = searchParams.get("accountId");
     const startDateStr = searchParams.get("startDate");
     const endDateStr = searchParams.get("endDate");
+    const voucherId = searchParams.get("voucherId") || undefined;
     const exportFormat = (searchParams.get("format") || "json") as ExportFormat;
 
     if (!accountId || !startDateStr || !endDateStr) {
@@ -26,7 +27,8 @@ export async function GET(req: NextRequest) {
       authReq.user.organisationId,
       accountId,
       startDate,
-      endDate
+      endDate,
+      { voucherId }
     );
 
     if (exportFormat === "json") {
