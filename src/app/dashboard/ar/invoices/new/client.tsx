@@ -39,6 +39,7 @@ export default function NewARInvoiceForm() {
   const { token, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [students, setStudents] = useState<any[]>([]);
+  const [currencies, setCurrencies] = useState<any[]>([]);
 
   const studentId = searchParams.get("studentId") || "";
 
