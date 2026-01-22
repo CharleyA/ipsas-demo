@@ -280,6 +280,8 @@ export class ReportService {
         totalCredits,
         netMovement,
       },
+      reportingCurrency,
+      accountCurrency,
       chartData
     };
   }
