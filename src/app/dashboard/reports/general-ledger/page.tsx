@@ -79,26 +79,26 @@ function GeneralLedgerContent() {
     }
   };
 
-  const fetchVoucherAffectedAccounts = async () => {
-    if (!urlVoucherId) return;
-    try {
-      const response = await fetch(`/api/vouchers/${urlVoucherId}`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      const voucher = await response.json();
-      if (response.ok) {
-        setVoucherInfo(voucher);
-        
-        if (voucher.lines && Array.isArray(voucher.lines)) {
-          const ids = [...new Set(voucher.lines.map((l: any) => l.accountId))];
-          const affected = accounts.filter(acc => ids.includes(acc.id));
-          setAffectedAccounts(affected);
+    const fetchVoucherAffectedAccounts = async () => {
+      if (!urlVoucherId) return;
+      try {
+        const response = await fetch(`/api/vouchers/${urlVoucherId}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const voucher = await response.json();
+        if (response.ok && voucher) {
+          setVoucherInfo(voucher);
+          
+          if (voucher.lines && Array.isArray(voucher.lines)) {
+            const ids = [...new Set(voucher.lines.map((l: any) => l.accountId))];
+            const affected = accounts.filter(acc => ids.includes(acc.id));
+            setAffectedAccounts(affected);
+          }
         }
+      } catch (error) {
+        console.error("Failed to fetch voucher info", error);
       }
-    } catch (error) {
-      console.error("Failed to fetch voucher info", error);
-    }
-  };
+    };
 
   const fetchReport = async () => {
     if (!selectedAccountId || !startDate || !endDate) return;
