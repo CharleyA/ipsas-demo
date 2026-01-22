@@ -421,15 +421,16 @@ function GeneralLedgerContent() {
             <div className="p-0">
               <Table>
                 <TableHeader className="bg-muted/50">
-                  <TableRow>
-                    <TableHead className="text-[10px] font-bold uppercase tracking-wider w-[100px] px-4">Date</TableHead>
-                    <TableHead className="text-[10px] font-bold uppercase tracking-wider w-[120px]">Entry #</TableHead>
-                    <TableHead className="text-[10px] font-bold uppercase tracking-wider w-[120px]">Voucher #</TableHead>
-                    <TableHead className="text-[10px] font-bold uppercase tracking-wider">Description</TableHead>
-                    <TableHead className="text-[10px] font-bold uppercase tracking-wider text-right w-[150px]">Debit</TableHead>
-                    <TableHead className="text-[10px] font-bold uppercase tracking-wider text-right w-[150px]">Credit</TableHead>
-                    <TableHead className="text-[10px] font-bold uppercase tracking-wider text-right w-[150px] px-4">Balance</TableHead>
-                  </TableRow>
+                    <TableRow>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider w-[100px] px-4">Date</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider w-[120px]">Entry #</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider w-[120px]">Voucher #</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider">Description</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider text-right w-[150px]">Debit ({data.reportingCurrency})</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider text-right w-[150px]">Credit ({data.reportingCurrency})</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider text-right w-[150px] px-4">Balance ({data.reportingCurrency})</TableHead>
+                    </TableRow>
+
                 </TableHeader>
                   <TableBody>
                     <TableRow className="bg-muted/20 italic group">
