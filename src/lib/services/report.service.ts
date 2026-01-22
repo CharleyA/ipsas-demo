@@ -176,8 +176,8 @@ export class ReportService {
     const pageOpeningBalance = runningBalance;
 
     const rows = entries.map((entry) => {
-      const dr = (isUsdAccount ? entry.debitFc : entry.debitLc) || new Decimal(0);
-      const cr = (isUsdAccount ? entry.creditFc : entry.creditLc) || new Decimal(0);
+      const dr = (useFc ? entry.debitFc : entry.debitLc) || new Decimal(0);
+      const cr = (useFc ? entry.creditFc : entry.creditLc) || new Decimal(0);
       runningBalance = runningBalance.add(dr).minus(cr);
 
       return {
