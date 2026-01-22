@@ -561,7 +561,6 @@ export class ReportService {
   }
 
   private static calculateAgeing(items: any[], date: Date, entityKey: string, reportingCurrency: string) {
-    const ageingRows: any[] = [];
     const entities = new Map<string, any>();
 
     items.forEach(item => {
