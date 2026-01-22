@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
           }
         });
 
-        const balance = (glEntries._sum.debitLc || 0) - (glEntries._sum.creditLc || 0);
+        const balance = Number(glEntries._sum.debitLc || 0) - Number(glEntries._sum.creditLc || 0);
         return {
           ...acc,
           _balance: balance
