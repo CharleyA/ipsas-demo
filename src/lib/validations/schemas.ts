@@ -105,8 +105,8 @@ export const createAccountingPeriodSchema = z.object({
   year: z.number().int().min(2000).max(2100),
   period: z.number().int().min(1).max(12),
   name: z.string().min(1).max(100),
-  startDate: z.string().datetime().or(z.date()),
-  endDate: z.string().datetime().or(z.date()),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date(),
 });
 
 export const createFiscalPeriodSchema = createAccountingPeriodSchema;
@@ -146,7 +146,7 @@ export const createVoucherSchema = z.object({
   organisationId: z.string(),
   type: z.enum(["JOURNAL", "RECEIPT", "PAYMENT", "INVOICE", "BILL", "CASHBOOK", "AR_INVOICE", "AR_RECEIPT", "AP_BILL", "AP_PAYMENT"]),
   periodId: z.string(),
-  date: z.string().datetime().or(z.date()),
+  date: z.coerce.date(),
   description: z.string().min(1).max(500),
   reference: z.string().max(100).optional(),
   studentId: z.string().optional(),
@@ -168,7 +168,7 @@ export const createARInvoiceSchema = z.object({
   term: z.string().optional(),
   fundId: z.string().optional(),
   projectId: z.string().optional(),
-  dueDate: z.string().datetime().or(z.date()),
+  dueDate: z.coerce.date(),
   lines: z.array(arInvoiceLineSchema).min(1),
   description: z.string().optional(),
 });
@@ -180,7 +180,7 @@ export const createARReceiptSchema = z.object({
   amount: z.number().positive(),
   paymentMethod: z.string().optional(),
   reference: z.string().optional(),
-  date: z.string().datetime().or(z.date()),
+  date: z.coerce.date(),
   bankAccountId: z.string(), // The bank/cash account to DR
 });
 
@@ -198,7 +198,7 @@ export type AllocateARReceiptInput = z.infer<typeof allocateARReceiptSchema>;
 
 
 export const updateVoucherSchema = z.object({
-  date: z.string().datetime().or(z.date()).optional(),
+  date: z.coerce.date().optional(),
   description: z.string().min(1).max(500).optional(),
   reference: z.string().max(100).optional(),
   lines: z.array(voucherLineSchema).min(1).optional(),
@@ -228,7 +228,7 @@ export const createAPBillSchema = z.object({
   currencyCode: z.string().length(3),
   fundId: z.string().optional(),
   projectId: z.string().optional(),
-  dueDate: z.string().datetime().or(z.date()),
+  dueDate: z.coerce.date(),
   lines: z.array(apBillLineSchema).min(1),
   description: z.string().optional(),
 });
@@ -240,7 +240,7 @@ export const createAPPaymentSchema = z.object({
   amount: z.number().positive(),
   paymentMethod: z.string().optional(),
   reference: z.string().optional(),
-  date: z.string().datetime().or(z.date()),
+  date: z.coerce.date(),
   bankAccountId: z.string(),
 });
 
@@ -265,7 +265,7 @@ export const updateStudentSchema = createStudentSchema.partial().extend({
   parentName: z.string().max(200).optional(),
   parentPhone: z.string().max(20).optional(),
   parentEmail: z.string().email().optional(),
-  enrollmentDate: z.string().datetime().or(z.date()).optional(),
+  enrollmentDate: z.coerce.date().optional(),
   isActive: z.boolean().optional(),
 });
 
