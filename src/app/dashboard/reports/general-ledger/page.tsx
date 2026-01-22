@@ -180,7 +180,17 @@ function GeneralLedgerContent() {
                       {new Date(entry.date).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="font-mono text-xs">{entry.entryNumber}</TableCell>
-                    <TableCell className="font-mono text-xs">{entry.voucherNumber || "-"}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {entry.voucherNumber ? (
+                          <Link 
+                            href={`/dashboard/vouchers/${entry.voucherNumber}`}
+                            className="text-primary hover:underline flex items-center gap-1"
+                          >
+                            {entry.voucherNumber}
+                            <Eye className="w-3 h-3" />
+                          </Link>
+                        ) : "-"}
+                      </TableCell>
                     <TableCell className="max-w-[200px] truncate">{entry.description}</TableCell>
                     <TableCell className="text-right">
                       {parseFloat(entry.debit) > 0 ? parseFloat(entry.debit).toLocaleString(undefined, { minimumFractionDigits: 2 }) : ""}
