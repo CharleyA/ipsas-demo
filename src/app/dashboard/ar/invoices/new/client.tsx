@@ -130,30 +130,61 @@ export default function NewARInvoiceForm() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="studentId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Student</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select Student" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {students.map(s => (
-                            <SelectItem key={s.id} value={s.id}>
-                              {s.firstName} {s.lastName} ({s.studentNumber})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="studentId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Student</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select Student" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {students.map(s => (
+                              <SelectItem key={s.id} value={s.id}>
+                                {s.firstName} {s.lastName} ({s.studentNumber})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="currencyCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Currency</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select Currency" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {currencies.map(c => (
+                              <SelectItem key={c.currencyCode} value={c.currencyCode}>
+                                {c.currencyCode} {c.isBaseCurrency ? "(Base)" : ""}
+                              </SelectItem>
+                            ))}
+                            {currencies.length === 0 && (
+                              <>
+                                <SelectItem value="ZWG">ZWG</SelectItem>
+                                <SelectItem value="USD">USD</SelectItem>
+                              </>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                 <FormField
                   control={form.control}
                   name="term"
