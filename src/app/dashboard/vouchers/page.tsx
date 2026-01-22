@@ -108,37 +108,52 @@ export default function VouchersPage() {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Types</SelectItem>
-                  <SelectItem value="JOURNAL">Journal</SelectItem>
-                  <SelectItem value="RECEIPT">Receipt</SelectItem>
-                  <SelectItem value="PAYMENT">Payment</SelectItem>
-                  <SelectItem value="INVOICE">Invoice</SelectItem>
-                  <SelectItem value="BILL">Bill</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Status</SelectItem>
-                  <SelectItem value="DRAFT">Draft</SelectItem>
-                  <SelectItem value="SUBMITTED">Submitted</SelectItem>
-                  <SelectItem value="APPROVED">Approved</SelectItem>
-                  <SelectItem value="POSTED">Posted</SelectItem>
-                  <SelectItem value="REVERSED">Reversed</SelectItem>
-                </SelectContent>
-              </Select>
-              {(status !== "ALL" || type !== "ALL" || search !== "") && (
-                <Button variant="ghost" size="icon" onClick={resetFilters} title="Reset Filters">
-                  <FilterX className="w-4 h-4" />
-                </Button>
-              )}
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="date"
+                    className="w-[150px]"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                  <span className="text-muted-foreground text-sm">to</span>
+                  <Input
+                    type="date"
+                    className="w-[150px]"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+                <Select value={type} onValueChange={setType}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Types</SelectItem>
+                    <SelectItem value="JOURNAL">Journal</SelectItem>
+                    <SelectItem value="RECEIPT">Receipt</SelectItem>
+                    <SelectItem value="PAYMENT">Payment</SelectItem>
+                    <SelectItem value="INVOICE">Invoice</SelectItem>
+                    <SelectItem value="BILL">Bill</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Status</SelectItem>
+                    <SelectItem value="DRAFT">Draft</SelectItem>
+                    <SelectItem value="SUBMITTED">Submitted</SelectItem>
+                    <SelectItem value="APPROVED">Approved</SelectItem>
+                    <SelectItem value="POSTED">Posted</SelectItem>
+                    <SelectItem value="REVERSED">Reversed</SelectItem>
+                  </SelectContent>
+                </Select>
+                {(status !== "ALL" || type !== "ALL" || search !== "" || startDate !== "" || endDate !== "") && (
+                  <Button variant="ghost" size="icon" onClick={resetFilters} title="Reset Filters">
+                    <FilterX className="w-4 h-4" />
+                  </Button>
+                )}
             </div>
           </div>
         </CardHeader>
