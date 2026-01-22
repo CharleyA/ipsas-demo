@@ -22,6 +22,7 @@ export class PurchaseOrderService {
       orderDate: string | Date;
       expectedDate?: string | Date;
       currencyCode?: string;
+      fxRate?: number;
       notes?: string;
       lines: {
         description: string;
@@ -53,6 +54,7 @@ export class PurchaseOrderService {
         expectedDate: data.expectedDate ? new Date(data.expectedDate) : null,
         totalAmount,
         currencyCode: data.currencyCode || "USD",
+        fxRate: data.fxRate || 1,
         notes: data.notes,
         createdById: actorId,
         lines: {
