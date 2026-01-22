@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
     const accountId = searchParams.get("accountId");
     const startDateStr = searchParams.get("startDate");
     const endDateStr = searchParams.get("endDate");
+    const voucherId = searchParams.get("voucherId");
     const page = searchParams.get("page") ? parseInt(searchParams.get("page")!) : undefined;
     const pageSize = searchParams.get("pageSize") ? parseInt(searchParams.get("pageSize")!) : undefined;
     const exportFormat = (searchParams.get("format") || "json") as ExportFormat;
