@@ -291,4 +291,38 @@ export class ARService {
     
     return result;
   }
+
+  static async getInvoices(organisationId: string) {
+    return prisma.aRInvoice.findMany({
+      where: { organisationId },
+      include: {
+        student: true,
+        voucher: {
+          include: {
+            createdBy: { select: { firstName: true, lastName: true } }
+          }
+        },
+        lines: true
+      },
+      orderBy: { createdAt: "desc" }
+    });
+  }
+
+  static async getReceipts(organisationId: string) {
+    return prisma.aRReceipt.findMany({
+      where: { organisationId },
+      include: {
+        student: true,
+        voucher: {
+          include: {
+            createdBy: { select: { firstName: true, lastName: true } }
+          }
+        },
+        allocations: {
+          include: { invoice: true }
+        }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+  }
 }
