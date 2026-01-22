@@ -183,18 +183,48 @@ export class VoucherService {
     if (!voucher) throw new Error("Voucher not found");
     if (voucher.status !== "DRAFT") throw new Error("Only draft vouchers can be submitted");
 
-    const updated = await prisma.voucher.update({
-      where: { id },
-      data: { status: "SUBMITTED" },
-    });
-
-    await prisma.approvalTask.create({
-      data: {
-        voucherId: id,
-        userId: actorId,
-        status: "PENDING",
+    // Find approvers (Headmasters and Bursars)
+    const approvers = await prisma.organisationUser.findMany({
+      where: {
+        organisationId: voucher.organisationId,
+        role: { in: ["HEADMASTER", "BURSAR"] },
+        isActive: true,
       },
     });
+
+    if (approvers.length === 0) {
+      throw new Error("No approvers found for this organisation. Please assign a Headmaster or Bursar.");
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      // Create approval tasks for all potential approvers
+      await tx.approvalTask.createMany({
+        data: approvers.map(approver => ({
+          voucherId: id,
+          userId: approver.userId,
+          status: "PENDING",
+        })),
+      });
+
+      return tx.voucher.update({
+        where: { id },
+        data: { status: "SUBMITTED" },
+      });
+    });
+
+    // Send notifications to approvers
+    await Promise.all(
+      approvers.map(approver => 
+        NotificationService.create({
+          organisationId: voucher.organisationId,
+          userId: approver.userId,
+          type: "APPROVAL_REQUEST",
+          title: "New Approval Request",
+          message: `Voucher ${voucher.number} has been submitted for approval.`,
+          metadata: { voucherId: id, voucherNumber: voucher.number },
+        })
+      )
+    );
 
     await AuditService.log({
       userId: actorId,
