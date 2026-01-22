@@ -27,8 +27,26 @@ export class ExternalRateService {
    */
   private static parseZimRateData(data: any[]) {
     // ZimRate returns an array of sources. We want the one where source is 'rbz' or similar.
-    // Usually it has 'rbz_interbank' or 'rbz'.
-    const rbzData = data.find((item: any) => 
+    // We prioritize "interbank" or "mid" or "average" rates as requested.
+    
+    // Sort to prioritize "interbank", "mid", "average"
+    const sortedData = [...data].sort((a, b) => {
+      const aName = (a.name || "").toLowerCase();
+      const bName = (b.name || "").toLowerCase();
+      const aSource = (a.source || "").toLowerCase();
+      const bSource = (b.source || "").toLowerCase();
+
+      const isMid = (s: string) => s.includes("mid") || s.includes("average") || s.includes("avg") || s.includes("interbank");
+      
+      const aIsMid = isMid(aName) || isMid(aSource);
+      const bIsMid = isMid(bName) || isMid(bSource);
+
+      if (aIsMid && !bIsMid) return -1;
+      if (!aIsMid && bIsMid) return 1;
+      return 0;
+    });
+
+    const rbzData = sortedData.find((item: any) => 
       item.currency?.toLowerCase() === "rbz" ||
       item.source?.toLowerCase().includes("rbz") || 
       item.name?.toLowerCase().includes("rbz") ||
@@ -36,14 +54,12 @@ export class ExternalRateService {
     );
 
     if (!rbzData || !rbzData.rate) {
-      // Fallback to searching for the one with the highest reliability or just the first one if RBZ not found
-      // But for this requirement, we specifically want RBZ.
       return null;
     }
 
     return {
       rate: parseFloat(rbzData.rate),
-      source: "RBZ",
+      source: `RBZ (${rbzData.name || rbzData.source || "Interbank"})`,
       date: rbzData.date ? new Date(rbzData.date) : new Date(),
     };
   }
