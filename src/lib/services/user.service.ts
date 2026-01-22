@@ -142,6 +142,38 @@ export class UserService {
     };
   }
 
+  static async updateOrganisationUser(organisationId: string, userId: string, data: { role?: any; isApprover?: boolean; isActive?: boolean }, actorId: string) {
+    const oldOrgUser = await prisma.organisationUser.findUnique({
+      where: {
+        organisationId_userId: { organisationId, userId },
+      },
+    });
+
+    if (!oldOrgUser) throw new Error("User not found in this organisation");
+
+    const orgUser = await prisma.organisationUser.update({
+      where: {
+        organisationId_userId: { organisationId, userId },
+      },
+      data,
+      include: {
+        user: { select: { id: true, email: true, firstName: true, lastName: true } },
+      },
+    });
+
+    await AuditService.log({
+      userId: actorId,
+      organisationId,
+      action: "UPDATE_USER_ORG_SETTINGS",
+      entityType: "OrganisationUser",
+      entityId: orgUser.id,
+      oldValues: oldOrgUser,
+      newValues: orgUser,
+    });
+
+    return orgUser;
+  }
+
   static async listByOrganisation(organisationId: string) {
     const orgUsers = await prisma.organisationUser.findMany({
       where: { organisationId },
