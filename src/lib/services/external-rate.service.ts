@@ -67,7 +67,7 @@ export class ExternalRateService {
   /**
    * Syncs RBZ rates for ZWG/USD to the database
    */
-  static async syncRBZRate(actorId: string) {
+  static async syncRBZRate(_actorId: string) {
     const rateInfo = await this.fetchLatestRates();
     if (!rateInfo) {
       throw new Error("Could not retrieve RBZ rates at this time.");
