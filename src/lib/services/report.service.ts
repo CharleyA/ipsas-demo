@@ -443,17 +443,43 @@ export class ReportService {
         margin: totalRevenue.gt(0) ? surplus.div(totalRevenue).mul(100) : new Decimal(0)
       };
 
-      chartData = {
-        revenueVsExpense: [
-          { name: "Revenue", value: Number(totalRevenue) },
-          { name: "Expenses", value: Number(totalExpenses) }
-        ],
-        expenseComposition: rows.find(r => r.name.toLowerCase().includes("expense"))?.children.map((c: any) => ({
-          name: c.name,
-          value: Number(c.amount.abs())
-        })).filter((c: any) => c.value > 0) || []
-      };
-    }
+        chartData = {
+          revenueVsExpense: [
+            { name: "Revenue", value: Number(totalRevenue) },
+            { name: "Expenses", value: Number(totalExpenses) }
+          ],
+          expenseComposition: rows.find(r => r.name.toLowerCase().includes("expense"))?.children.map((c: any) => ({
+            name: c.name,
+            value: Number(c.amount.abs())
+          })).filter((c: any) => c.value > 0) || []
+        };
+      } else if (type === ReportType.CASH_FLOW) {
+        const operating = rows.find(r => r.code === "CF-100")?.amount || new Decimal(0);
+        const investing = rows.find(r => r.code === "CF-200")?.amount || new Decimal(0);
+        const financing = rows.find(r => r.code === "CF-300")?.amount || new Decimal(0);
+        
+        const netCashChange = operating.add(investing).add(financing);
+
+        summary = {
+          operatingCashFlow: operating,
+          investingCashFlow: investing,
+          financingCashFlow: financing,
+          netCashChange,
+        };
+
+        chartData = {
+          cashFlowBreakdown: [
+            { name: "Operating", value: Number(operating) },
+            { name: "Investing", value: Number(investing) },
+            { name: "Financing", value: Number(financing) }
+          ],
+          operatingComposition: rows.find(r => r.code === "CF-100")?.children.map((c: any) => ({
+            name: c.name,
+            value: Number(c.amount.abs())
+          })).filter((c: any) => c.value > 0) || []
+        };
+      }
+
 
     return {
       reportType: type,
