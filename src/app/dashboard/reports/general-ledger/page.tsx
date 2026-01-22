@@ -62,8 +62,10 @@ function GeneralLedgerContent() {
   const [data, setData] = useState<any>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedAccountId, setSelectedAccountId] = useState("");
-  const [affectedAccounts, setAffectedAccounts] = useState<any[]>([]);
+    const [selectedAccountId, setSelectedAccountId] = useState("");
+    const [reportingCurrency, setReportingCurrency] = useState<string>("");
+    const [affectedAccounts, setAffectedAccounts] = useState<any[]>([]);
+
   const [voucherInfo, setVoucherInfo] = useState<any>(null);
   
   const [startDate, setStartDate] = useState("");
