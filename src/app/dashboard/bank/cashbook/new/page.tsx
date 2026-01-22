@@ -417,24 +417,24 @@ export default function CashbookEntryPage() {
                           </SelectTrigger>
                         </FormControl>
                           <SelectContent>
-                            {currencies.map((c) => (
+                            {Array.isArray(currencies) && currencies.map((c) => (
                               <SelectItem key={c.code} value={c.code}>
                                 {c.code} - {c.name}
                               </SelectItem>
                             ))}
-                            {currencies.length === 0 && (
+                            {(!Array.isArray(currencies) || currencies.length === 0) && (
                               <>
                                 <SelectItem value="ZWG">ZWG</SelectItem>
                                 <SelectItem value="USD">USD</SelectItem>
                               </>
                             )}
                           </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
@@ -469,51 +469,51 @@ export default function CashbookEntryPage() {
                   )}
                 />
 
-              <FormField
-                control={form.control}
-                name="fundId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fund</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="General Fund" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {funds.map((f) => (
-                          <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="fundId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fund</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="General Fund" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Array.isArray(funds) && funds.map((f) => (
+                            <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="costCentreId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cost Centre</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select cost centre" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {costCentres.map((cc) => (
-                          <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="costCentreId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cost Centre</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select cost centre" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Array.isArray(costCentres) && costCentres.map((cc) => (
+                            <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
               <div className="md:col-span-2">
                 <FormField
