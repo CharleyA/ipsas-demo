@@ -49,6 +49,16 @@ export default function ApprovalWorkflowPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
 
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch = 
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesRole = roleFilter === "ALL" || user.role === roleFilter;
+
+    return matchesSearch && matchesRole;
+  });
+
   useEffect(() => {
     async function fetchUsers() {
       if (!token) return;
