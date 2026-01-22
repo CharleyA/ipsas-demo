@@ -14,8 +14,8 @@ export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchDashboardData = async () => {
-    setIsLoading(true);
+  const fetchDashboardData = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     try {
       const response = await fetch("/api/dashboard", {
         headers: { "Authorization": `Bearer ${token}` }
@@ -24,14 +24,22 @@ export default function DashboardPage() {
       const result = await response.json();
       setData(result);
     } catch (error) {
-      toast.error("Error loading dashboard metrics");
+      console.error("Dashboard error:", error);
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (token) fetchDashboardData();
+    if (!token) return;
+    
+    fetchDashboardData(true);
+
+    const interval = setInterval(() => {
+      fetchDashboardData(false);
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, [token]);
 
   if (isLoading) {
