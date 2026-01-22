@@ -142,7 +142,7 @@ export default function VoucherDetailPage() {
           <div className="flex items-center gap-2">
             {isPosted && (
               <Button variant="outline" size="sm" asChild className="border-primary text-primary hover:bg-primary/5">
-                <Link href={`/dashboard/reports/general-ledger?accountId=${voucher.lines[0]?.accountId}&voucherId=${voucher.id}&startDate=${new Date(voucher.date).toISOString().split('T')[0]}&endDate=${new Date(voucher.date).toISOString().split('T')[0]}`}>
+                <Link href={`/dashboard/reports/general-ledger?accountId=${voucher.lines?.[0]?.accountId || ""}&voucherId=${voucher.id}&startDate=${voucher.date ? new Date(voucher.date).toISOString().split('T')[0] : ""}&endDate=${voucher.date ? new Date(voucher.date).toISOString().split('T')[0] : ""}`}>
                   <FileText className="w-4 h-4 mr-2" />
                   View Ledger
                 </Link>
