@@ -379,51 +379,106 @@ function GeneralLedgerContent() {
                     <TableHead className="text-[10px] font-bold uppercase tracking-wider text-right w-[150px] px-4">Balance</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
-                  <TableRow className="bg-muted/20 italic group">
-                    <TableCell colSpan={6} className="text-xs font-medium text-muted-foreground px-4">Opening Balance</TableCell>
-                    <TableCell className="text-right font-mono text-sm font-bold px-4">
-                      {parseFloat(data.openingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </TableCell>
-                  </TableRow>
-                  {data?.entries && Array.isArray(data.entries) && data.entries.map((entry: any) => (
-                    <TableRow key={entry.id} className="hover:bg-muted/30 transition-colors">
-                      <TableCell className="whitespace-nowrap text-[11px] font-medium px-4">
-                        {entry.date ? new Date(entry.date).toLocaleDateString(undefined, { dateStyle: 'medium' }) : "-"}
+                  <TableBody>
+                    <TableRow className="bg-muted/20 italic group">
+                      <TableCell colSpan={6} className="text-xs font-medium text-muted-foreground px-4">
+                        {data.page > 1 ? `Opening Balance for Page ${data.page}` : "Opening Balance"}
                       </TableCell>
-                      <TableCell className="font-mono text-[10px] text-muted-foreground">{entry.entryNumber}</TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {entry.voucherId ? (
-                          <Link 
-                            href={`/dashboard/vouchers/${entry.voucherId}`}
-                            className="text-primary hover:underline flex items-center gap-1.5 font-bold"
-                          >
-                            {entry.voucherNumber || "View"}
-                            <Eye className="w-3 h-3" />
-                          </Link>
-                        ) : <span className="text-muted-foreground italic">{entry.voucherNumber || "-"}</span>}
-                      </TableCell>
-                      <TableCell className="text-xs leading-relaxed max-w-[300px]">{entry.description}</TableCell>
-                      <TableCell className="text-right font-mono text-xs text-emerald-600 font-medium">
-                        {parseFloat(entry.debit) > 0 ? parseFloat(entry.debit).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-xs text-rose-600 font-medium">
-                        {parseFloat(entry.credit) > 0 ? parseFloat(entry.credit).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-xs font-bold px-4">
-                        {parseFloat(entry.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      <TableCell className="text-right font-mono text-sm font-bold px-4">
+                        {parseFloat(data.pageOpeningBalance || data.openingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </TableCell>
                     </TableRow>
-                  ))}
-                  <TableRow className="bg-primary/5 font-bold">
-                    <TableCell colSpan={6} className="text-sm font-bold uppercase tracking-tight text-primary px-4">Closing Balance</TableCell>
-                    <TableCell className="text-right font-mono text-lg text-primary underline decoration-double underline-offset-4 px-4">
-                      {parseFloat(data.closingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
+                    {data?.entries && Array.isArray(data.entries) && data.entries.map((entry: any) => (
+                      <TableRow key={entry.id} className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="whitespace-nowrap text-[11px] font-medium px-4">
+                          {entry.date ? new Date(entry.date).toLocaleDateString(undefined, { dateStyle: 'medium' }) : "-"}
+                        </TableCell>
+                        <TableCell className="font-mono text-[10px] text-muted-foreground">{entry.entryNumber}</TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {entry.voucherId ? (
+                            <Link 
+                              href={`/dashboard/vouchers/${entry.voucherId}`}
+                              className="text-primary hover:underline flex items-center gap-1.5 font-bold"
+                            >
+                              {entry.voucherNumber || "View"}
+                              <Eye className="w-3 h-3" />
+                            </Link>
+                          ) : <span className="text-muted-foreground italic">{entry.voucherNumber || "-"}</span>}
+                        </TableCell>
+                        <TableCell className="text-xs leading-relaxed max-w-[300px]">{entry.description}</TableCell>
+                        <TableCell className="text-right font-mono text-xs text-emerald-600 font-medium">
+                          {parseFloat(entry.debit) > 0 ? parseFloat(entry.debit).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-xs text-rose-600 font-medium">
+                          {parseFloat(entry.credit) > 0 ? parseFloat(entry.credit).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-xs font-bold px-4">
+                          {parseFloat(entry.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {data.page === data.totalPages && (
+                      <TableRow className="bg-primary/5 font-bold">
+                        <TableCell colSpan={6} className="text-sm font-bold uppercase tracking-tight text-primary px-4">Closing Balance</TableCell>
+                        <TableCell className="text-right font-mono text-lg text-primary underline decoration-double underline-offset-4 px-4">
+                          {parseFloat(data.closingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {data.totalPages > 1 && (
+                <div className="flex items-center justify-between p-4 bg-muted/30 border-t border-border/50">
+                  <p className="text-xs text-muted-foreground font-medium">
+                    Showing {(data.page - 1) * data.pageSize + 1} to {Math.min(data.page * data.pageSize, data.totalCount)} of {data.totalCount} entries
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(data.page - 1)}
+                      disabled={data.page === 1}
+                      className="h-8 text-xs font-bold uppercase tracking-wider"
+                    >
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1 px-4">
+                      {Array.from({ length: Math.min(5, data.totalPages) }, (_, i) => {
+                        let pageNum = data.page;
+                        if (data.page <= 3) pageNum = i + 1;
+                        else if (data.page >= data.totalPages - 2) pageNum = data.totalPages - 4 + i;
+                        else pageNum = data.page - 2 + i;
+                        
+                        if (pageNum <= 0 || pageNum > data.totalPages) return null;
+
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={data.page === pageNum ? "default" : "ghost"}
+                            size="sm"
+                            onClick={() => handlePageChange(pageNum)}
+                            className="h-8 w-8 text-xs font-bold"
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(data.page + 1)}
+                      disabled={data.page === data.totalPages}
+                      className="h-8 text-xs font-bold uppercase tracking-wider"
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+
           </Card>
         </>
       ) : (
