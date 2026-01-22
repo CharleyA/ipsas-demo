@@ -69,8 +69,8 @@ export default function CurrenciesPage() {
     toCurrencyCode: "ZWG",
     rate: "",
     effectiveDate: new Date().toISOString().split("T")[0],
-    source: "Manual",
-  });
+      source: "MANUAL",
+    });
 
   const [configData, setConfigData] = useState({
     name: "",
