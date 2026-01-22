@@ -320,7 +320,12 @@ export class ReportService {
     });
   }
 
-  static async getFinancialStatement(organisationId: string, type: ReportType, endDate: Date, startDate?: Date) {
+  static async getFinancialStatement(organisationId: string, type: ReportType, endDate: Date, startDate?: Date, options: { reportingCurrency?: string } = {}) {
+    const org = await prisma.organisation.findUnique({ where: { id: organisationId } });
+    const baseCurrency = org?.baseCurrency || "ZWG";
+    const reportingCurrency = options.reportingCurrency || baseCurrency;
+    const useFc = reportingCurrency === "USD";
+
     // 1. Get all statement lines for the report
     const lines = await prisma.statementLine.findMany({
       where: { organisationId, reportType: type },
@@ -350,13 +355,17 @@ export class ReportService {
       _sum: {
         debitLc: true,
         creditLc: true,
+        debitFc: true,
+        creditFc: true,
       },
     });
 
     const balanceMap = new Map(
       balances.map((b) => [
         b.accountId,
-        (b._sum.debitLc || new Decimal(0)).minus(b._sum.creditLc || new Decimal(0))
+        useFc 
+          ? (b._sum.debitFc || new Decimal(0)).minus(b._sum.creditFc || new Decimal(0))
+          : (b._sum.debitLc || new Decimal(0)).minus(b._sum.creditLc || new Decimal(0))
       ])
     );
 
@@ -378,9 +387,6 @@ export class ReportService {
             amount = amount.add(c.amount);
           });
 
-          // For some reports, we might need to flip signs (e.g. Revenue/Liability)
-          // But usually we just keep it as net debit - credit and handle in UI if needed
-
           return {
             id: line.id,
             code: line.code,
@@ -391,24 +397,55 @@ export class ReportService {
         });
     };
 
+    const rows = buildTree(null);
+
+    // Calculate Summary Totals for Info Cards
+    // Usually, top level nodes in Financial Position are Assets, Liabilities, Net Assets/Equity
+    const assets = rows.find(r => r.name.toLowerCase().includes("asset"))?.amount || new Decimal(0);
+    const liabilities = rows.find(r => r.name.toLowerCase().includes("liabilit"))?.amount || new Decimal(0);
+    const netAssets = rows.find(r => r.name.toLowerCase().includes("net asset") || r.name.toLowerCase().includes("equity"))?.amount || assets.add(liabilities); // liabilities are usually negative in this context if credits are negative
+
+    // Refined logic for Assets/Liabilities/Equity
+    // In IPSAS/Accounting, Assets = Debit Positive, Liabilities/Equity = Credit Positive
+    // But our balance is Debit - Credit. So Assets will be positive, Liabilities/Equity will be negative.
+    // We should probably return absolute values for the cards.
+    
+    const summary = {
+      totalAssets: assets.abs(),
+      totalLiabilities: liabilities.abs(),
+      netAssets: netAssets.abs(),
+      equity: netAssets.abs(),
+    };
+
+    // Chart Data
+    const chartData = {
+      composition: rows.map(r => ({
+        name: r.name,
+        value: Number(r.amount.abs())
+      })).filter(r => r.value > 0)
+    };
+
     return {
       reportType: type,
       asOf: endDate,
       startDate,
-      rows: buildTree(null)
+      rows,
+      summary,
+      chartData,
+      reportingCurrency,
     };
   }
 
-  static async getFinancialPosition(organisationId: string, date: Date) {
-    return this.getFinancialStatement(organisationId, ReportType.FINANCIAL_POSITION, date);
+  static async getFinancialPosition(organisationId: string, date: Date, options: { reportingCurrency?: string } = {}) {
+    return this.getFinancialStatement(organisationId, ReportType.FINANCIAL_POSITION, date, undefined, options);
   }
 
-  static async getFinancialPerformance(organisationId: string, startDate: Date, endDate: Date) {
-    return this.getFinancialStatement(organisationId, ReportType.FINANCIAL_PERFORMANCE, endDate, startDate);
+  static async getFinancialPerformance(organisationId: string, startDate: Date, endDate: Date, options: { reportingCurrency?: string } = {}) {
+    return this.getFinancialStatement(organisationId, ReportType.FINANCIAL_PERFORMANCE, endDate, startDate, options);
   }
 
-  static async getCashflow(organisationId: string, startDate: Date, endDate: Date) {
-    return this.getFinancialStatement(organisationId, ReportType.CASH_FLOW, endDate, startDate);
+  static async getCashflow(organisationId: string, startDate: Date, endDate: Date, options: { reportingCurrency?: string } = {}) {
+    return this.getFinancialStatement(organisationId, ReportType.CASH_FLOW, endDate, startDate, options);
   }
 
   static async getARAgeing(organisationId: string, date: Date) {
