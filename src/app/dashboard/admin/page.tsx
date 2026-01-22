@@ -72,14 +72,14 @@ export default function AdminDashboardPage() {
     },
   ];
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome, {user.firstName}. You have full administrative access to the system.
-        </p>
-      </div>
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Control Panel</h1>
+          <p className="text-muted-foreground">
+            Welcome, {user.firstName}. You have full administrative access to system tools and maintenance.
+          </p>
+        </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {adminTools.map((tool) => (
