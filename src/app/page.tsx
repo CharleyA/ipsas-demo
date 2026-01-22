@@ -3,7 +3,7 @@ import {
   BookOpen, 
   Building2, 
   FileText, 
-  ChartBar as BarChart3, 
+  BarChart3, 
   Settings,
   Calendar,
   Wallet,
