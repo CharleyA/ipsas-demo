@@ -222,16 +222,35 @@ export default function NewPurchaseOrderPage() {
                             <SelectItem value="ZWG">ZWG</SelectItem>
                           </>
                         )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="orderDate"
+                <FormField
+                  control={form.control}
+                  name="fxRate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>FX Rate (to Base)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.0001"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="orderDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Order Date</FormLabel>
