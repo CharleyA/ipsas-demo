@@ -249,12 +249,13 @@ export class ReportService {
       let evolutionBal = openingBalance;
       const evolution: { date: string, balance: number }[] = [];
 
-      allEntries.forEach(e => {
-        const d = e.glHeader.entryDate.toISOString().split("T")[0];
-        const dr = isUsdAccount ? (e.debitFc || 0) : (e.debitLc || 0);
-        const cr = isUsdAccount ? (e.creditFc || 0) : (e.creditLc || 0);
-        
-        const existing = dailyMap.get(d) || { date: d, debits: 0, credits: 0 };
+        allEntries.forEach(e => {
+          const d = e.glHeader.entryDate.toISOString().split("T")[0];
+          const dr = useFc ? (e.debitFc || 0) : (e.debitLc || 0);
+          const cr = useFc ? (e.creditFc || 0) : (e.creditLc || 0);
+          
+          const existing = dailyMap.get(d) || { date: d, debits: 0, credits: 0 };
+
         existing.debits += Number(dr);
         existing.credits += Number(cr);
         dailyMap.set(d, existing);
