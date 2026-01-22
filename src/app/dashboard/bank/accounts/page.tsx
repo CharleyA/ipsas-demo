@@ -138,9 +138,9 @@ export default function BankAccountsPage() {
                     </TableCell>
                     <TableCell>{acc.accountNumber}</TableCell>
                     <TableCell>{acc.currencyCode}</TableCell>
-                    <TableCell className="text-right font-mono">
-                      {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(acc._balance || 0)}
-                    </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(Number(acc._balance || 0))}
+                      </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button variant="ghost" size="sm" asChild>
