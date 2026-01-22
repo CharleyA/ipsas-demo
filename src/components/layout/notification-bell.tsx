@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { Bell, Check, Clock } from "lucide-react";
+import { useAuth } from "@/components/providers/auth-provider";
 import {
   DropdownMenu,
   DropdownMenuContent,
