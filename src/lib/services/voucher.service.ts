@@ -579,6 +579,8 @@ export class VoucherService {
     });
     nextNumber = count + 1;
 
+    // Add a random component for demo/concurrency safety if needed, 
+    // or just rely on the existence check loop which we'll make more robust
     while (exists) {
       voucherNumber = `${prefix}-${year}-${String(nextNumber).padStart(6, "0")}`;
       const existing = await prisma.voucher.findUnique({
@@ -589,6 +591,10 @@ export class VoucherService {
         exists = false;
       } else {
         nextNumber++;
+        // If we've tried many times, maybe add a random offset
+        if (nextNumber > count + 100) {
+          nextNumber += Math.floor(Math.random() * 1000);
+        }
       }
     }
 
