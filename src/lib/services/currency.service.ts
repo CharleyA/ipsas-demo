@@ -123,7 +123,7 @@ export class CurrencyService {
         fromCurrencyCode: fromCurrency.toUpperCase(),
         toCurrencyCode: toCurrency.toUpperCase(),
         effectiveDate: { lte: date },
-        source: { contains: "Manual" }
+        source: { equals: "MANUAL", mode: "insensitive" }
       },
       orderBy: { effectiveDate: "desc" },
     });
