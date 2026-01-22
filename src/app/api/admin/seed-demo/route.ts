@@ -227,6 +227,7 @@ export async function POST(req: NextRequest) {
       where: { batchId: batchResult.batch.id }
     });
 
+    console.log(`Posting ${batchInvoices.length} invoices...`);
     for (const inv of batchInvoices) {
       try {
         await VoucherService.submit(inv.voucherId, actorId);
@@ -239,6 +240,8 @@ export async function POST(req: NextRequest) {
 
     // 8. Create and Post Receipts for all students (to show realistic data)
     let receiptsCreated = 0;
+    console.log(`Creating receipts for ${students.length} students...`);
+    // Use a sequential loop to avoid voucher number conflicts
     for (let i = 0; i < students.length; i++) {
       const student = students[i];
       // Give some students full payments, some partial, some none
@@ -248,33 +251,37 @@ export async function POST(req: NextRequest) {
       const isFullPayment = i % 2 === 0;
       const amount = isFullPayment ? 220 : (50 + Math.floor(Math.random() * 100)); // $220 full or partial
 
-      const receipt = await ARService.createReceipt({
-        organisationId,
-        studentId: student.id,
-        bankAccountId: bankAcc.id,
-        amount: amount,
-        currencyCode: "USD",
-        date: new Date().toISOString(),
-        paymentMethod: i % 2 === 0 ? "Bank Transfer" : "Cash",
-        reference: `REC-${Math.random().toString(36).substring(7).toUpperCase()}`
-      }, actorId);
-
-      await VoucherService.submit(receipt.voucherId, actorId);
-      await VoucherService.approve(receipt.voucherId, actorId);
-      await VoucherService.post(receipt.voucherId, actorId);
-      receiptsCreated++;
-
-      // Allocate to the invoice we just generated
-      const studentInv = await prisma.aRInvoice.findFirst({
-        where: { studentId: student.id, batchId: batchResult.batch.id, balance: { gt: 0 } }
-      });
-      
-      if (studentInv) {
-        const allocAmount = Math.min(amount, Number(studentInv.balance));
-        await ARService.allocate({
-          receiptId: receipt.id,
-          allocations: [{ invoiceId: studentInv.id, amount: allocAmount }]
+      try {
+        const receipt = await ARService.createReceipt({
+          organisationId,
+          studentId: student.id,
+          bankAccountId: bankAcc.id,
+          amount: amount,
+          currencyCode: "USD",
+          date: new Date().toISOString(),
+          paymentMethod: i % 2 === 0 ? "Bank Transfer" : "Cash",
+          reference: `REC-${Math.random().toString(36).substring(7).toUpperCase()}`
         }, actorId);
+
+        await VoucherService.submit(receipt.voucherId, actorId);
+        await VoucherService.approve(receipt.voucherId, actorId);
+        await VoucherService.post(receipt.voucherId, actorId);
+        receiptsCreated++;
+
+        // Allocate to the invoice we just generated
+        const studentInv = await prisma.aRInvoice.findFirst({
+          where: { studentId: student.id, batchId: batchResult.batch.id, balance: { gt: 0 } }
+        });
+        
+        if (studentInv) {
+          const allocAmount = Math.min(amount, Number(studentInv.balance));
+          await ARService.allocate({
+            receiptId: receipt.id,
+            allocations: [{ invoiceId: studentInv.id, amount: allocAmount }]
+          }, actorId);
+        }
+      } catch (e) {
+        console.error(`Failed to create/post receipt for student ${student.id}:`, e);
       }
     }
 
