@@ -307,7 +307,7 @@ export default function ReconcilePage() {
                       <TableBody>
                         {unmatchedRows.map(row => (
                           <TableRow key={row.id}>
-                            <TableCell>{format(new Date(row.date), "MMM d")}</TableCell>
+                            <TableCell>{row.date ? format(new Date(row.date), "MMM d") : "N/A"}</TableCell>
                             <TableCell className="max-w-[200px] truncate">{row.description}</TableCell>
                             <TableCell className={cn("text-right font-mono", row.amount > 0 ? "text-green-600" : "text-red-600")}>
                               {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(row.amount)}
