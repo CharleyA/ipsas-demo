@@ -108,41 +108,51 @@ export default function VoucherDetailPage() {
 
   const canSubmit = voucher.status === "DRAFT" && ["ADMIN", "ACCOUNTANT"].includes(user?.role || "");
   const canApprove = voucher.status === "SUBMITTED" && ["ADMIN", "BURSAR"].includes(user?.role || "");
-  const canPost = voucher.status === "APPROVED" && ["ADMIN", "BURSAR"].includes(user?.role || "");
-  const canReverse = voucher.status === "POSTED" && user?.role === "ADMIN";
+    const canPost = voucher.status === "APPROVED" && ["ADMIN", "BURSAR"].includes(user?.role || "");
+    const canReverse = voucher.status === "POSTED" && user?.role === "ADMIN";
+    const isPosted = voucher.status === "POSTED";
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/dashboard/vouchers">
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">{voucher.number}</h1>
-              <Badge 
-                variant={
-                  voucher.status === "POSTED" ? "success" :
-                  voucher.status === "DRAFT" ? "outline" :
-                  voucher.status === "SUBMITTED" ? "warning" : "default"
-                }
-              >
-                {voucher.status}
-              </Badge>
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/dashboard/vouchers">
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
+            </Button>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold tracking-tight">{voucher.number}</h1>
+                <Badge 
+                  variant={
+                    voucher.status === "POSTED" ? "success" :
+                    voucher.status === "DRAFT" ? "outline" :
+                    voucher.status === "SUBMITTED" ? "warning" : "default"
+                  }
+                >
+                  {voucher.status}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {voucher.type} • Created by {voucher.createdBy?.firstName} on {new Date(voucher.date).toLocaleDateString()}
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {voucher.type} • Created by {voucher.createdBy?.firstName} on {new Date(voucher.date).toLocaleDateString()}
-            </p>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Printer className="w-4 h-4 mr-2" />
-            Print
-          </Button>
+          <div className="flex items-center gap-2">
+            {isPosted && (
+              <Button variant="outline" size="sm" asChild className="border-primary text-primary hover:bg-primary/5">
+                <Link href={`/dashboard/reports/general-ledger?accountId=${voucher.lines[0]?.accountId}&voucherId=${voucher.id}&startDate=${new Date(voucher.date).toISOString().split('T')[0]}&endDate=${new Date(voucher.date).toISOString().split('T')[0]}`}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  View Ledger
+                </Link>
+              </Button>
+            )}
+            <Button variant="outline" size="sm">
+              <Printer className="w-4 h-4 mr-2" />
+              Print
+            </Button>
+
           {canSubmit && (
             <Button size="sm" onClick={() => handleWorkflowAction("submit")} disabled={isActing}>
               <Send className="w-4 h-4 mr-2" />
