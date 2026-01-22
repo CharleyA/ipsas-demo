@@ -68,31 +68,73 @@ export class ReportExporter {
   private static async generateExcel(
     data: any[],
     columns: ExportColumn[],
-    reportName: string
+    reportName: string,
+    options?: PDFOptions
   ): Promise<Buffer> {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(reportName);
 
-    worksheet.columns = columns.map((col) => ({
-      header: col.header,
-      key: col.key,
-      width: col.width || 20,
-    }));
+    // Add Header Information
+    const orgName = options?.organisationName || "Organisation";
+    const title = options?.title || reportName;
+    const subtitle = options?.subtitle || "";
 
-    data.forEach((item) => {
-      const row: any = {};
-      columns.forEach((col) => {
-        row[col.key] = this.formatValue(item[col.key], col);
-      });
-      worksheet.addRow(row);
+    worksheet.mergeCells('A1:F1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = orgName;
+    titleCell.font = { bold: true, size: 16 };
+    titleCell.alignment = { horizontal: 'center' };
+
+    worksheet.mergeCells('A2:F2');
+    const reportTitleCell = worksheet.getCell('A2');
+    reportTitleCell.value = title;
+    reportTitleCell.font = { bold: true, size: 14 };
+    reportTitleCell.alignment = { horizontal: 'center' };
+
+    if (subtitle) {
+      worksheet.mergeCells('A3:F3');
+      const subtitleCell = worksheet.getCell('A3');
+      subtitleCell.value = subtitle;
+      subtitleCell.font = { italic: true, size: 12 };
+      subtitleCell.alignment = { horizontal: 'center' };
+    }
+
+    // Header Row starts at row 5
+    const headerRowIndex = 5;
+    const headerRow = worksheet.getRow(headerRowIndex);
+    
+    columns.forEach((col, index) => {
+      const cell = headerRow.getCell(index + 1);
+      cell.value = col.header;
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF1E293B' } // Slate-800
+      };
+      cell.alignment = { horizontal: 'center' };
+      worksheet.getColumn(index + 1).width = col.width || 20;
     });
 
-    worksheet.getRow(1).font = { bold: true };
-    worksheet.getRow(1).fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: "FFE0E0E0" },
-    };
+    // Add Data
+    data.forEach((item, rowIndex) => {
+      const row = worksheet.getRow(headerRowIndex + 1 + rowIndex);
+      columns.forEach((col, colIndex) => {
+        const value = this.formatValue(item[col.key], col);
+        const cell = row.getCell(colIndex + 1);
+        
+        cell.value = value;
+
+        // Apply currency formatting if column is debit/credit/balance
+        if (['debit', 'credit', 'balance', 'amount', 'total'].includes(col.key.toLowerCase())) {
+          cell.numFmt = '#,##0.00;[Red]-#,##0.00';
+          cell.alignment = { horizontal: 'right' };
+        }
+      });
+    });
+
+    // Freeze header
+    worksheet.views = [{ state: 'frozen', xSplit: 0, ySplit: headerRowIndex, activePane: 'bottomLeft', selType: 'row' }];
 
     return (await workbook.xlsx.writeBuffer()) as Buffer;
   }
@@ -103,7 +145,35 @@ export class ReportExporter {
     reportName: string,
     options?: PDFOptions
   ): Promise<Buffer> {
+    // Calculate totals for summary if it's Trial Balance
+    let summaryHtml = "";
+    if (reportName === "Trial Balance") {
+      const totalDebit = data.reduce((sum, row) => sum + (parseFloat(row.debit) || 0), 0);
+      const totalCredit = data.reduce((sum, row) => sum + (parseFloat(row.credit) || 0), 0);
+      const variance = Math.abs(totalDebit - totalCredit);
+
+      summaryHtml = `
+        <div class="summary-box">
+          <div class="summary-row">
+            <span class="font-bold">Total Institutional Debits:</span>
+            <span>${this.formatCurrency(totalDebit)}</span>
+          </div>
+          <div class="summary-row">
+            <span class="font-bold">Total Institutional Credits:</span>
+            <span>${this.formatCurrency(totalCredit)}</span>
+          </div>
+          <div class="summary-row" style="margin-top: 8px; border-top: 1px solid #ddd; padding-top: 8px;">
+            <span class="font-bold">Trial Balance Variance:</span>
+            <span class="${variance < 0.01 ? 'positive' : 'negative'} font-bold">
+              ${this.formatCurrency(variance)} ${variance < 0.01 ? '(Balanced)' : '(Out of Balance)'}
+            </span>
+          </div>
+        </div>
+      `;
+    }
+
     const tableHtml = `
+      ${summaryHtml}
       <table>
         <thead>
           <tr>
@@ -118,7 +188,7 @@ export class ReportExporter {
               ${columns
                 .map((col) => {
                   const val = this.formatValue(item[col.key], col);
-                  const isNum = typeof val === "number";
+                  const isNum = typeof val === "number" || (typeof val === "string" && !isNaN(parseFloat(val)) && ['debit', 'credit', 'balance', 'amount', 'total'].includes(col.key.toLowerCase()));
                   const displayVal = isNum ? this.formatCurrency(val) : (val ?? '');
                   return `<td class="${isNum ? "text-right" : ""}">${displayVal}</td>`;
                 })
