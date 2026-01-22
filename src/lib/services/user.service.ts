@@ -194,6 +194,7 @@ export class UserService {
     return orgUsers.map((ou) => ({
       ...ou.user,
       role: ou.role,
+      isApprover: ou.isApprover,
       organisationUserId: ou.id,
       isActive: ou.isActive && ou.user.isActive,
     }));
@@ -209,12 +210,14 @@ export class UserService {
       },
       update: {
         role: data.role,
+        isApprover: data.isApprover,
         isActive: true,
       },
       create: {
         userId: data.userId,
         organisationId: data.organisationId,
         role: data.role,
+        isApprover: data.isApprover,
         isActive: true,
       },
       include: {
