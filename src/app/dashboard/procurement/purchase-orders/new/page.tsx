@@ -75,6 +75,7 @@ export default function NewPurchaseOrderPage() {
   const [assetCategories, setAssetCategories] = useState<any[]>([]);
   const [currencies, setCurrencies] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [rateSource, setRateSource] = useState<string>("");
 
   const form = useForm<CreatePOInput>({
     resolver: zodResolver(createPOSchema),
