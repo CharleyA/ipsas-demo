@@ -27,8 +27,8 @@ import {
 import { 
   Loader2, 
   ArrowLeft,
-  Eye,
-  FileText as FileIconGL
+Eye,
+FileText
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
