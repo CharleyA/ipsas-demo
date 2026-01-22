@@ -8,7 +8,7 @@ export async function GET(
   props: { params: Promise<{ id: string }> }
 ) {
   const params = await props.params;
-  const { id } = params;
+  const id = params.id;
   
   return withAuth(req, async (authReq) => {
     const voucher = await VoucherService.findById(id);
@@ -29,7 +29,7 @@ export async function PATCH(
   props: { params: Promise<{ id: string }> }
 ) {
   const params = await props.params;
-  const { id } = params;
+  const id = params.id;
 
   return withAuth(req, async (authReq) => {
     try {
