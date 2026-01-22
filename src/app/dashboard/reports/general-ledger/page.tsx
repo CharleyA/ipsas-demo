@@ -279,12 +279,12 @@ import { ReportToolbar } from "@/components/reports/report-toolbar";
                     </TableCell>
                   </TableRow>
                 ))}
-                <TableRow className="bg-muted/50 font-bold">
-                  <TableCell colSpan={6}>Closing Balance</TableCell>
-                  <TableCell className="text-right underline decoration-double">
-                    {parseFloat(data.closingBalance).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </TableCell>
-                </TableRow>
+                  <TableRow className="bg-muted/50 font-bold">
+                    <TableCell colSpan={6}>Closing Balance</TableCell>
+                    <TableCell className="text-right underline decoration-double">
+                      {parseFloat(data.closingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </TableCell>
+                  </TableRow>
               </TableBody>
             </Table>
           ) : (
