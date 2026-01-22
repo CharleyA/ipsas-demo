@@ -57,31 +57,31 @@ export class ARService {
         studentId: data.studentId,
         lines: [
           // DR Fees Receivable
-          {
-            lineNumber: 1,
-            accountId: receivableAccount.id,
-            description: `Fees Receivable (${data.currencyCode}) - Student ${data.studentId}`,
-            currencyCode: data.currencyCode,
-            amountFc: totalAmountFc,
-            fxRate: fxRate,
-            amountLc: totalAmountLc,
-            debit: totalAmountLc,
-            fundId: data.fundId,
-            projectId: data.projectId,
-          },
-          // CR Fees Revenue
-          {
-            lineNumber: 2,
-            accountId: revenueAccount.id,
-            description: `Fees Revenue (${data.currencyCode}) - Student ${data.studentId}`,
-            currencyCode: data.currencyCode,
-            amountFc: totalAmountFc,
-            fxRate: fxRate,
-            amountLc: totalAmountLc,
-            credit: totalAmountLc,
-            fundId: data.fundId,
-            projectId: data.projectId,
-          }
+            {
+              lineNumber: 1,
+              accountId: receivableAccount.id,
+              description: `Fees Receivable (${data.currencyCode}) - Student ${data.studentId}`,
+              currencyCode: data.currencyCode,
+              amountFc: totalAmountFc,
+              fxRate: fxRate,
+              amountLc: totalAmountLc,
+              debit: totalAmountFc,
+              fundId: data.fundId,
+              projectId: data.projectId,
+            },
+            // CR Fees Revenue
+            {
+              lineNumber: 2,
+              accountId: revenueAccount.id,
+              description: `Fees Revenue (${data.currencyCode}) - Student ${data.studentId}`,
+              currencyCode: data.currencyCode,
+              amountFc: totalAmountFc,
+              fxRate: fxRate,
+              amountLc: totalAmountLc,
+              credit: totalAmountFc,
+              fundId: data.fundId,
+              projectId: data.projectId,
+            }
         ]
       }, actorId);
 
