@@ -80,15 +80,15 @@ export class APService {
         });
       });
 
-      const voucher = await VoucherService.create({
-        organisationId: data.organisationId,
-        type: "AP_BILL",
-        periodId: period.id,
-        date: new Date(),
-        description: data.description || `Bill from supplier ${data.supplierId}`,
-        supplierId: data.supplierId,
-        lines: voucherLines
-      }, actorId);
+        const voucher = await VoucherService.create({
+          organisationId: data.organisationId,
+          type: "AP_BILL",
+          periodId: period.id,
+          date: new Date(),
+          description: data.description || `Bill from supplier ${supplierName}`,
+          supplierId: data.supplierId,
+          lines: voucherLines
+        }, actorId);
 
       // 2. Create APBill
       const apBill = await tx.aPBill.create({
