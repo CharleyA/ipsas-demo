@@ -149,8 +149,9 @@ export default function CashbookEntryPage() {
 
       toast.success("Cashbook entry created as draft");
       router.push("/dashboard/vouchers");
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to create entry";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
