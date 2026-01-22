@@ -106,11 +106,11 @@ export class DashboardService {
     // 8. Total Liquidity (Bank + Cash)
     const totalLiquidity = cashAtBank.add(cashInHand);
 
-    // 9. Latest Exchange Rate (ZWG to USD)
+    // 9. Latest Exchange Rate (USD to ZWG as quoted by RBZ)
     const latestRate = await prisma.exchangeRate.findFirst({
       where: {
-        fromCurrencyCode: "ZWG",
-        toCurrencyCode: "USD"
+        fromCurrencyCode: "USD",
+        toCurrencyCode: "ZWG"
       },
       orderBy: { effectiveDate: "desc" }
     });
