@@ -147,13 +147,13 @@ export default function APPaymentsPage() {
                     <TableCell className="text-right font-bold">
                       {parseFloat(payment.unallocated).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" asChild>
-                        <Link href={`/dashboard/suppliers/${payment.supplierId}`}>
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                      </Button>
-                    </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link href={`/dashboard/vouchers/${payment.voucherId}`}>
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                      </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
