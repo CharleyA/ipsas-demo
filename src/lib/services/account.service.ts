@@ -153,7 +153,7 @@ export class AccountService {
   /**
    * Resolves a currency-specific sub-account for a given parent account code.
    * e.g. If parentCode is 1121 and currency is USD, it looks for 1121.USD.
-   * If not found, it falls back to the parent account.
+   * If not found, it creates the sub-account using the parent as a template.
    */
   static async resolveAccountByCurrency(
     organisationId: string,
@@ -175,7 +175,7 @@ export class AccountService {
 
     if (subAccount) return subAccount;
 
-    // Fallback to parent account
+    // Sub-account not found, get parent to use as template
     const parentAccount = await prisma.account.findUnique({
       where: {
         organisationId_code: {
@@ -185,7 +185,38 @@ export class AccountService {
       },
     });
 
-    return parentAccount;
+    if (!parentAccount) {
+      throw new Error(`Parent account ${parentCode} not found for organisation ${organisationId}`);
+    }
+
+    // Create the sub-account
+    try {
+      const newAccount = await prisma.account.create({
+        data: {
+          organisationId,
+          code: subAccountCode,
+          name: `${parentAccount.name} - ${currencySuffix}`,
+          type: parentAccount.type,
+          parentId: parentAccount.id,
+          description: `System generated currency account for ${currencySuffix}`,
+          isSystemAccount: true,
+        },
+      });
+      return newAccount;
+    } catch (error: any) {
+      // In case of race condition where another request created it simultaneously
+      if (error.code === 'P2002') {
+        return prisma.account.findUnique({
+          where: {
+            organisationId_code: {
+              organisationId,
+              code: subAccountCode,
+            },
+          },
+        }) as any;
+      }
+      throw error;
+    }
   }
 
   static async seedIPSAS(organisationId: string, actorId: string) {
