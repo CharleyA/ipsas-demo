@@ -149,6 +149,8 @@ export const createVoucherSchema = z.object({
   date: z.string().datetime().or(z.date()),
   description: z.string().min(1).max(500),
   reference: z.string().max(100).optional(),
+  studentId: z.string().optional(),
+  supplierId: z.string().optional(),
   lines: z.array(voucherLineSchema).min(1),
 });
 
