@@ -310,13 +310,39 @@ export default function AccountsPage() {
             {account.parentId ? accounts.find(a => a.id === account.parentId)?.code : "-"}
           </TableCell>
         )}
-        <TableCell>
-          <div className="flex items-center gap-2">
-            <div className={cn("w-2 h-2 rounded-full", account.isActive ? "bg-green-500" : "bg-muted")} />
-            <span className="text-xs font-medium">{account.isActive ? "Active" : "Inactive"}</span>
-          </div>
-        </TableCell>
-      </TableRow>
+          <TableCell>
+            <div className="flex items-center gap-2">
+              <div className={cn("w-2 h-2 rounded-full", account.isActive ? "bg-green-500" : "bg-muted")} />
+              <span className="text-xs font-medium">{account.isActive ? "Active" : "Inactive"}</span>
+            </div>
+          </TableCell>
+          <TableCell className="text-right">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[160px]">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setEditingAccount({ ...account })}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit Account
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="text-rose-600 focus:text-rose-600"
+                  onClick={() => setIsDeletingAccount(account)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TableCell>
+        </TableRow>
+
     );
   };
 
