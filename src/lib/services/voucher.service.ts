@@ -562,6 +562,12 @@ export class VoucherService {
   private static async generateVoucherNumber(organisationId: string, type: string) {
     const year = new Date().getFullYear();
     const prefix = type.substring(0, 3).toUpperCase();
+    
+    let nextNumber = 0;
+    let voucherNumber = "";
+    let exists = true;
+
+    // Use a loop to find the next available number
     const count = await prisma.voucher.count({
       where: {
         organisationId,
@@ -569,8 +575,22 @@ export class VoucherService {
         number: { startsWith: `${prefix}-${year}` },
       },
     });
+    nextNumber = count + 1;
 
-    return `${prefix}-${year}-${String(count + 1).padStart(6, "0")}`;
+    while (exists) {
+      voucherNumber = `${prefix}-${year}-${String(nextNumber).padStart(6, "0")}`;
+      const existing = await prisma.voucher.findUnique({
+        where: { organisationId_number: { organisationId, number: voucherNumber } },
+        select: { id: true }
+      });
+      if (!existing) {
+        exists = false;
+      } else {
+        nextNumber++;
+      }
+    }
+
+    return voucherNumber;
   }
 
   private static async generateEntryNumber(organisationId: string) {
