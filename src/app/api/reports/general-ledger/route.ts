@@ -69,11 +69,11 @@ export async function GET(req: NextRequest) {
       organisationName: org?.name || "Organisation",
       orientation: "landscape",
       summaryData: [
-        { label: "Opening Balance", value: Number(report.openingBalance) },
-        { label: "Total Debits", value: Number(report.summary.totalDebits) },
-        { label: "Total Credits", value: Number(report.summary.totalCredits) },
-        { label: "Net Movement", value: Number(report.summary.netMovement) },
-        { label: "Closing Balance", value: Number(report.closingBalance) },
+        { label: `Opening Balance (${report.reportingCurrency})`, value: Number(report.openingBalance) },
+        { label: `Total Debits (${report.reportingCurrency})`, value: Number(report.summary.totalDebits) },
+        { label: `Total Credits (${report.reportingCurrency})`, value: Number(report.summary.totalCredits) },
+        { label: `Net Movement (${report.reportingCurrency})`, value: Number(report.summary.netMovement) },
+        { label: `Closing Balance (${report.reportingCurrency})`, value: Number(report.closingBalance) },
       ]
     });
     return ReportExporter.getResponse(exportFormat, content, reportName);
