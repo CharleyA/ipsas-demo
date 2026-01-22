@@ -59,7 +59,7 @@ export function ReportToolbar({ reportName, endpoint, filters }: ReportToolbarPr
   return (
     <div className="flex items-center gap-2">
       <Button variant="outline" size="sm" onClick={() => handleDownload("pdf")} className="hidden md:flex">
-        <FileIconTB className="mr-2 h-4 w-4" />
+        <FileText className="mr-2 h-4 w-4" />
         PDF
       </Button>
       <Button variant="outline" size="sm" onClick={() => handleDownload("xlsx")} className="hidden md:flex">
@@ -76,7 +76,7 @@ export function ReportToolbar({ reportName, endpoint, filters }: ReportToolbarPr
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => handleDownload("pdf")} className="md:hidden">
-            <FileIconTB className="mr-2 h-4 w-4" />
+            <FileText className="mr-2 h-4 w-4" />
             Download PDF
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => handleDownload("xlsx")} className="md:hidden">
