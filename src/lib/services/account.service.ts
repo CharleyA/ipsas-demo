@@ -219,6 +219,91 @@ export class AccountService {
     }
   }
 
+  /**
+   * Sanitises ledger entries by moving them from parent accounts to currency-specific sub-accounts.
+   * e.g. Moves USD transactions from 1121 to 1121.USD.
+   */
+  static async sanitizeCurrencyAccounts(organisationId: string, actorId: string) {
+    const parentCodesToSanitize = ["1121", "4210", "2111"];
+    
+    const results = {
+      voucherLinesFixed: 0,
+      glEntriesFixed: 0,
+      accountsCreated: 0
+    };
+
+    // 1. Process VoucherLines
+    const voucherLines = await prisma.voucherLine.findMany({
+      where: {
+        voucher: { organisationId },
+        account: {
+          code: { in: parentCodesToSanitize }
+        }
+      },
+      include: {
+        account: true,
+        voucher: true
+      }
+    });
+
+    for (const line of voucherLines) {
+      const correctAccount = await this.resolveAccountByCurrency(
+        organisationId,
+        line.account.code,
+        line.currencyCode
+      );
+
+      if (correctAccount.id !== line.accountId) {
+        await prisma.voucherLine.update({
+          where: { id: line.id },
+          data: { accountId: correctAccount.id }
+        });
+        results.voucherLinesFixed++;
+      }
+    }
+
+    // 2. Process GLEntries
+    const glEntries = await prisma.gLEntry.findMany({
+      where: {
+        glHeader: { organisationId },
+        account: {
+          code: { in: parentCodesToSanitize }
+        }
+      },
+      include: {
+        account: true,
+        glHeader: true
+      }
+    });
+
+    for (const entry of glEntries) {
+      const correctAccount = await this.resolveAccountByCurrency(
+        organisationId,
+        entry.account.code,
+        entry.currencyCode
+      );
+
+      if (correctAccount.id !== entry.accountId) {
+        await prisma.gLEntry.update({
+          where: { id: entry.id },
+          data: { accountId: correctAccount.id }
+        });
+        results.glEntriesFixed++;
+      }
+    }
+
+    await AuditService.log({
+      userId: actorId,
+      organisationId,
+      action: "SANITIZE_ACCOUNTS",
+      entityType: "Account",
+      entityId: "bulk",
+      newValues: results
+    });
+
+    return results;
+  }
+
   static async seedIPSAS(organisationId: string, actorId: string) {
     const ipsasAccounts = [
       // Assets (1000-1999)
