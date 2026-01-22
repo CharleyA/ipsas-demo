@@ -33,8 +33,10 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
 import { ReportToolbar } from "@/components/reports/report-toolbar";
 
-export default function GeneralLedgerPage() {
+function GeneralLedgerContent() {
   const { token } = useAuth();
+  const searchParams = useSearchParams();
+  const urlAccountId = searchParams.get("accountId");
   const [data, setData] = useState<any>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,7 +53,13 @@ export default function GeneralLedgerPage() {
       });
       const result = await response.json();
       setAccounts(result);
-      if (result.length > 0) setSelectedAccountId(result[0].id);
+      
+      // Prioritize URL parameter for drill-down
+      if (urlAccountId) {
+        setSelectedAccountId(urlAccountId);
+      } else if (result.length > 0) {
+        setSelectedAccountId(result[0].id);
+      }
     } catch (error) {
       toast.error("Failed to fetch accounts");
     }
