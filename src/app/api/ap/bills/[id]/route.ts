@@ -6,14 +6,15 @@ export const runtime = "nodejs";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await verifyAuth(req);
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const { id } = await params;
     const bill = await prisma.aPBill.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         supplier: true,
         voucher: {
