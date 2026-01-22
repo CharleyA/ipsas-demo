@@ -231,14 +231,36 @@ function GeneralLedgerContent() {
               <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                 <CalendarDays className="w-3 h-3" /> End Date
               </label>
-              <Input 
-                type="date" 
-                value={endDate} 
-                onChange={(e) => setEndDate(e.target.value)}
-                className="h-9 w-[160px] bg-background/50"
-              />
+                <Input 
+                  type="date" 
+                  value={endDate} 
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="h-9 w-[160px] bg-background/50"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5 min-w-[140px]">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                  <Coins className="w-3 h-3" /> Reporting Currency
+                </label>
+                <Select 
+                  value={reportingCurrency || (data?.accountCurrency || "")} 
+                  onValueChange={setReportingCurrency}
+                >
+                  <SelectTrigger className="h-9 bg-background/50">
+                    <SelectValue placeholder="Currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={data?.accountCurrency || "ORIGINAL"}>
+                      Original ({data?.accountCurrency || "..."})
+                    </SelectItem>
+                    <SelectItem value="ZWG">ZWG (Base)</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
+
         </CardContent>
       </Card>
 
