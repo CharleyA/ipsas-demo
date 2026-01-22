@@ -112,6 +112,7 @@ export class ARService {
         date: new Date(data.date),
         description: `Fee Payment - Student ${data.studentId}`,
         reference: data.reference,
+        studentId: data.studentId,
         lines: [
           // DR Bank/Cash
           {
