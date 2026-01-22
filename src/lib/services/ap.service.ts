@@ -64,6 +64,7 @@ export class APService {
         periodId: period.id,
         date: new Date(),
         description: data.description || `Bill from supplier ${data.supplierId}`,
+        supplierId: data.supplierId,
         lines: voucherLines
       }, actorId);
 
