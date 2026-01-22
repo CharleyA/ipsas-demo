@@ -351,13 +351,18 @@ export default function FinancialPositionPage() {
           <Card className="border-slate-200/60 shadow-sm overflow-hidden print:border-none print:shadow-none">
             <CardHeader className="bg-slate-50/50 border-b border-slate-100 px-6 py-4 print:hidden">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-indigo-500" />
-                  Classification Breakdown
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-slate-400 uppercase tracking-widest">Default View: 50+ Items</span>
-                </div>
+                  <CardTitle className="text-lg font-bold text-slate-800 flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-5 h-5 text-indigo-500" />
+                      Classification Breakdown
+                    </div>
+                    <div className="flex items-center gap-3 px-3 py-1 bg-slate-100 rounded-lg text-xs font-semibold text-slate-500">
+                      <span>Total Lines: {data.rows.length}</span>
+                      <span className="w-1 h-1 rounded-full bg-slate-300" />
+                      <span>Display Limit: 50+</span>
+                    </div>
+                  </CardTitle>
+
               </div>
             </CardHeader>
             <CardContent className="p-0">
