@@ -106,6 +106,21 @@ export class DashboardService {
     // 8. Total Liquidity (Bank + Cash)
     const totalLiquidity = cashAtBank.add(cashInHand);
 
+    // 9. Latest Exchange Rate (ZWG to USD)
+    const latestRate = await prisma.exchangeRate.findFirst({
+      where: {
+        fromCurrencyCode: "ZWG",
+        toCurrencyCode: "USD"
+      },
+      orderBy: { effectiveDate: "desc" }
+    });
+
+    // 10. Organisation Info
+    const org = await prisma.organisation.findUnique({
+      where: { id: organisationId },
+      select: { name: true, baseCurrency: true }
+    });
+
     return {
       cashAtBank: cashAtBank.toNumber(),
       cashInHand: cashInHand.toNumber(),
@@ -114,7 +129,13 @@ export class DashboardService {
       pendingApprovals,
       topSpending: topSpending.map(s => ({ name: s.name, amount: s.amount.toNumber() })),
       budgetUtilisation,
-      studentCount
+      studentCount,
+      exchangeRate: latestRate ? {
+        rate: latestRate.rate.toNumber(),
+        effectiveDate: latestRate.effectiveDate,
+        lastSync: latestRate.updatedAt
+      } : null,
+      organisationInfo: org
     };
   }
 
