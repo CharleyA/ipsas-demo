@@ -133,9 +133,6 @@ export async function generatePDF(
   return Buffer.from(doc.output("arraybuffer"));
 }
 
-  return Buffer.from(doc.output("arraybuffer"));
-}
-
 // Keep this for compatibility but it's likely broken in this environment
 // We will transition all reports to the new generatePDF function
 export async function generatePDFFromHTML(
