@@ -64,23 +64,27 @@ export default function ApprovalWorkflowPage() {
   });
 
   useEffect(() => {
-    async function fetchUsers() {
-      if (!token) return;
+      async function fetchUsers() {
+        if (!token || !currentUser) return;
 
-      try {
-        const response = await fetch("/api/users", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const result = await response.json();
-        if (result.success) {
-          setUsers(result.data);
+        try {
+          const response = await fetch("/api/users", {
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              "x-organisation-id": currentUser.organisationId,
+              "x-user-id": currentUser.id
+            },
+          });
+          const result = await response.json();
+          if (result.success) {
+            setUsers(result.data);
+          }
+        } catch (error) {
+          toast.error("Failed to fetch users");
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        toast.error("Failed to fetch users");
-      } finally {
-        setIsLoading(false);
       }
-    }
 
     fetchUsers();
   }, [token]);
