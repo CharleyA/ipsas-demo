@@ -60,11 +60,15 @@ export default function CashbookEntryPage() {
     defaultValues: {
       organisationId: user?.organisationId,
       type: "RECEIPT",
-      date: new Date(),
       currencyCode: "ZWG",
       fxRate: 1,
     },
   });
+
+  // Handle hydration for date
+  useEffect(() => {
+    form.setValue("date", new Date());
+  }, [form]);
 
   const isBursar = user?.role === "BURSAR";
 
