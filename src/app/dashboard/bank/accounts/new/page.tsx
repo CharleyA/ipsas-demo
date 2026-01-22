@@ -30,6 +30,11 @@ export default function NewBankAccountPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currencies, setCurrencies] = useState<any[]>([]);
   const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const [formData, setFormData] = useState({
     bankName: "",
