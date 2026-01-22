@@ -595,14 +595,32 @@ export class VoucherService {
 
   private static async generateEntryNumber(organisationId: string) {
     const year = new Date().getFullYear();
+    let nextNumber = 0;
+    let entryNumber = "";
+    let exists = true;
+
     const count = await prisma.gLHeader.count({
       where: {
         organisationId,
         entryNumber: { startsWith: `GL-${year}` },
       },
     });
+    nextNumber = count + 1;
 
-    return `GL-${year}-${String(count + 1).padStart(6, "0")}`;
+    while (exists) {
+      entryNumber = `GL-${year}-${String(nextNumber).padStart(6, "0")}`;
+      const existing = await prisma.gLHeader.findUnique({
+        where: { organisationId_entryNumber: { organisationId, entryNumber } },
+        select: { id: true }
+      });
+      if (!existing) {
+        exists = false;
+      } else {
+        nextNumber++;
+      }
+    }
+
+    return entryNumber;
   }
 }
 
