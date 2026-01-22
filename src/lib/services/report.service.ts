@@ -132,6 +132,27 @@ export class ReportService {
         };
     });
 
+    const totalDebits = rows.reduce((acc, r) => acc.add(r.debit), new Decimal(0));
+    const totalCredits = rows.reduce((acc, r) => acc.add(r.credit), new Decimal(0));
+    const netMovement = closingBalance.minus(openingBalance);
+
+    // Group for Daily Activity Chart
+    const dailyMap = new Map<string, { date: string, debits: number, credits: number }>();
+    rows.forEach(r => {
+      const d = r.date.toISOString().split("T")[0];
+      const existing = dailyMap.get(d) || { date: d, debits: 0, credits: 0 };
+      existing.debits += r.debit.toNumber();
+      existing.credits += r.credit.toNumber();
+      dailyMap.set(d, existing);
+    });
+
+    // Balance Evolution
+    const evolutionMap = new Map<string, number>();
+    rows.forEach(r => {
+      const d = r.date.toISOString().split("T")[0];
+      evolutionMap.set(d, r.balance.toNumber());
+    });
+
     return {
       account,
       startDate,
@@ -139,6 +160,17 @@ export class ReportService {
       openingBalance,
       entries: rows,
       closingBalance: runningBalance,
+      summary: {
+        totalDebits,
+        totalCredits,
+        netMovement,
+      },
+      chartData: {
+        dailyActivity: Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date)),
+        balanceEvolution: Array.from(evolutionMap.entries())
+          .map(([date, balance]) => ({ date, balance }))
+          .sort((a, b) => a.date.localeCompare(b.date)),
+      }
     };
   }
 
