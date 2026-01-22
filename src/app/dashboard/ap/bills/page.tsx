@@ -147,13 +147,13 @@ export default function APBillsPage() {
                     <TableCell className="text-right font-bold">
                       {parseFloat(bill.balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" asChild>
-                        <Link href={`/dashboard/suppliers/${bill.supplierId}`}>
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                      </Button>
-                    </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link href={`/dashboard/vouchers/${bill.voucherId}`}>
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                      </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
