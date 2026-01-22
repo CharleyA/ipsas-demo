@@ -167,10 +167,10 @@ function GeneralLedgerContent() {
         {urlVoucherId && (
           <Card className="bg-primary/5 border-primary/20">
             <CardContent className="p-4 flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <FileIconGL className="w-4 h-4 text-primary" />
-                <span>Affected Accounts for {voucherInfo?.number}:</span>
-              </div>
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <FileText className="w-4 h-4 text-primary" />
+                  <span>Affected Accounts for {voucherInfo?.number}:</span>
+                </div>
             <div className="flex flex-wrap gap-2">
               {affectedAccounts.map(acc => (
                 <Button 
