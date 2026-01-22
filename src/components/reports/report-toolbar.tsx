@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { 
   FileDown, 
   FileSpreadsheet, 
-  FileText, 
+  FileText as LucideFileText, 
   Mail, 
   MoreHorizontal 
 } from "lucide-react";
