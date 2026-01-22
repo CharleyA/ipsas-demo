@@ -1,22 +1,63 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Card,
   CardContent,
   CardHeader,
+  CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   Loader2, 
-  ArrowLeft
+  ArrowLeft,
+  TrendingUp,
+  Wallet,
+  ShieldAlert,
+  PieChart as PieChartIcon,
+  Printer,
+  Mail,
+  RefreshCcw,
+  Building2,
+  Calendar,
+  Layers,
+  Activity,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  TrendingDown,
+  Coins
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
 import { ReportToolbar } from "@/components/reports/report-toolbar";
 import { FinancialStatementTable } from "@/components/reports/financial-statement-table";
+import { 
+  PieChart, 
+  Pie, 
+  Cell, 
+  ResponsiveContainer, 
+  Tooltip, 
+  Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid
+} from "recharts";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+
+const COLORS = ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6'];
 
 export default function CashFlowPage() {
   const { token } = useAuth();
@@ -26,11 +67,13 @@ export default function CashFlowPage() {
     new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0]
   );
   const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
+  const [reportingCurrency, setReportingCurrency] = useState("ZWG");
+  const printRef = useRef<HTMLDivElement>(null);
 
   const fetchReport = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/reports/cashflow?startDate=${startDate}&endDate=${endDate}`, {
+      const response = await fetch(`/api/reports/cashflow?startDate=${startDate}&endDate=${endDate}&currency=${reportingCurrency}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       const result = await response.json();
@@ -44,66 +87,352 @@ export default function CashFlowPage() {
 
   useEffect(() => {
     if (token) fetchReport();
-  }, [token, startDate, endDate]);
+  }, [token, startDate, endDate, reportingCurrency]);
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleEmailReport = async () => {
+    try {
+      const response = await fetch("/api/reports/email", {
+        method: "POST",
+        headers: { 
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          reportName: "Statement of Cash Flows",
+          endpoint: `/api/reports/cashflow?startDate=${startDate}&endDate=${endDate}&currency=${reportingCurrency}`,
+          summary: {
+            "Period": `${format(new Date(startDate), "PP")} to ${format(new Date(endDate), "PP")}`,
+            "Currency": reportingCurrency,
+            "Operating Cash Flow": `${reportingCurrency} ${parseFloat(data.summary.operatingCashFlow).toLocaleString()}`,
+            "Investing Cash Flow": `${reportingCurrency} ${parseFloat(data.summary.investingCashFlow).toLocaleString()}`,
+            "Financing Cash Flow": `${reportingCurrency} ${parseFloat(data.summary.financingCashFlow).toLocaleString()}`,
+            "Net Cash Change": `${reportingCurrency} ${parseFloat(data.summary.netCashChange).toLocaleString()}`,
+          }
+        })
+      });
+
+      if (!response.ok) throw new Error("Failed to send email");
+      toast.success("Report emailed successfully");
+    } catch (error) {
+      toast.error("Failed to send report email");
+    }
+  };
+
+  const SummaryCard = ({ title, value, icon: Icon, colorClass }: any) => (
+    <Card className="overflow-hidden border-slate-200/60 shadow-sm hover:shadow-md transition-all duration-300">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-1 uppercase tracking-wider">{title}</p>
+            <h3 className="text-2xl font-bold text-slate-900 tracking-tight">
+              {reportingCurrency} {parseFloat(value).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </h3>
+          </div>
+          <div className={cn("p-3 rounded-xl", colorClass)}>
+            <Icon className="w-6 h-6" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8 pb-10">
+      {/* Top Navigation & Actions */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild className="rounded-full hover:bg-slate-100 transition-colors">
             <Link href="/dashboard/reports">
               <ArrowLeft className="w-4 h-4" />
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Cash Flow Statement</h1>
-            <p className="text-muted-foreground">Statement of Cash Flows (IPSAS 2)</p>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600 rounded-full border border-blue-100">IPSAS 2</span>
+              <span className="text-slate-300">/</span>
+              <span className="text-xs font-medium text-slate-400">Cash Flows</span>
+            </div>
+            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Statement of Cash Flows</h1>
           </div>
         </div>
-        <ReportToolbar 
-          reportName="Cash Flow" 
-          endpoint="/api/reports/cashflow" 
-          filters={{ startDate, endDate }} 
-        />
+        
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2 border-slate-200 font-medium">
+            <Printer className="w-4 h-4" />
+            Print
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleEmailReport} className="gap-2 border-slate-200 font-medium">
+            <Mail className="w-4 h-4" />
+            Email
+          </Button>
+          <div className="h-4 w-[1px] bg-slate-200 mx-1" />
+          <ReportToolbar 
+            reportName="Cash Flow" 
+            endpoint="/api/reports/cashflow" 
+            filters={{ startDate, endDate, currency: reportingCurrency }} 
+          />
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Start Date</label>
+      {/* Control Panel */}
+      <Card className="border-slate-200/60 shadow-sm print:hidden">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-wrap items-end gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5" />
+                Start Date
+              </label>
               <Input 
                 type="date" 
                 value={startDate} 
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-[180px]"
+                className="w-[180px] border-slate-200 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">End Date</label>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5" />
+                End Date
+              </label>
               <Input 
                 type="date" 
                 value={endDate} 
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-[180px]"
+                className="w-[180px] border-slate-200 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5" />
+                Reporting Currency
+              </label>
+              <Select value={reportingCurrency} onValueChange={setReportingCurrency}>
+                <SelectTrigger className="w-[160px] border-slate-200">
+                  <SelectValue placeholder="Currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ZWG">ZWG (Base)</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button onClick={fetchReport} disabled={isLoading} variant="secondary" className="gap-2">
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
+              Generate Report
+            </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-          ) : data ? (
-            <FinancialStatementTable data={data.rows} />
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              No data available for the selected range.
-            </div>
-          )}
         </CardContent>
       </Card>
+
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
+          <p className="text-slate-500 font-medium animate-pulse">Analyzing cash movements...</p>
+        </div>
+      ) : data ? (
+        <div ref={printRef} className="space-y-8 print:p-8 print:bg-white print:text-black print:m-0 landscape-container">
+          {/* Print Header */}
+          <div className="hidden print:block mb-10 border-b-2 border-slate-900 pb-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">Statement of Cash Flows</h1>
+                <p className="text-slate-600 font-bold mt-1 uppercase tracking-widest text-sm">{data.organisationName || "Official Report"}</p>
+                <p className="text-slate-500 text-xs mt-1 italic">For the period {format(new Date(startDate), "MMMM d, yyyy")} to {format(new Date(endDate), "MMMM d, yyyy")}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Reported Currency</p>
+                <p className="text-lg font-bold text-slate-900">{reportingCurrency}</p>
+                <p className="text-xs font-bold text-blue-600 mt-1 uppercase">IPSAS COMPLIANT</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Info Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print:grid-cols-4">
+            <SummaryCard 
+              title="Operating Cash Flow" 
+              value={data.summary.operatingCashFlow} 
+              icon={Activity} 
+              colorClass="bg-emerald-50 text-emerald-600"
+            />
+            <SummaryCard 
+              title="Investing Cash Flow" 
+              value={data.summary.investingCashFlow} 
+              icon={TrendingUp} 
+              colorClass="bg-amber-50 text-amber-600"
+            />
+            <SummaryCard 
+              title="Financing Cash Flow" 
+              value={data.summary.financingCashFlow} 
+              icon={Coins} 
+              colorClass="bg-indigo-50 text-indigo-600"
+            />
+            <SummaryCard 
+              title="Net Cash Change" 
+              value={data.summary.netCashChange} 
+              icon={Wallet} 
+              colorClass={parseFloat(data.summary.netCashChange) >= 0 ? "bg-blue-50 text-blue-600" : "bg-rose-50 text-rose-600"}
+            />
+          </div>
+
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:grid-cols-2">
+            <Card className="border-slate-200/60 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div>
+                  <CardTitle className="text-base font-bold text-slate-800">Cash Flow Breakdown</CardTitle>
+                  <CardDescription>Activity type comparison</CardDescription>
+                </div>
+                <PieChartIcon className="w-5 h-5 text-slate-400" />
+              </CardHeader>
+              <CardContent className="h-[300px] mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.chartData.cashFlowBreakdown}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} />
+                    <Tooltip 
+                      cursor={{ fill: '#f8fafc' }}
+                      formatter={(value: any) => `${reportingCurrency} ${parseFloat(value).toLocaleString()}`}
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {data.chartData.cashFlowBreakdown.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={entry.value >= 0 ? '#10b981' : '#ef4444'} fillOpacity={0.8} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200/60 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div>
+                  <CardTitle className="text-base font-bold text-slate-800">Operating Composition</CardTitle>
+                  <CardDescription>Operating cash distribution</CardDescription>
+                </div>
+                <Activity className="w-5 h-5 text-slate-400" />
+              </CardHeader>
+              <CardContent className="h-[300px] mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={data.chartData.operatingComposition}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                      minAngle={15}
+                      label={({ name, percent }) => 
+                        percent > 0.05 ? `${name} ${(percent * 100).toFixed(0)}%` : ""
+                      }
+                    >
+                      {data.chartData.operatingComposition.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: any) => `${reportingCurrency} ${parseFloat(value).toLocaleString()}`}
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Legend verticalAlign="bottom" height={36} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Data Table */}
+          <Card className="border-slate-200/60 shadow-sm overflow-hidden print:border-none print:shadow-none">
+            <CardHeader className="bg-slate-50/50 border-b border-slate-100 px-6 py-4 print:hidden">
+              <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg font-bold text-slate-800 flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-5 h-5 text-blue-500" />
+                      IPSAS Statement Breakdown
+                    </div>
+                    <div className="flex items-center gap-3 px-3 py-1 bg-slate-100 rounded-lg text-xs font-semibold text-slate-500">
+                      <span>Accrual Basis Reporting</span>
+                      <span className="w-1 h-1 rounded-full bg-slate-300" />
+                      <span>{reportingCurrency}</span>
+                    </div>
+                  </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <FinancialStatementTable data={data.rows} currency={reportingCurrency} />
+            </CardContent>
+          </Card>
+
+          {/* Print Footer */}
+          <div className="hidden print:block mt-12 pt-8 border-t border-slate-200">
+            <div className="grid grid-cols-3 gap-8">
+              <div className="space-y-4">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Prepared By</p>
+                <div className="h-10 border-b border-slate-300 w-full" />
+                <p className="text-xs font-bold">Financial Controller</p>
+              </div>
+              <div className="space-y-4">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Approved By</p>
+                <div className="h-10 border-b border-slate-300 w-full" />
+                <p className="text-xs font-bold">Principal / SDC Chairperson</p>
+              </div>
+              <div className="space-y-4">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date of Approval</p>
+                <div className="h-10 border-b border-slate-300 w-full" />
+                <p className="text-xs font-bold">{format(new Date(), "PPpp")}</p>
+              </div>
+            </div>
+            <div className="mt-12 text-center">
+              <p className="text-[9px] text-slate-400 uppercase tracking-[0.2em]">Generated by IPSAS Accounting System • Institutional Cash Flow Audit Document</p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-24 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+          <ShieldAlert className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-slate-900">No Cash Flow Data</h3>
+          <p className="text-slate-500 max-w-xs mx-auto mt-2">We couldn't find any cash movements for the selected period. Please ensure your transactions are posted to cash/bank accounts.</p>
+        </div>
+      )}
+
+      {/* Global CSS for Landscape Print */}
+      <style jsx global>{`
+        @media print {
+          @page {
+            size: landscape;
+            margin: 0;
+          }
+          body {
+            margin: 0;
+            padding: 0;
+            background: white !important;
+            color: black !important;
+          }
+          .landscape-container {
+            width: 100% !important;
+            max-width: none !important;
+          }
+          header, nav, .print-hidden {
+            display: none !important;
+          }
+          .recharts-responsive-container {
+            width: 100% !important;
+            height: 250px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
