@@ -46,20 +46,26 @@ const menuItems = [
   {
     title: "General",
     items: [
-            {
-              title: "Dashboard",
-              href: "/dashboard",
-              icon: LayoutDashboard,
-              roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"],
-            },
-        {
-          title: "Approvals",
-          href: "/dashboard/approvals",
-          icon: ShieldCheck,
-          roles: ["ADMIN", "BURSAR", "HEADMASTER"],
-        },
-      ],
-    },
+          {
+            title: "Dashboard",
+            href: "/dashboard",
+            icon: LayoutDashboard,
+            roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"],
+          },
+          {
+            title: "Control Panel",
+            href: "/dashboard/admin",
+            icon: ShieldCheck,
+            roles: ["ADMIN"],
+          },
+          {
+            title: "Approvals",
+            href: "/dashboard/approvals",
+            icon: ShieldCheck,
+            roles: ["ADMIN", "BURSAR", "HEADMASTER"],
+          },
+        ],
+      },
     {
       title: "Accounting",
       items: [
