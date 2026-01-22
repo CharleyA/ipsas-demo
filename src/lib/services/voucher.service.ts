@@ -275,6 +275,16 @@ export class VoucherService {
       newValues: { status: "APPROVED", notes },
     });
 
+    // Notify creator
+    await NotificationService.create({
+      organisationId: voucher.organisationId,
+      userId: voucher.createdById,
+      type: "VOUCHER_APPROVED",
+      title: "Voucher Approved",
+      message: `Your voucher ${voucher.number} has been approved.`,
+      metadata: { voucherId: id, voucherNumber: voucher.number },
+    });
+
     return result;
   }
 
