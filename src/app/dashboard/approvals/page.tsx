@@ -130,22 +130,23 @@ export default function ApprovalsPage() {
                         </Button>
                           {["ADMIN", "BURSAR", "HEADMASTER"].includes(user?.role) && (
                             <>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="text-green-600"
-                              onClick={() => handleAction(task.id, "approve")}
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="text-red-600"
-                              onClick={() => handleAction(task.id, "reject")}
-                            >
-                              <XCircle className="w-4 h-4" />
-                            </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="text-green-600"
+                                onClick={() => handleAction(task.voucherId, "approve")}
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="text-red-600"
+                                onClick={() => handleAction(task.voucherId, "reject")}
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </Button>
+
                           </>
                         )}
                       </div>
