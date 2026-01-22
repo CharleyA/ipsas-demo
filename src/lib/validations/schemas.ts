@@ -333,7 +333,7 @@ export const createCashbookEntrySchema = z.object({
   organisationId: z.string(),
   bankAccountId: z.string(),
   type: z.enum(["RECEIPT", "PAYMENT"]),
-  date: z.string().or(z.date()),
+  date: z.coerce.date(),
   description: z.string(),
   reference: z.string().optional(),
   amount: z.number().positive(),
