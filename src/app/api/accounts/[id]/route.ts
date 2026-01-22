@@ -4,12 +4,13 @@ import prisma from "@/lib/db";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return withAuth(req, async (authReq) => {
+    const { id } = await params;
     const account = await prisma.account.findUnique({
       where: {
-        id: params.id,
+        id: id,
         organisationId: authReq.user.organisationId,
       },
     });
@@ -24,10 +25,11 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return withAuth(req, async (authReq) => {
     try {
+      const { id } = await params;
       const body = await authReq.json();
       
       // Prevent changing organisationId
@@ -35,7 +37,7 @@ export async function PATCH(
 
       const account = await prisma.account.update({
         where: {
-          id: params.id,
+          id: id,
           organisationId: authReq.user.organisationId,
         },
         data: body,
@@ -50,15 +52,16 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return withAuth(req, async (authReq) => {
     try {
+      const { id } = await params;
       // Check for transactions
       const [glEntries, voucherLines, children] = await Promise.all([
-        prisma.glEntry.count({ where: { accountId: params.id } }),
-        prisma.voucherLine.count({ where: { accountId: params.id } }),
-        prisma.account.count({ where: { parentId: params.id } }),
+        prisma.glEntry.count({ where: { accountId: id } }),
+        prisma.voucherLine.count({ where: { accountId: id } }),
+        prisma.account.count({ where: { parentId: id } }),
       ]);
 
       if (glEntries > 0 || voucherLines > 0) {
@@ -76,7 +79,7 @@ export async function DELETE(
       }
 
       const account = await prisma.account.findUnique({
-        where: { id: params.id },
+        where: { id: id },
       });
 
       if (account?.isSystemAccount) {
@@ -88,7 +91,7 @@ export async function DELETE(
 
       await prisma.account.delete({
         where: {
-          id: params.id,
+          id: id,
           organisationId: authReq.user.organisationId,
         },
       });
