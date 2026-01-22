@@ -490,12 +490,18 @@ export class VoucherService {
     return updated;
   }
 
-  static async listByOrganisation(organisationId: string, filters?: { status?: VoucherStatus, type?: VoucherType }) {
+  static async listByOrganisation(organisationId: string, filters?: { status?: VoucherStatus, type?: VoucherType, startDate?: string, endDate?: string }) {
     return prisma.voucher.findMany({
       where: {
         organisationId,
         ...(filters?.status && { status: filters.status }),
         ...(filters?.type && { type: filters.type }),
+        ...(filters?.startDate || filters?.endDate ? {
+          date: {
+            ...(filters.startDate && { gte: new Date(filters.startDate) }),
+            ...(filters.endDate && { lte: new Date(filters.endDate) }),
+          }
+        } : {}),
       },
       include: {
         lines: true,
