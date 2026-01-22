@@ -51,6 +51,7 @@ export default function CashbookEntryPage() {
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [costCentres, setCostCentres] = useState<any[]>([]);
   const [funds, setFunds] = useState<any[]>([]);
+  const [currencies, setCurrencies] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [counterpartyType, setCounterpartyType] = useState("OTHER");
 
@@ -66,17 +67,18 @@ export default function CashbookEntryPage() {
   });
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || !user?.organisationId) return;
 
     const fetchData = async () => {
       try {
-        const [banksRes, accsRes, studentsRes, suppliersRes, ccRes, fundsRes] = await Promise.all([
+        const [banksRes, accsRes, studentsRes, suppliersRes, ccRes, fundsRes, currRes] = await Promise.all([
           fetch("/api/bank/accounts", { headers: { "Authorization": `Bearer ${token}` } }),
           fetch("/api/accounts", { headers: { "Authorization": `Bearer ${token}` } }),
           fetch("/api/students", { headers: { "Authorization": `Bearer ${token}` } }),
           fetch("/api/suppliers", { headers: { "Authorization": `Bearer ${token}` } }),
           fetch("/api/organisations/current/cost-centres", { headers: { "Authorization": `Bearer ${token}` } }),
           fetch("/api/organisations/current/funds", { headers: { "Authorization": `Bearer ${token}` } }),
+          fetch(`/api/organisations/${user.organisationId}/currencies`, { headers: { "Authorization": `Bearer ${token}` } }),
         ]);
 
         setBankAccounts(await banksRes.json());
@@ -85,13 +87,14 @@ export default function CashbookEntryPage() {
         setSuppliers(await suppliersRes.json());
         setCostCentres(await ccRes.json());
         setFunds(await fundsRes.json());
+        setCurrencies(await currRes.json());
       } catch (error) {
         toast.error("Failed to load form data");
       }
     };
 
     fetchData();
-  }, [token]);
+  }, [token, user?.organisationId]);
 
   const onSubmit = async (data: CreateCashbookEntryInput) => {
     setIsLoading(true);
