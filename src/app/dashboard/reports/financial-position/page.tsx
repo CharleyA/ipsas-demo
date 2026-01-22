@@ -303,9 +303,9 @@ export default function FinancialPositionPage() {
                       dataKey="value"
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     >
-                      {data.chartData.composition.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.COLORS.length] || COLORS[index % COLORS.length]} />
-                      ))}
+                        {data.chartData.composition.map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
                     </Pie>
                     <Tooltip 
                       formatter={(value: any) => `${reportingCurrency} ${parseFloat(value).toLocaleString()}`}
