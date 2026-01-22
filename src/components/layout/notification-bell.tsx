@@ -28,6 +28,7 @@ interface Notification {
 }
 
 export function NotificationBell() {
+  const { token } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
