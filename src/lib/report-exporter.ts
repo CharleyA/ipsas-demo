@@ -53,7 +53,18 @@ export class ReportExporter {
     });
   }
 
-  private static generateCSV(data: any[], columns: ExportColumn[]): string {
+  private static generateCSV(data: any[], columns: ExportColumn[], reportName: string, options?: PDFOptions): string {
+    const orgName = options?.organisationName || "Organisation";
+    const title = options?.title || reportName;
+    const subtitle = options?.subtitle || "";
+    const generatedAt = new Date().toLocaleString();
+
+    // Add metadata header for CSV
+    let csvHeader = `"${orgName}"\n`;
+    csvHeader += `"${title}"\n`;
+    if (subtitle) csvHeader += `"${subtitle}"\n`;
+    csvHeader += `"Generated At: ${generatedAt}"\n\n`;
+
     const rows = data.map((item) => {
       const row: any = {};
       columns.forEach((col) => {
@@ -62,7 +73,7 @@ export class ReportExporter {
       return row;
     });
 
-    return Papa.unparse(rows);
+    return csvHeader + Papa.unparse(rows);
   }
 
   private static async generateExcel(
