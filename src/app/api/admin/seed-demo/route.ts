@@ -260,16 +260,16 @@ export async function POST(req: NextRequest) {
       const amount = isFullPayment ? 220 : (50 + Math.floor(Math.random() * 100)); // $220 full or partial
 
       try {
-        const receipt = await ARService.createReceipt({
-          organisationId,
-          studentId: student.id,
-          bankAccountId: bankAcc.id,
-          amount: amount,
-          currencyCode: "USD",
-          date: new Date().toISOString(),
-          paymentMethod: i % 2 === 0 ? "Bank Transfer" : "Cash",
-          reference: `REC-${Math.random().toString(36).substring(7).toUpperCase()}`
-        }, actorId);
+          const receipt = await ARService.createReceipt({
+            organisationId,
+            studentId: student.id,
+            bankAccountId: bankAcc.id,
+            amount: amount,
+            currencyCode: "USD",
+            date: new Date().toISOString(),
+            paymentMethod: i % 2 === 0 ? "Bank Transfer" : "Cash",
+            reference: `DEMO-REC-${Date.now()}-${i}-${Math.random().toString(36).substring(7).toUpperCase()}`
+          }, actorId);
 
         await VoucherService.submit(receipt.voucherId, actorId);
         await VoucherService.approve(receipt.voucherId, actorId);
