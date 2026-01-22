@@ -169,6 +169,57 @@ export default function AccountsPage() {
     }
   };
 
+  const handleUpdateAccount = async () => {
+    if (!editingAccount) return;
+    setIsUpdating(true);
+    try {
+      const res = await fetch(`/api/accounts/${editingAccount.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(editingAccount),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to update account");
+      }
+
+      toast.success("Account updated successfully");
+      setEditingAccount(null);
+      fetchAccounts();
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!isDeletingAccount) return;
+    try {
+      const res = await fetch(`/api/accounts/${isDeletingAccount.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete account");
+      }
+
+      toast.success("Account deleted successfully");
+      setIsDeletingAccount(null);
+      fetchAccounts();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
   const filteredAccounts = accounts.filter((a) =>
     `${a.code} ${a.name}`.toLowerCase().includes(search.toLowerCase())
   );
