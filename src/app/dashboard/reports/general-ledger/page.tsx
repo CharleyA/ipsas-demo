@@ -309,9 +309,11 @@ function GeneralLedgerContent() {
                       <ArrowDownRight className="w-3.5 h-3.5 text-rose-600" />
                     </div>
                   </div>
-                  <p className="text-xl font-bold font-mono text-rose-600 tracking-tight">
-                    {parseFloat(data.summary.totalCredits || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </p>
+                    <p className="text-xl font-bold font-mono text-rose-600 tracking-tight">
+                      <span className="text-[10px] mr-1 opacity-50">{data.reportingCurrency}</span>
+                      {parseFloat(data.summary.totalCredits || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </p>
+
                 </CardContent>
               </Card>
               <Card className="border-blue-500/20 bg-blue-500/5 shadow-sm transition-all hover:shadow-md">
