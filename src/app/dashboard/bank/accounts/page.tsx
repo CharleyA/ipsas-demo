@@ -17,15 +17,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus, Import, ArrowRightLeft, Loader2, Wallet } from "lucide-react";
+import { Plus, Import, ArrowRightLeft, Loader2, Wallet, Building2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
 
 export default function BankAccountsPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [accounts, setAccounts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const canCreate = user?.role === "ADMIN" || user?.role === "HEADMASTER" || user?.role === "ACCOUNTANT";
 
   const fetchAccounts = async () => {
     setIsLoading(true);
@@ -56,13 +58,21 @@ export default function BankAccountsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          {canCreate && (
+            <Button asChild>
+              <Link href="/dashboard/bank/accounts/new">
+                <Building2 className="w-4 h-4 mr-2" />
+                New Bank Account
+              </Link>
+            </Button>
+          )}
           <Button asChild variant="outline">
             <Link href="/dashboard/bank/reconcile">
               <Import className="w-4 h-4 mr-2" />
               Import Statement
             </Link>
           </Button>
-          <Button asChild>
+          <Button asChild variant="outline">
             <Link href="/dashboard/bank/cashbook/new">
               <Plus className="w-4 h-4 mr-2" />
               Cashbook Entry
@@ -87,10 +97,14 @@ export default function BankAccountsPage() {
             <div className="text-center py-12">
                <Wallet className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                <h3 className="text-lg font-medium">No bank accounts found</h3>
-               <p className="text-muted-foreground mb-4">Register your bank accounts in the Chart of Accounts first.</p>
-               <Button asChild variant="outline">
-                  <Link href="/dashboard/accounts">Go to Chart of Accounts</Link>
-               </Button>
+               <p className="text-muted-foreground mb-4">Register your bank accounts to start tracking balances and reconciling transactions.</p>
+               {canCreate ? (
+                 <Button asChild>
+                    <Link href="/dashboard/bank/accounts/new">Register New Bank Account</Link>
+                 </Button>
+               ) : (
+                 <p className="text-sm text-muted-foreground">Contact an administrator to add a bank account.</p>
+               )}
             </div>
           ) : (
             <Table>
