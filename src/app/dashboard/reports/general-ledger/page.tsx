@@ -66,22 +66,29 @@ function GeneralLedgerContent() {
     }
   };
 
-  const fetchReport = async () => {
-    if (!selectedAccountId) return;
-    setIsLoading(true);
-    try {
-      const response = await fetch(
-        `/api/reports/general-ledger?accountId=${selectedAccountId}&startDate=${startDate}&endDate=${endDate}`,
-        { headers: { "Authorization": `Bearer ${token}` } }
-      );
-      const result = await response.json();
-      setData(result);
-    } catch (error) {
-      toast.error("Failed to fetch General Ledger");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const fetchReport = async () => {
+      if (!selectedAccountId) return;
+      setIsLoading(true);
+      const voucherId = searchParams.get("voucherId");
+      try {
+        const url = new URL(`/api/reports/general-ledger`, window.location.origin);
+        url.searchParams.set("accountId", selectedAccountId);
+        url.searchParams.set("startDate", startDate);
+        url.searchParams.set("endDate", endDate);
+        if (voucherId) url.searchParams.set("voucherId", voucherId);
+
+        const response = await fetch(url.toString(), { 
+          headers: { "Authorization": `Bearer ${token}` } 
+        });
+        const result = await response.json();
+        setData(result);
+      } catch (error) {
+        toast.error("Failed to fetch General Ledger");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
 
   useEffect(() => {
     if (token) fetchAccounts();
