@@ -150,6 +150,44 @@ export class AccountService {
     });
   }
 
+  /**
+   * Resolves a currency-specific sub-account for a given parent account code.
+   * e.g. If parentCode is 1121 and currency is USD, it looks for 1121.USD.
+   * If not found, it falls back to the parent account.
+   */
+  static async resolveAccountByCurrency(
+    organisationId: string,
+    parentCode: string,
+    currencyCode: string
+  ) {
+    const currencySuffix = currencyCode.toUpperCase();
+    const subAccountCode = `${parentCode}.${currencySuffix}`;
+
+    // Try finding the sub-account first
+    const subAccount = await prisma.account.findUnique({
+      where: {
+        organisationId_code: {
+          organisationId,
+          code: subAccountCode,
+        },
+      },
+    });
+
+    if (subAccount) return subAccount;
+
+    // Fallback to parent account
+    const parentAccount = await prisma.account.findUnique({
+      where: {
+        organisationId_code: {
+          organisationId,
+          code: parentCode,
+        },
+      },
+    });
+
+    return parentAccount;
+  }
+
   static async seedIPSAS(organisationId: string, actorId: string) {
     const ipsasAccounts = [
       // Assets (1000-1999)
@@ -160,6 +198,11 @@ export class AccountService {
       { code: "1112", name: "Main Bank Account", type: "ASSET" as const, parentCode: "1110" },
       { code: "1120", name: "Receivables from Non-Exchange Transactions", type: "ASSET" as const, parentCode: "1100" },
       { code: "1121", name: "Fees Receivable", type: "ASSET" as const, parentCode: "1120" },
+      
+      // Multi-currency sub-accounts for Fees Receivable
+      { code: "1121.USD", name: "Fees Receivable - USD", type: "ASSET" as const, parentCode: "1121" },
+      { code: "1121.ZWG", name: "Fees Receivable - ZWG", type: "ASSET" as const, parentCode: "1121" },
+
       { code: "1200", name: "Non-Current Assets", type: "ASSET" as const, parentCode: "1000" },
       { code: "1210", name: "Property, Plant and Equipment", type: "ASSET" as const, parentCode: "1200" },
       { code: "1211", name: "Buildings", type: "ASSET" as const, parentCode: "1210" },
@@ -170,6 +213,11 @@ export class AccountService {
       { code: "2100", name: "Current Liabilities", type: "LIABILITY" as const, parentCode: "2000" },
       { code: "2110", name: "Payables from Exchange Transactions", type: "LIABILITY" as const, parentCode: "2100" },
       { code: "2111", name: "Trade Payables", type: "LIABILITY" as const, parentCode: "2110" },
+      
+      // Multi-currency sub-accounts for Trade Payables
+      { code: "2111.USD", name: "Trade Payables - USD", type: "LIABILITY" as const, parentCode: "2111" },
+      { code: "2111.ZWG", name: "Trade Payables - ZWG", type: "LIABILITY" as const, parentCode: "2111" },
+
       { code: "2120", name: "Taxes and Levies Payable", type: "LIABILITY" as const, parentCode: "2100" },
 
       // Net Assets/Equity (3000-3999)
@@ -184,6 +232,11 @@ export class AccountService {
       { code: "4120", name: "Transfers from Other Government Entities", type: "REVENUE" as const, parentCode: "4100" },
       { code: "4200", name: "Revenue from Exchange Transactions", type: "REVENUE" as const, parentCode: "4000" },
       { code: "4210", name: "Rendering of Services (Fees)", type: "REVENUE" as const, parentCode: "4200" },
+      
+      // Multi-currency sub-accounts for Fees Revenue
+      { code: "4210.USD", name: "Rendering of Services (Fees) - USD", type: "REVENUE" as const, parentCode: "4210" },
+      { code: "4210.ZWG", name: "Rendering of Services (Fees) - ZWG", type: "REVENUE" as const, parentCode: "4210" },
+
       { code: "4220", name: "Sale of Goods", type: "REVENUE" as const, parentCode: "4200" },
 
       // Expenses (5000-5999)
