@@ -377,10 +377,19 @@ export default function CashbookEntryPage() {
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="ZWG">ZWG</SelectItem>
-                          <SelectItem value="USD">USD</SelectItem>
-                        </SelectContent>
+                          <SelectContent>
+                            {currencies.map((c) => (
+                              <SelectItem key={c.code} value={c.code}>
+                                {c.code} - {c.name}
+                              </SelectItem>
+                            ))}
+                            {currencies.length === 0 && (
+                              <>
+                                <SelectItem value="ZWG">ZWG</SelectItem>
+                                <SelectItem value="USD">USD</SelectItem>
+                              </>
+                            )}
+                          </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
