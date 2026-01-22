@@ -1,11 +1,9 @@
-"use client";
-
 import Link from "next/link";
 import { 
   BookOpen, 
   Building2, 
   FileText, 
-  BarChart3, 
+  ChartBar as BarChart3, 
   Settings,
   Calendar,
   Wallet,
