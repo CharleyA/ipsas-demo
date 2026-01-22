@@ -31,7 +31,9 @@ export default function ApprovalsPage() {
   const fetchTasks = async (silent = false) => {
     if (!silent) setIsLoading(true);
     try {
-      const response = await fetch("/api/approvals");
+      const response = await fetch("/api/approvals", {
+        headers: token ? { "Authorization": `Bearer ${token}` } : {},
+      });
       if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
       setTasks(data);
