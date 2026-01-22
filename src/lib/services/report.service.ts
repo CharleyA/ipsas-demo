@@ -400,30 +400,60 @@ export class ReportService {
     const rows = buildTree(null);
 
     // Calculate Summary Totals for Info Cards
-    // Usually, top level nodes in Financial Position are Assets, Liabilities, Net Assets/Equity
-    const assets = rows.find(r => r.name.toLowerCase().includes("asset"))?.amount || new Decimal(0);
-    const liabilities = rows.find(r => r.name.toLowerCase().includes("liabilit"))?.amount || new Decimal(0);
-    const netAssets = rows.find(r => r.name.toLowerCase().includes("net asset") || r.name.toLowerCase().includes("equity"))?.amount || assets.add(liabilities); // liabilities are usually negative in this context if credits are negative
+    let summary: any = {};
+    let chartData: any = {};
 
-    // Refined logic for Assets/Liabilities/Equity
-    // In IPSAS/Accounting, Assets = Debit Positive, Liabilities/Equity = Credit Positive
-    // But our balance is Debit - Credit. So Assets will be positive, Liabilities/Equity will be negative.
-    // We should probably return absolute values for the cards.
-    
-    const summary = {
-      totalAssets: assets.abs(),
-      totalLiabilities: liabilities.abs(),
-      netAssets: netAssets.abs(),
-      equity: netAssets.abs(),
-    };
+    if (type === ReportType.FINANCIAL_POSITION) {
+      const assets = rows.find(r => r.name.toLowerCase().includes("asset"))?.amount || new Decimal(0);
+      const liabilities = rows.find(r => r.name.toLowerCase().includes("liabilit"))?.amount || new Decimal(0);
+      const netAssets = rows.find(r => r.name.toLowerCase().includes("net asset") || r.name.toLowerCase().includes("equity"))?.amount || assets.add(liabilities);
 
-    // Chart Data
-    const chartData = {
-      composition: rows.map(r => ({
-        name: r.name,
-        value: Number(r.amount.abs())
-      })).filter(r => r.value > 0)
-    };
+      summary = {
+        totalAssets: assets.abs(),
+        totalLiabilities: liabilities.abs(),
+        netAssets: netAssets.abs(),
+        equity: netAssets.abs(),
+      };
+
+      chartData = {
+        composition: rows.map(r => ({
+          name: r.name,
+          value: Number(r.amount.abs())
+        })).filter(r => r.value > 0)
+      };
+    } else if (type === ReportType.FINANCIAL_PERFORMANCE) {
+      const revenue = rows.find(r => r.name.toLowerCase().includes("revenue"))?.amount || new Decimal(0);
+      const expenses = rows.find(r => r.name.toLowerCase().includes("expense"))?.amount || new Decimal(0);
+      
+      // Revenue is credit-normal (negative in our Debit-Credit calc), Expense is debit-normal (positive)
+      // Surplus = Revenue (Credit) - Expense (Debit)
+      // In our Debit-Credit: 
+      // Total Revenue = |Revenue|
+      // Total Expenses = Expenses
+      // Surplus = |Revenue| - Expenses
+      
+      const totalRevenue = revenue.abs();
+      const totalExpenses = expenses.abs();
+      const surplus = totalRevenue.minus(totalExpenses);
+
+      summary = {
+        totalRevenue,
+        totalExpenses,
+        surplus,
+        margin: totalRevenue.gt(0) ? surplus.div(totalRevenue).mul(100) : new Decimal(0)
+      };
+
+      chartData = {
+        revenueVsExpense: [
+          { name: "Revenue", value: Number(totalRevenue) },
+          { name: "Expenses", value: Number(totalExpenses) }
+        ],
+        expenseComposition: rows.find(r => r.name.toLowerCase().includes("expense"))?.children.map((c: any) => ({
+          name: c.name,
+          value: Number(c.amount.abs())
+        })).filter((c: any) => c.value > 0) || []
+      };
+    }
 
     return {
       reportType: type,
