@@ -65,12 +65,13 @@ export default function NewBankAccountPage() {
     fetchCurrencies();
   }, [token]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.bankName || !formData.accountNumber || !formData.currencyCode) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!formData.bankName || !formData.accountNumber) {
+        toast.error("Please fill in all required fields");
+        return;
+      }
+
 
     setIsSubmitting(true);
     try {
