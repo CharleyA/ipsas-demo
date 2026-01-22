@@ -24,14 +24,15 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return withAuth(req, async (authReq) => {
     try {
+      const { id } = await params;
       const body = await authReq.json();
       const validatedData = updateVoucherSchema.parse(body);
       
-      const voucher = await VoucherService.update(params.id, validatedData, authReq.user.userId);
+      const voucher = await VoucherService.update(id, validatedData, authReq.user.userId);
       return NextResponse.json(voucher);
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 400 });
