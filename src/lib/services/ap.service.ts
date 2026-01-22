@@ -52,7 +52,7 @@ export class APService {
           amountFc: totalAmountFc,
           fxRate: fxRate,
           amountLc: totalAmountLc,
-          credit: totalAmountLc,
+          credit: totalAmountFc,
           fundId: data.fundId,
           projectId: data.projectId,
         }
@@ -68,7 +68,7 @@ export class APService {
           amountFc: line.amount,
           fxRate: fxRate,
           amountLc: line.amount * fxRate,
-          debit: line.amount * fxRate,
+          debit: line.amount,
           fundId: data.fundId,
           projectId: data.projectId,
         });
