@@ -46,13 +46,21 @@ export async function POST(req: NextRequest) {
       return acc;
     };
 
-    const receivableAcc = await getAccount("1200", "Fees Receivable", "ASSET");
-    const revenueAcc = await getAccount("4100", "Tuition Fees Revenue", "REVENUE");
+    const receivableAcc = await getAccount("1121", "Fees Receivable", "ASSET");
+    const revenueAcc = await getAccount("4210", "Rendering of Services (Fees)", "REVENUE");
     const grantRevenueAcc = await getAccount("4200", "Grant Income", "REVENUE");
-    const payableAcc = await getAccount("2100", "Accounts Payable", "LIABILITY");
+    const payableAcc = await getAccount("2111", "Trade Payables", "LIABILITY");
     const expenseAcc = await getAccount("5100", "General Expenses", "EXPENSE");
     const utilityExpenseAcc = await getAccount("5200", "Utilities", "EXPENSE");
-    const bankAcc = await getAccount("1100", "Main Bank Account", "ASSET");
+    const bankAcc = await getAccount("1112", "Main Bank Account", "ASSET");
+
+    // Create sub-accounts for multi-currency
+    await getAccount("1121.USD", "Fees Receivable - USD", "ASSET");
+    await getAccount("1121.ZWG", "Fees Receivable - ZWG", "ASSET");
+    await getAccount("4210.USD", "Fees Revenue - USD", "REVENUE");
+    await getAccount("4210.ZWG", "Fees Revenue - ZWG", "REVENUE");
+    await getAccount("2111.USD", "Trade Payables - USD", "LIABILITY");
+    await getAccount("2111.ZWG", "Trade Payables - ZWG", "LIABILITY");
 
     // Update org settings if missing
     if (!org.arReceivableAccountId || !org.arRevenueAccountId || !org.apPayableAccountId || !org.apBankAccountId) {
