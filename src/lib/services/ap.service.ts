@@ -8,6 +8,8 @@ import {
 import { VoucherService } from "./voucher.service";
 import { FiscalPeriodService } from "./fiscal-period.service";
 import { AuditService } from "./audit.service";
+import { CurrencyService } from "./currency.service";
+import { AccountService } from "./account.service";
 
 export class APService {
   static async createBill(data: CreateAPBillInput, actorId: string) {
@@ -15,28 +17,42 @@ export class APService {
       where: { id: data.organisationId },
     });
     if (!org) throw new Error("Organisation not found");
-    if (!org.apPayableAccountId) {
-      throw new Error("AP Payable account not configured for this organisation");
-    }
 
     const period = await FiscalPeriodService.getCurrentPeriod(data.organisationId);
     if (!period) throw new Error("No open fiscal period found for today");
 
-    const totalAmount = data.lines.reduce((sum, line) => sum + line.amount, 0);
+    // Fetch exchange rate
+    const fxInfo = await CurrencyService.getExchangeRate(data.currencyCode, org.baseCurrency);
+    if (!fxInfo) throw new Error(`Exchange rate not found for ${data.currencyCode} to ${org.baseCurrency}`);
+    
+    const fxRate = fxInfo.rate;
+    const totalAmountFc = data.lines.reduce((sum, line) => sum + line.amount, 0);
+    const totalAmountLc = totalAmountFc * fxRate;
+
+    // Resolve dynamic account for Trade Payables
+    const payableAccount = await AccountService.resolveAccountByCurrency(
+      data.organisationId,
+      "2111", // Trade Payables Parent
+      data.currencyCode
+    );
+
+    if (!payableAccount) {
+      throw new Error("Could not resolve Trade Payables account (2111) for this currency");
+    }
 
     return await prisma.$transaction(async (tx) => {
       // 1. Create Voucher (AP_BILL)
       const voucherLines = [
-        // CR Accounts Payable
+        // CR Trade Payables
         {
           lineNumber: data.lines.length + 1,
-          accountId: org.apPayableAccountId!,
-          description: `AP Bill - Supplier ${data.supplierId}`,
+          accountId: payableAccount.id,
+          description: `AP Bill (${data.currencyCode}) - Supplier ${data.supplierId}`,
           currencyCode: data.currencyCode,
-          amountFc: totalAmount,
-          fxRate: 1,
-          amountLc: totalAmount,
-          credit: totalAmount,
+          amountFc: totalAmountFc,
+          fxRate: fxRate,
+          amountLc: totalAmountLc,
+          credit: totalAmountLc,
           fundId: data.fundId,
           projectId: data.projectId,
         }
@@ -50,9 +66,9 @@ export class APService {
           description: line.description,
           currencyCode: data.currencyCode,
           amountFc: line.amount,
-          fxRate: 1,
-          amountLc: line.amount,
-          debit: line.amount,
+          fxRate: fxRate,
+          amountLc: line.amount * fxRate,
+          debit: line.amount * fxRate,
           fundId: data.fundId,
           projectId: data.projectId,
         });
@@ -75,8 +91,8 @@ export class APService {
           voucherId: voucher.id,
           supplierId: data.supplierId,
           currencyCode: data.currencyCode,
-          amount: new Decimal(totalAmount),
-          balance: new Decimal(totalAmount),
+          amount: new Decimal(totalAmountFc),
+          balance: new Decimal(totalAmountFc),
           dueDate: new Date(data.dueDate),
           lines: {
             create: data.lines.map(line => ({
@@ -98,12 +114,27 @@ export class APService {
       where: { id: data.organisationId },
     });
     if (!org) throw new Error("Organisation not found");
-    if (!org.apPayableAccountId) {
-      throw new Error("AP Payable account not configured");
-    }
 
     const period = await FiscalPeriodService.getCurrentPeriod(data.organisationId);
     if (!period) throw new Error("No open fiscal period found");
+
+    // Fetch exchange rate
+    const fxInfo = await CurrencyService.getExchangeRate(data.currencyCode, org.baseCurrency);
+    if (!fxInfo) throw new Error(`Exchange rate not found for ${data.currencyCode} to ${org.baseCurrency}`);
+    
+    const fxRate = fxInfo.rate;
+    const amountLc = data.amount * fxRate;
+
+    // Resolve dynamic account for Trade Payables
+    const payableAccount = await AccountService.resolveAccountByCurrency(
+      data.organisationId,
+      "2111", // Trade Payables Parent
+      data.currencyCode
+    );
+
+    if (!payableAccount) {
+      throw new Error("Could not resolve Trade Payables account (2111) for this currency");
+    }
 
     return await prisma.$transaction(async (tx) => {
       // 1. Create Voucher (AP_PAYMENT)
@@ -112,7 +143,7 @@ export class APService {
         type: "AP_PAYMENT",
         periodId: period.id,
         date: new Date(data.date),
-        description: `Supplier Payment - Supplier ${data.supplierId}`,
+        description: `Supplier Payment (${data.currencyCode}) - Supplier ${data.supplierId}`,
         reference: data.reference,
         supplierId: data.supplierId,
         lines: [
@@ -123,20 +154,20 @@ export class APService {
             description: `Supplier Payment - ${data.paymentMethod || 'Transfer'}`,
             currencyCode: data.currencyCode,
             amountFc: data.amount,
-            fxRate: 1,
-            amountLc: data.amount,
-            credit: data.amount,
+            fxRate: fxRate,
+            amountLc: amountLc,
+            credit: amountLc,
           },
-          // DR Accounts Payable
+          // DR Trade Payables
           {
             lineNumber: 2,
-            accountId: org.apPayableAccountId!,
-            description: `Payment to Supplier ${data.supplierId}`,
+            accountId: payableAccount.id,
+            description: `Payment to Supplier ${data.supplierId} (${data.currencyCode})`,
             currencyCode: data.currencyCode,
             amountFc: data.amount,
-            fxRate: 1,
-            amountLc: data.amount,
-            debit: data.amount,
+            fxRate: fxRate,
+            amountLc: amountLc,
+            debit: amountLc,
           }
         ]
       }, actorId);
