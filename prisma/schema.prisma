@@ -306,6 +306,25 @@ model Voucher {
   @@map("vouchers")
 }
 
+model Notification {
+  id             String           @id @default(cuid())
+  organisationId String
+  userId         String
+  type           NotificationType
+  title          String
+  message        String
+  metadata       Json?
+  isRead         Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organisation   Organisation     @relation(fields: [organisationId], references: [id])
+  user           User             @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+  @@index([organisationId, createdAt])
+  @@map("notifications")
+}
+
 model VoucherLine {
   id           String      @id @default(cuid())
   voucherId    String
