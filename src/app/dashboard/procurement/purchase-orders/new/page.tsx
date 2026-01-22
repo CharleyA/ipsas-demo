@@ -59,6 +59,7 @@ const createPOSchema = z.object({
   orderDate: z.date(),
   expectedDate: z.date().optional(),
   currencyCode: z.string().length(3),
+  fxRate: z.number().positive().default(1),
   notes: z.string().optional(),
   lines: z.array(purchaseOrderLineSchema).min(1, "At least one line is required"),
 });
@@ -80,6 +81,7 @@ export default function NewPurchaseOrderPage() {
     defaultValues: {
       orderDate: new Date(),
       currencyCode: "USD",
+      fxRate: 1,
       lines: [
         {
           description: "",
