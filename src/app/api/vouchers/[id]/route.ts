@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAuth, AuthenticatedRequest } from "@/lib/middleware-utils";
+import { withAuth } from "@/lib/middleware-utils";
 import { VoucherService } from "@/lib/services/voucher.service";
 import { updateVoucherSchema } from "@/lib/validations/schemas";
 
