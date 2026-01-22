@@ -132,6 +132,7 @@ function GeneralLedgerContent() {
       params.set("endDate", endDate);
       params.set("page", page.toString());
       params.set("pageSize", pageSize.toString());
+      if (reportingCurrency) params.set("reportingCurrency", reportingCurrency);
       if (urlVoucherId) params.set("voucherId", urlVoucherId);
 
       const response = await fetch(`/api/reports/general-ledger?${params.toString()}`, { 
