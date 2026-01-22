@@ -320,7 +320,7 @@ export default function NewARInvoiceForm() {
             </CardContent>
             <CardFooter className="bg-muted/30 flex justify-end">
               <div className="text-xl font-bold">
-                Total: ZWG {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                Total: {form.watch("currencyCode")} {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </div>
             </CardFooter>
           </Card>
