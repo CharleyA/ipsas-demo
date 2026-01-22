@@ -342,28 +342,28 @@ export default function ReconcilePage() {
                   ) : (
                     <div className="space-y-4">
                         <div className="p-4 bg-muted rounded-lg space-y-2">
-                            <div className="flex justify-between font-medium">
-                                <span>Selected Bank Row</span>
-                                <span>{selectedRow.amount}</span>
-                            </div>
-                            <div className="text-sm text-muted-foreground">{selectedRow.description}</div>
-                            <div className="text-xs">{format(new Date(selectedRow.date), "PPP")}</div>
-                        </div>
+                              <div className="flex justify-between font-medium">
+                                  <span>Selected Bank Row</span>
+                                  <span>{selectedRow.amount}</span>
+                              </div>
+                              <div className="text-sm text-muted-foreground">{selectedRow.description}</div>
+                              <div className="text-xs">{selectedRow.date ? format(new Date(selectedRow.date), "PPP") : "No date"}</div>
+                          </div>
 
-                        <div className="space-y-2">
-                            <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Suggested Matches</h4>
-                            {suggestions.length === 0 ? (
-                                <div className="text-center py-8 border-2 border-dashed rounded-lg">
-                                    No exact date/amount matches found.
-                                </div>
-                            ) : (
-                                suggestions.map(v => (
-                                    <div key={v.id} className="flex items-center justify-between p-4 border rounded-lg hover:border-primary cursor-pointer transition-colors" onClick={() => matchRow(v.id)}>
-                                        <div>
-                                            <div className="font-medium">{v.number}</div>
-                                            <div className="text-sm text-muted-foreground">{v.description}</div>
-                                            <div className="text-xs">{format(new Date(v.date), "MMM d, yyyy")}</div>
-                                        </div>
+                          <div className="space-y-2">
+                              <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Suggested Matches</h4>
+                              {suggestions.length === 0 ? (
+                                  <div className="text-center py-8 border-2 border-dashed rounded-lg">
+                                      No exact date/amount matches found.
+                                  </div>
+                              ) : (
+                                  suggestions.map(v => (
+                                      <div key={v.id} className="flex items-center justify-between p-4 border rounded-lg hover:border-primary cursor-pointer transition-colors" onClick={() => matchRow(v.id)}>
+                                          <div>
+                                              <div className="font-medium">{v.number}</div>
+                                              <div className="text-sm text-muted-foreground">{v.description}</div>
+                                              <div className="text-xs">{v.date ? format(new Date(v.date), "MMM d, yyyy") : "N/A"}</div>
+                                          </div>
                                         <div className="flex flex-col items-end gap-1">
                                             <div className="font-mono">{v.lines[0]?.debit || v.lines[0]?.credit}</div>
                                             <Badge variant="outline">Postable</Badge>
