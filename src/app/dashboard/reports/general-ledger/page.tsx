@@ -160,171 +160,284 @@ function GeneralLedgerContent() {
     ? affectedAccounts 
     : accounts;
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href={urlVoucherId ? `/dashboard/vouchers/${urlVoucherId}` : "/dashboard/reports"}>
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">General Ledger</h1>
-            <p className="text-muted-foreground">
-              {urlVoucherId ? `Viewing impact of ${voucherInfo?.number || "voucher"}` : "Detailed account activity"}
-            </p>
-          </div>
-        </div>
-        <ReportToolbar 
-          reportName="General Ledger" 
-          endpoint="/api/reports/general-ledger" 
-          filters={{ accountId: selectedAccountId, startDate, endDate, voucherId: urlVoucherId }} 
-        />
-      </div>
-
-        {urlVoucherId && (
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="p-4 flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <FileText className="w-4 h-4 text-primary" />
-                  <span>Affected Accounts for {voucherInfo?.number}:</span>
-                </div>
-            <div className="flex flex-wrap gap-2">
-              {affectedAccounts.map(acc => (
-                <Button 
-                  key={acc.id}
-                  variant={selectedAccountId === acc.id ? "default" : "outline"}
-                  size="sm"
-                  className="h-8 text-[11px]"
-                  onClick={() => setSelectedAccountId(acc.id)}
-                >
-                  {acc.code}
-                </Button>
-              ))}
-            </div>
-            <Button variant="ghost" size="sm" className="ml-auto h-8 text-xs" asChild>
-              <Link href="/dashboard/reports/general-ledger">
-                Clear Voucher Filter
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+              <Link href={urlVoucherId ? `/dashboard/vouchers/${urlVoucherId}` : "/dashboard/reports"}>
+                <ArrowLeft className="w-4 h-4" />
               </Link>
             </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="flex flex-col gap-1 w-[300px]">
-              <label className="text-xs font-medium text-muted-foreground">Account</label>
-              <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select account" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.isArray(displayedAccounts) && displayedAccounts.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>
-                      {acc.code} - {acc.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Start Date</label>
-              <Input 
-                type="date" 
-                value={startDate} 
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-[180px]"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">End Date</label>
-              <Input 
-                type="date" 
-                value={endDate} 
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-[180px]"
-              />
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">General Ledger</h1>
+              <p className="text-xs text-muted-foreground">
+                {urlVoucherId ? `Viewing impact of ${voucherInfo?.number || "voucher"}` : "Institutional account auditing and transaction history"}
+              </p>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-          ) : data && !data.error ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Entry #</TableHead>
-                  <TableHead>Voucher #</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Debit</TableHead>
-                  <TableHead className="text-right">Credit</TableHead>
-                  <TableHead className="text-right">
-                    Balance {data?.entries?.[0]?.currency && <span className="text-[10px] opacity-70 ml-1">({data.entries[0].currency})</span>}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
+          <ReportToolbar 
+            reportName="General Ledger" 
+            endpoint="/api/reports/general-ledger" 
+            filters={{ accountId: selectedAccountId, startDate, endDate, voucherId: urlVoucherId }} 
+          />
+        </div>
 
-              <TableBody>
-                <TableRow className="bg-muted/30 italic">
-                  <TableCell colSpan={6}>Opening Balance</TableCell>
-                  <TableCell className="text-right font-medium">
-                    {parseFloat(data.openingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </TableCell>
-                </TableRow>
-                {data?.entries && Array.isArray(data.entries) && data.entries.map((entry: any) => (
-                  <TableRow key={entry.id}>
-                    <TableCell className="whitespace-nowrap text-xs">
-                      {entry.date ? new Date(entry.date).toLocaleDateString() : "-"}
-                    </TableCell>
-                    <TableCell className="font-mono text-[10px]">{entry.entryNumber}</TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {entry.voucherId ? (
-                        <Link 
-                          href={`/dashboard/vouchers/${entry.voucherId}`}
-                          className="text-primary hover:underline flex items-center gap-1"
-                        >
-                          {entry.voucherNumber || "View"}
-                          <Eye className="w-3 h-3" />
-                        </Link>
-                      ) : entry.voucherNumber || "-"}
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate text-xs">{entry.description}</TableCell>
-                    <TableCell className="text-right text-xs">
-                      {parseFloat(entry.debit) > 0 ? parseFloat(entry.debit).toLocaleString(undefined, { minimumFractionDigits: 2 }) : ""}
-                    </TableCell>
-                    <TableCell className="text-right text-red-600 text-xs">
-                      {parseFloat(entry.credit) > 0 ? parseFloat(entry.credit).toLocaleString(undefined, { minimumFractionDigits: 2 }) : ""}
-                    </TableCell>
-                    <TableCell className="text-right font-medium text-xs">
-                      {parseFloat(entry.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                <TableRow className="bg-muted/50 font-bold">
-                  <TableCell colSpan={6}>Closing Balance</TableCell>
-                  <TableCell className="text-right underline decoration-double">
-                    {parseFloat(data.closingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              {data?.error ? data.error : "Select an account and dates to view ledger activity."}
+        {/* Filters */}
+        <Card className="border-primary/10 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="flex flex-col gap-1.5 min-w-[300px] flex-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                  <Wallet className="w-3 h-3" /> Select Account
+                </label>
+                <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+                  <SelectTrigger className="h-9 bg-background/50">
+                    <SelectValue placeholder="Select account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.isArray(displayedAccounts) && displayedAccounts.map((acc) => (
+                      <SelectItem key={acc.id} value={acc.id}>
+                        <span className="font-mono text-xs mr-2">{acc.code}</span>
+                        <span>{acc.name}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                  <CalendarDays className="w-3 h-3" /> Start Date
+                </label>
+                <Input 
+                  type="date" 
+                  value={startDate} 
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="h-9 w-[160px] bg-background/50"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                  <CalendarDays className="w-3 h-3" /> End Date
+                </label>
+                <Input 
+                  type="date" 
+                  value={endDate} 
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="h-9 w-[160px] bg-background/50"
+                />
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
+          </CardContent>
+        </Card>
+
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground animate-pulse font-medium">Synthesizing ledger data...</p>
+          </div>
+        ) : data && !data.error ? (
+          <>
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <Card className="border-border/50 bg-card/30">
+                <CardContent className="p-4">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Opening Balance</p>
+                  <p className="text-xl font-bold font-mono">
+                    {parseFloat(data.openingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-border/50 bg-card/30">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Debits</p>
+                    <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                  </div>
+                  <p className="text-xl font-bold font-mono text-emerald-600">
+                    {parseFloat(data.summary.totalDebits || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-border/50 bg-card/30">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Credits</p>
+                    <ArrowDownRight className="w-3 h-3 text-rose-500" />
+                  </div>
+                  <p className="text-xl font-bold font-mono text-rose-600">
+                    {parseFloat(data.summary.totalCredits || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-border/50 bg-card/30">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Net Movement</p>
+                    {parseFloat(data.summary.netMovement) >= 0 ? 
+                      <TrendingUp className="w-3 h-3 text-emerald-500" /> : 
+                      <TrendingDown className="w-3 h-3 text-rose-500" />
+                    }
+                  </div>
+                  <p className={`text-xl font-bold font-mono ${parseFloat(data.summary.netMovement) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {parseFloat(data.summary.netMovement || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-primary/20 bg-primary/5">
+                <CardContent className="p-4">
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Closing Balance</p>
+                  <p className="text-xl font-black font-mono">
+                    {parseFloat(data.closingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="border-border/50 shadow-sm">
+                <CardHeader className="pb-2">
+                  <h3 className="text-sm font-bold flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" /> Daily Activity Digest
+                  </h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[250px] w-full mt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={data.chartData.dailyActivity}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                        <XAxis 
+                          dataKey="date" 
+                          fontSize={10} 
+                          tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        />
+                        <YAxis fontSize={10} />
+                        <Tooltip 
+                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                          labelFormatter={(val) => new Date(val).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                        />
+                        <Legend iconType="circle" />
+                        <Bar dataKey="debits" name="Debits" fill="#10b981" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="credits" name="Credits" fill="#f43f5e" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/50 shadow-sm">
+                <CardHeader className="pb-2">
+                  <h3 className="text-sm font-bold flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-primary" /> Balance Evolution
+                  </h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[250px] w-full mt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={data.chartData.balanceEvolution}>
+                        <defs>
+                          <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                        <XAxis 
+                          dataKey="date" 
+                          fontSize={10}
+                          tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        />
+                        <YAxis fontSize={10} />
+                        <Tooltip 
+                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                          labelFormatter={(val) => new Date(val).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                        />
+                        <Area type="monotone" dataKey="balance" name="Balance" stroke="#3b82f6" fillOpacity={1} fill="url(#colorBalance)" strokeWidth={2} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </AreaChart>
+            </div>
+
+            {/* Table */}
+            <Card className="border-border/50 shadow-sm overflow-hidden">
+              <div className="p-0">
+                <Table>
+                  <TableHeader className="bg-muted/50">
+                    <TableRow>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider w-[100px]">Date</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider w-[120px]">Entry #</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider w-[120px]">Voucher #</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider">Description</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider text-right w-[150px]">Debit</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider text-right w-[150px]">Credit</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase tracking-wider text-right w-[150px]">Balance</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow className="bg-muted/20 italic group">
+                      <TableCell colSpan={6} className="text-xs font-medium text-muted-foreground">Opening Balance</TableCell>
+                      <TableCell className="text-right font-mono text-sm font-bold">
+                        {parseFloat(data.openingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </TableCell>
+                    </TableRow>
+                    {data?.entries && Array.isArray(data.entries) && data.entries.map((entry: any) => (
+                      <TableRow key={entry.id} className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="whitespace-nowrap text-[11px] font-medium">
+                          {entry.date ? new Date(entry.date).toLocaleDateString(undefined, { dateStyle: 'medium' }) : "-"}
+                        </TableCell>
+                        <TableCell className="font-mono text-[10px] text-muted-foreground">{entry.entryNumber}</TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {entry.voucherId ? (
+                            <Link 
+                              href={`/dashboard/vouchers/${entry.voucherId}`}
+                              className="text-primary hover:underline flex items-center gap-1.5 font-bold"
+                            >
+                              {entry.voucherNumber || "View"}
+                              <Eye className="w-3 h-3" />
+                            </Link>
+                          ) : <span className="text-muted-foreground italic">{entry.voucherNumber || "-"}</span>}
+                        </TableCell>
+                        <TableCell className="text-xs leading-relaxed max-w-[300px]">{entry.description}</TableCell>
+                        <TableCell className="text-right font-mono text-xs text-emerald-600 font-medium">
+                          {parseFloat(entry.debit) > 0 ? parseFloat(entry.debit).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-xs text-rose-600 font-medium">
+                          {parseFloat(entry.credit) > 0 ? parseFloat(entry.credit).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-xs font-bold">
+                          {parseFloat(entry.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow className="bg-primary/5 font-bold">
+                      <TableCell colSpan={6} className="text-sm font-bold uppercase tracking-tight text-primary">Closing Balance</TableCell>
+                      <TableCell className="text-right font-mono text-lg text-primary underline decoration-double underline-offset-4">
+                        {parseFloat(data.closingBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+              <FileText className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-bold mb-2">No Ledger Data</h3>
+            <p className="text-sm text-muted-foreground max-w-xs">
+              {data?.error ? data.error : "Select an account and defined date range to analyze transaction history."}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+
 }
 
 export default function GeneralLedgerPage() {
