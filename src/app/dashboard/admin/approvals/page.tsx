@@ -46,13 +46,15 @@ export default function ApprovalWorkflowPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState<string | null>(null);
   const [users, setUsers] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("ALL");
 
   useEffect(() => {
     async function fetchUsers() {
       if (!token) return;
 
       try {
-        const response = await fetch("/api/users/organisation", {
+        const response = await fetch("/api/users", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const result = await response.json();
