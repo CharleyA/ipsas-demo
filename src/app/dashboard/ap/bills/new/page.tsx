@@ -48,13 +48,15 @@ export default function NewBillPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [supRes, accRes] = await Promise.all([
+        const [supRes, accRes, curRes] = await Promise.all([
           fetch("/api/suppliers", { headers: { "Authorization": `Bearer ${token}` } }),
-          fetch(`/api/accounts?organisationId=${user?.organisationId}`, { headers: { "Authorization": `Bearer ${token}` } })
+          fetch(`/api/accounts?organisationId=${user?.organisationId}`, { headers: { "Authorization": `Bearer ${token}` } }),
+          fetch(`/api/organisations/${user?.organisationId}/currencies`, { headers: { "Authorization": `Bearer ${token}` } }),
         ]);
-        const [supData, accData] = await Promise.all([supRes.json(), accRes.json()]);
+        const [supData, accData, curData] = await Promise.all([supRes.json(), accRes.json(), curRes.json()]);
         setSuppliers(supData);
         setAccounts(accData.filter((a: any) => a.type === "EXPENSE" || a.type === "ASSET"));
+        setCurrencies(curData);
       } catch (error) {
         toast.error("Failed to load form data");
       }
