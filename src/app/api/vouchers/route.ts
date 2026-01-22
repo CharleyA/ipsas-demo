@@ -25,10 +25,14 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(authReq.url);
     const status = searchParams.get("status");
     const type = searchParams.get("type");
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
 
     const vouchers = await VoucherService.listByOrganisation(authReq.user.organisationId, {
       status: status as any,
       type: type as any,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
     });
 
     return NextResponse.json(vouchers);
