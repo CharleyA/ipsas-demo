@@ -327,9 +327,11 @@ function GeneralLedgerContent() {
                       }
                     </div>
                   </div>
-                  <p className={`text-xl font-bold font-mono tracking-tight ${parseFloat(data.summary.netMovement) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {parseFloat(data.summary.netMovement || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </p>
+                    <p className={`text-xl font-bold font-mono tracking-tight ${parseFloat(data.summary.netMovement) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      <span className="text-[10px] mr-1 opacity-50">{data.reportingCurrency}</span>
+                      {parseFloat(data.summary.netMovement || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </p>
+
                 </CardContent>
               </Card>
               <Card className="border-primary/20 bg-primary/10 shadow-sm transition-all hover:shadow-md">
