@@ -94,6 +94,11 @@ export default function NewPurchaseOrderPage() {
     },
   });
 
+  // Handle hydration for date
+  useEffect(() => {
+    form.setValue("orderDate", new Date());
+  }, [form]);
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "lines",
@@ -112,8 +117,9 @@ export default function NewPurchaseOrderPage() {
         const res = await fetch(`/api/currencies/exchange-rates?from=${selectedCurrency}&to=USD&limit=1`, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        if (!res.ok) return;
         const rates = await res.json();
-        if (rates && rates.length > 0) {
+        if (rates && Array.isArray(rates) && rates.length > 0) {
           form.setValue("fxRate", parseFloat(rates[0].rate));
         }
       } catch (error) {
@@ -137,11 +143,30 @@ export default function NewPurchaseOrderPage() {
           fetch(`/api/organisations/${user.organisationId}/currencies`, { headers: { Authorization: `Bearer ${token}` } }),
         ]);
 
-        setSuppliers(await suppliersRes.json());
-        setAccounts(await accountsRes.json());
-        setInventoryItems(await itemsRes.json());
-        setAssetCategories(await categoriesRes.json());
-        setCurrencies(await currenciesRes.json());
+        if (suppliersRes.ok) {
+          const data = await suppliersRes.json();
+          if (Array.isArray(data)) setSuppliers(data);
+        }
+        
+        if (accountsRes.ok) {
+          const data = await accountsRes.json();
+          if (Array.isArray(data)) setAccounts(data);
+        }
+
+        if (itemsRes.ok) {
+          const data = await itemsRes.json();
+          if (Array.isArray(data)) setInventoryItems(data);
+        }
+
+        if (categoriesRes.ok) {
+          const data = await categoriesRes.json();
+          if (Array.isArray(data)) setAssetCategories(data);
+        }
+
+        if (currenciesRes.ok) {
+          const data = await currenciesRes.json();
+          if (Array.isArray(data)) setCurrencies(data);
+        }
       } catch (error) {
         toast.error("Failed to load form data");
       }
