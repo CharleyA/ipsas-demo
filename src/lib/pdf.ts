@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 // Note: jspdf-autotable adds autoTable method to jsPDF
 // We need to extend the type for TypeScript
@@ -66,7 +66,7 @@ export async function generatePDF(
 
   // Summary Table (if provided)
   if (options.summaryData && options.summaryData.length > 0) {
-    doc.autoTable({
+    autoTable(doc, {
       startY: currentY,
       body: options.summaryData.map(s => [s.label, typeof s.value === 'number' ? s.value.toLocaleString(undefined, { minimumFractionDigits: 2 }) : s.value]),
       theme: 'grid',
@@ -93,7 +93,7 @@ export async function generatePDF(
 
   const tableHeaders = columns.map(col => col.header);
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: currentY,
     head: [tableHeaders],
     body: tableRows,
@@ -129,6 +129,9 @@ export async function generatePDF(
       );
     }
   });
+
+  return Buffer.from(doc.output("arraybuffer"));
+}
 
   return Buffer.from(doc.output("arraybuffer"));
 }
