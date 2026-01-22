@@ -64,7 +64,7 @@ export default function VouchersPage() {
 
   useEffect(() => {
     if (token) fetchVouchers();
-  }, [token, status, type]);
+  }, [token, status, type, startDate, endDate]);
 
   const filteredVouchers = vouchers.filter(v => 
     `${v.number} ${v.description}`.toLowerCase().includes(search.toLowerCase())
@@ -73,6 +73,8 @@ export default function VouchersPage() {
   const resetFilters = () => {
     setStatus("ALL");
     setType("ALL");
+    setStartDate("");
+    setEndDate("");
     setSearch("");
   };
 
