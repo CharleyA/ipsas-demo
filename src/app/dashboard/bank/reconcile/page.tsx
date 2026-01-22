@@ -306,13 +306,13 @@ export default function ReconcilePage() {
                       </TableHeader>
                       <TableBody>
                         {unmatchedRows.map(row => (
-                          <TableRow key={row.id}>
-                            <TableCell>{row.date ? format(new Date(row.date), "MMM d") : "N/A"}</TableCell>
-                            <TableCell className="max-w-[200px] truncate">{row.description}</TableCell>
-                            <TableCell className={cn("text-right font-mono", row.amount > 0 ? "text-green-600" : "text-red-600")}>
-                              {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(row.amount)}
-                            </TableCell>
-                            <TableCell className="text-right">
+                            <TableRow key={row.id}>
+                              <TableCell>{row.date ? format(new Date(row.date), "MMM d") : "N/A"}</TableCell>
+                              <TableCell className="max-w-[200px] truncate">{row.description}</TableCell>
+                              <TableCell className={cn("text-right font-mono", Number(row.amount || 0) > 0 ? "text-green-600" : "text-red-600")}>
+                                {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(Number(row.amount || 0))}
+                              </TableCell>
+                              <TableCell className="text-right">
                               <Button variant="ghost" size="sm" onClick={() => getSuggestions(row)}>
                                 <LinkIcon className="w-4 h-4 mr-2" />
                                 Match
