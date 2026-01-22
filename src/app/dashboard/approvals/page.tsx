@@ -54,7 +54,10 @@ export default function ApprovalsPage() {
     try {
       const response = await fetch(`/api/vouchers/${voucherId}/${action}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ notes: `Voucher ${action}d via approvals inbox` }),
       });
 
