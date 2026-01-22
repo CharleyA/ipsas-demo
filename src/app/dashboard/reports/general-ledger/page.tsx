@@ -81,9 +81,11 @@ import { ReportToolbar } from "@/components/reports/report-toolbar";
         const voucher = await response.json();
         setVoucherInfo(voucher);
         
-        const ids = [...new Set(voucher.lines.map((l: any) => l.accountId))];
-        const affected = accounts.filter(acc => ids.includes(acc.id));
-        setAffectedAccounts(affected);
+        if (voucher.lines && Array.isArray(voucher.lines)) {
+          const ids = [...new Set(voucher.lines.map((l: any) => l.accountId))];
+          const affected = accounts.filter(acc => ids.includes(acc.id));
+          setAffectedAccounts(affected);
+        }
       } catch (error) {
         console.error("Failed to fetch voucher info", error);
       }
