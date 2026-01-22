@@ -20,11 +20,13 @@ export async function GET(req: NextRequest) {
 
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
+    const reportingCurrency = searchParams.get("currency") || undefined;
 
     const report = await ReportService.getFinancialPerformance(
       authReq.user.organisationId,
       startDate,
-      endDate
+      endDate,
+      { reportingCurrency }
     );
 
     if (exportFormat === "json") {
