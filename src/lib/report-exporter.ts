@@ -156,67 +156,18 @@ export class ReportExporter {
     reportName: string,
     options?: PDFOptions
   ): Promise<Buffer> {
-    // Calculate totals for summary if it's Trial Balance
-    let summaryHtml = "";
-    if (reportName === "Trial Balance") {
-      const totalDebit = data.reduce((sum, row) => sum + (parseFloat(row.debit) || 0), 0);
-      const totalCredit = data.reduce((sum, row) => sum + (parseFloat(row.credit) || 0), 0);
-      const variance = Math.abs(totalDebit - totalCredit);
+    const pdfColumns = columns.map(col => ({
+      header: col.header,
+      key: col.key,
+      width: col.width
+    }));
 
-      summaryHtml = `
-        <div class="summary-box">
-          <div class="summary-row">
-            <span class="font-bold">Total Institutional Debits:</span>
-            <span>${this.formatCurrency(totalDebit)}</span>
-          </div>
-          <div class="summary-row">
-            <span class="font-bold">Total Institutional Credits:</span>
-            <span>${this.formatCurrency(totalCredit)}</span>
-          </div>
-          <div class="summary-row" style="margin-top: 8px; border-top: 1px solid #ddd; padding-top: 8px;">
-            <span class="font-bold">Trial Balance Variance:</span>
-            <span class="${variance < 0.01 ? 'positive' : 'negative'} font-bold">
-              ${this.formatCurrency(variance)} ${variance < 0.01 ? '(Balanced)' : '(Out of Balance)'}
-            </span>
-          </div>
-        </div>
-      `;
-    }
-
-    const tableHtml = `
-      ${summaryHtml}
-      <table>
-        <thead>
-          <tr>
-            ${columns.map((col) => `<th>${col.header}</th>`).join("")}
-          </tr>
-        </thead>
-        <tbody>
-          ${data
-            .map(
-              (item) => `
-            <tr>
-              ${columns
-                .map((col) => {
-                  const val = this.formatValue(item[col.key], col);
-                  const isNum = typeof val === "number" || (typeof val === "string" && !isNaN(parseFloat(val)) && ['debit', 'credit', 'balance', 'amount', 'total'].includes(col.key.toLowerCase()));
-                  const displayVal = isNum ? this.formatCurrency(val) : (val ?? '');
-                  return `<td class="${isNum ? "text-right" : ""}">${displayVal}</td>`;
-                })
-                .join("")}
-            </tr>
-          `
-            )
-            .join("")}
-        </tbody>
-      </table>
-    `;
-
-    return generatePDFFromHTML(tableHtml, {
-      title: reportName,
+    return generatePDF(data, pdfColumns, {
+      title: options?.title || reportName,
       subtitle: options?.subtitle,
       organisationName: options?.organisationName || 'Organisation',
       orientation: options?.orientation || 'portrait',
+      generatedAt: new Date()
     });
   }
 
