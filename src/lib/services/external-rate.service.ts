@@ -41,7 +41,7 @@ export class ExternalRateService {
 
     return {
       rate: parseFloat(rbzData.rate),
-      source: `RBZ (${rbzData.source || 'Official'})`,
+      source: "RBZ",
       date: rbzData.date ? new Date(rbzData.date) : new Date(),
     };
   }
