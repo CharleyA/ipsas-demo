@@ -118,17 +118,18 @@ export class ReportService {
       const cr = (isUsdAccount ? entry.creditFc : entry.creditLc) || new Decimal(0);
       runningBalance = runningBalance.add(dr).minus(cr);
 
-      return {
-        id: entry.id,
-        date: entry.glHeader.entryDate,
-        entryNumber: entry.glHeader.entryNumber,
-        voucherNumber: entry.glHeader.voucher?.number,
-        description: entry.description || entry.glHeader.description,
-        debit: dr,
-        credit: cr,
-        balance: runningBalance,
-        currency: isUsdAccount ? "USD" : "ZWG",
-      };
+        return {
+          id: entry.id,
+          date: entry.glHeader.entryDate,
+          entryNumber: entry.glHeader.entryNumber,
+          voucherId: entry.glHeader.voucher?.id,
+          voucherNumber: entry.glHeader.voucher?.number,
+          description: entry.description || entry.glHeader.description,
+          debit: dr,
+          credit: cr,
+          balance: runningBalance,
+          currency: isUsdAccount ? "USD" : "ZWG",
+        };
     });
 
     return {
