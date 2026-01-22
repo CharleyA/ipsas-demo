@@ -11,10 +11,11 @@ export async function GET(req: NextRequest) {
   return withAuth(req, async (authReq) => {
     const { searchParams } = new URL(authReq.url);
     const dateStr = searchParams.get("date");
+    const reportingCurrency = searchParams.get("currency") || undefined;
     const exportFormat = (searchParams.get("format") || "json") as ExportFormat;
     const date = dateStr ? new Date(dateStr) : new Date();
 
-    const report = await ReportService.getAPAgeing(authReq.user.organisationId, date);
+    const report = await ReportService.getAPAgeing(authReq.user.organisationId, date, { reportingCurrency });
 
     if (exportFormat === "json") {
       return NextResponse.json(report);
