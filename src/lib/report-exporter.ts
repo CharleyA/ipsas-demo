@@ -135,6 +135,12 @@ export class ReportExporter {
         const cell = row.getCell(colIndex + 1);
         
         cell.value = value;
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+          left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+          bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+          right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+        };
 
         // Apply currency formatting if column is debit/credit/balance
         if (['debit', 'credit', 'balance', 'amount', 'total'].includes(col.key.toLowerCase())) {
