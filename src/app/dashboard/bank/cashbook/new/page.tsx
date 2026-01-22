@@ -431,24 +431,38 @@ export default function CashbookEntryPage() {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="fxRate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>FX Rate (to Base)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        step="0.0001" 
-                        {...field} 
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="fxRate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>FX Rate (to Base)</FormLabel>
+                        {rateSource && (
+                          <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
+                            Source: {rateSource}
+                          </span>
+                        )}
+                      </div>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step="0.0001" 
+                          {...field} 
+                          readOnly={isBursar && selectedCurrency !== "USD"}
+                          className={cn(isBursar && selectedCurrency !== "USD" && "bg-muted cursor-not-allowed")}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value))} 
+                        />
+                      </FormControl>
+                      {isBursar && selectedCurrency !== "USD" && (
+                        <p className="text-[11px] text-muted-foreground">
+                          Exchange rates are locked to RBZ official mid-rates.
+                        </p>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
               <FormField
                 control={form.control}
