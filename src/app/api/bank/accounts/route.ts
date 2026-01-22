@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { 
+    let { 
       bankName, 
       accountNumber, 
       currencyCode, 
@@ -63,8 +63,18 @@ export async function POST(req: NextRequest) {
       glAccountType = "ASSET"
     } = body;
 
-    if (!bankName || !accountNumber || !currencyCode) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!bankName || !accountNumber) {
+      return NextResponse.json({ error: "Bank name and account number are required" }, { status: 400 });
+    }
+
+    // Fetch organisation to get base currency if currencyCode is missing
+    const organisation = await prisma.organisation.findUnique({
+      where: { id: user.organisationId },
+      select: { baseCurrency: true }
+    });
+
+    if (!currencyCode) {
+      currencyCode = organisation?.baseCurrency || "ZWG";
     }
 
     // Start a transaction to create both Account and BankAccount
@@ -85,8 +95,13 @@ export async function POST(req: NextRequest) {
       if (!account) {
         // Create new GL account if not found
         // Use bank name and account number as defaults if not provided
-        const code = glAccountCode || `BANK-${accountNumber.slice(-4)}`;
-        const name = glAccountName || `${bankName} (${accountNumber})`;
+        // Append currency suffix to code and name for better identification
+        const suffix = `.${currencyCode.toLowerCase()}`;
+        const defaultCode = `BANK-${accountNumber.slice(-4)}${suffix}`;
+        const defaultName = `${bankName} (${accountNumber}) [${currencyCode.toUpperCase()}]`;
+        
+        const code = glAccountCode || defaultCode;
+        const name = glAccountName || defaultName;
         
         account = await tx.account.create({
           data: {
