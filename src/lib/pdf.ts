@@ -15,6 +15,7 @@ export interface PDFGenerationOptions {
   organisationName: string;
   generatedAt?: Date;
   orientation?: 'portrait' | 'landscape';
+  summaryData?: { label: string; value: string | number }[];
 }
 
 export async function generatePDF(
@@ -56,6 +57,23 @@ export async function generatePDF(
   doc.setFont("helvetica", "italic");
   doc.text(`Generated: ${(options.generatedAt || new Date()).toLocaleString()}`, pageWidth / 2, currentY, { align: "center" });
   currentY += 10;
+
+  // Summary Table (if provided)
+  if (options.summaryData && options.summaryData.length > 0) {
+    doc.autoTable({
+      startY: currentY,
+      body: options.summaryData.map(s => [s.label, typeof s.value === 'number' ? s.value.toLocaleString(undefined, { minimumFractionDigits: 2 }) : s.value]),
+      theme: 'grid',
+      styles: { fontSize: 9, cellPadding: 2 },
+      columnStyles: {
+        0: { fontStyle: 'bold', fillColor: [240, 240, 240], width: 40 },
+        1: { halign: 'right' }
+      },
+      margin: { left: pageWidth - 100 }, // Align to the right side
+      tableWidth: 85,
+    });
+    currentY = (doc as any).lastAutoTable.finalY + 10;
+  }
 
   // Table
   const tableRows = data.map(item => columns.map(col => {
