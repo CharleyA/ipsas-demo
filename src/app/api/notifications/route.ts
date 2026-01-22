@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { NotificationService } from "@/lib/services/notification.service";
-import { AuthService } from "@/lib/services/auth.service";
+import { verifyAuth } from "@/lib/auth";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const user = await AuthService.getCurrentUser();
+    const user = await verifyAuth(request);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -12,8 +12,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get("limit") || "20");
 
-    const notifications = await NotificationService.listForUser(user.id, limit);
-    const unreadCount = await NotificationService.getUnreadCount(user.id);
+    const notifications = await NotificationService.listForUser(user.userId, limit);
+    const unreadCount = await NotificationService.getUnreadCount(user.userId);
 
     return NextResponse.json({ notifications, unreadCount });
   } catch (error: any) {
@@ -21,14 +21,14 @@ export async function GET(request: Request) {
   }
 }
 
-export async function PATCH(request: Request) {
+export async function PATCH(request: NextRequest) {
   try {
-    const user = await AuthService.getCurrentUser();
+    const user = await verifyAuth(request);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await NotificationService.markAllAsRead(user.id);
+    await NotificationService.markAllAsRead(user.userId);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
