@@ -4,11 +4,12 @@ import { VoucherService } from "@/lib/services/voucher.service";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return withAuth(req, async (authReq) => {
     try {
-      const voucher = await VoucherService.reverse(params.id, authReq.user.userId);
+      const { id } = await params;
+      const voucher = await VoucherService.reverse(id, authReq.user.userId);
       return NextResponse.json(voucher);
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 400 });
