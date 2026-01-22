@@ -73,19 +73,19 @@ export default function VoucherDetailPage() {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error);
         
-        if (action === "post" && data.affectedAccountIds?.length > 0) {
-          toast.success(`Voucher posted successfully`, {
-            description: "You can now view the impact on the affected ledgers.",
-            action: {
-              label: "View Ledgers",
-                onClick: () => {
-                  const firstAccountId = data.affectedAccountIds[0];
-                  const dateStr = voucher.date ? new Date(voucher.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-                  router.push(`/dashboard/reports/general-ledger?accountId=${firstAccountId}&voucherId=${id}&startDate=${dateStr}&endDate=${dateStr}`);
-                }
-            }
-          });
-        } else {
+          if (action === "post" && data.affectedAccountIds?.length > 0) {
+            toast.success(`Voucher posted successfully`, {
+              description: "You can now view the impact on the affected ledgers.",
+              action: {
+                label: "View Ledgers",
+                  onClick: () => {
+                    const firstAccountId = data.affectedAccountIds[0];
+                    const dateStr = voucher?.date ? new Date(voucher.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+                    router.push(`/dashboard/reports/general-ledger?accountId=${firstAccountId}&voucherId=${id}&startDate=${dateStr}&endDate=${dateStr}`);
+                  }
+              }
+            });
+          } else {
           toast.success(`Voucher ${action}ed successfully`);
         }
         fetchVoucher();
