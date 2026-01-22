@@ -60,14 +60,16 @@ export default function CurrenciesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [isAddingRate, setIsAddingRate] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<any>(null);
 
   const [newRate, setNewRate] = useState({
-    fromCurrencyCode: "",
-    toCurrencyCode: "",
+    fromCurrencyCode: "USD",
+    toCurrencyCode: "ZWG",
     rate: "",
     effectiveDate: new Date().toISOString().split("T")[0],
+    source: "Manual",
   });
 
   const [configData, setConfigData] = useState({
