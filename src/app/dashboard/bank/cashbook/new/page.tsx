@@ -66,6 +66,31 @@ export default function CashbookEntryPage() {
     },
   });
 
+  // Fetch exchange rate when currency changes
+  const selectedCurrency = form.watch("currencyCode");
+  useEffect(() => {
+    if (selectedCurrency === "USD") {
+      form.setValue("fxRate", 1);
+      return;
+    }
+
+    const fetchRate = async () => {
+      try {
+        const res = await fetch(`/api/currencies/exchange-rates?from=${selectedCurrency}&to=USD&limit=1`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const rates = await res.json();
+        if (rates && rates.length > 0) {
+          form.setValue("fxRate", parseFloat(rates[0].rate));
+        }
+      } catch (error) {
+        console.error("Failed to fetch exchange rate", error);
+      }
+    };
+
+    fetchRate();
+  }, [selectedCurrency, token, form]);
+
   useEffect(() => {
     if (!token || !user?.organisationId) return;
 
