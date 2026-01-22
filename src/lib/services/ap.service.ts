@@ -147,28 +147,28 @@ export class APService {
         reference: data.reference,
         supplierId: data.supplierId,
         lines: [
-          // CR Bank/Cash
-          {
-            lineNumber: 1,
-            accountId: data.bankAccountId,
-            description: `Supplier Payment - ${data.paymentMethod || 'Transfer'}`,
-            currencyCode: data.currencyCode,
-            amountFc: data.amount,
-            fxRate: fxRate,
-            amountLc: amountLc,
-            credit: amountLc,
-          },
-          // DR Trade Payables
-          {
-            lineNumber: 2,
-            accountId: payableAccount.id,
-            description: `Payment to Supplier ${data.supplierId} (${data.currencyCode})`,
-            currencyCode: data.currencyCode,
-            amountFc: data.amount,
-            fxRate: fxRate,
-            amountLc: amountLc,
-            debit: amountLc,
-          }
+        // CR Bank/Cash
+        {
+          lineNumber: 1,
+          accountId: data.bankAccountId,
+          description: `Supplier Payment - ${data.paymentMethod || 'Transfer'}`,
+          currencyCode: data.currencyCode,
+          amountFc: data.amount,
+          fxRate: fxRate,
+          amountLc: amountLc,
+          credit: data.amount,
+        },
+        // DR Trade Payables
+        {
+          lineNumber: 2,
+          accountId: payableAccount.id,
+          description: `Payment to Supplier ${data.supplierId} (${data.currencyCode})`,
+          currencyCode: data.currencyCode,
+          amountFc: data.amount,
+          fxRate: fxRate,
+          amountLc: amountLc,
+          debit: data.amount,
+        }
         ]
       }, actorId);
 
