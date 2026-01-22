@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
       title: "Statement of Financial Position",
       subtitle: `As at ${format(date, "MMMM d, yyyy")}`,
       organisationName: org?.name || "Organisation",
-      orientation: "portrait",
+      orientation: "landscape",
       summaryData: [
         { label: `Total Assets (${report.reportingCurrency})`, value: Number(report.summary.totalAssets) },
         { label: `Total Liabilities (${report.reportingCurrency})`, value: Number(report.summary.totalLiabilities) },
