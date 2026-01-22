@@ -68,6 +68,8 @@ function GeneralLedgerContent() {
   
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
 
   useEffect(() => {
     const s = searchParams.get("startDate") || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
@@ -124,6 +126,8 @@ function GeneralLedgerContent() {
       params.set("accountId", selectedAccountId);
       params.set("startDate", startDate);
       params.set("endDate", endDate);
+      params.set("page", page.toString());
+      params.set("pageSize", pageSize.toString());
       if (urlVoucherId) params.set("voucherId", urlVoucherId);
 
       const response = await fetch(`/api/reports/general-ledger?${params.toString()}`, { 
@@ -151,7 +155,12 @@ function GeneralLedgerContent() {
 
   useEffect(() => {
     if (token && selectedAccountId && startDate && endDate) fetchReport();
-  }, [token, selectedAccountId, startDate, endDate, urlVoucherId]);
+  }, [token, selectedAccountId, startDate, endDate, urlVoucherId, page, pageSize]);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const displayedAccounts = urlVoucherId && affectedAccounts.length > 0 
     ? affectedAccounts 
