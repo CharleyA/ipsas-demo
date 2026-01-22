@@ -53,11 +53,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           router.push("/login");
         } else if (token && pathname.startsWith("/login")) {
           console.log("Redirecting to correct dashboard");
-          const redirectPath = user?.role === "ADMIN" ? "/dashboard/admin" : "/dashboard";
+          const redirectPath = "/dashboard";
           router.push(redirectPath);
         }
       }
-    }, [token, isLoading, pathname, router, user?.role]);
+    }, [token, isLoading, pathname, router]);
 
   const login = (newToken: string, newUser: User) => {
     console.log("Login initiated", { newToken: !!newToken, newUser });
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     toast.success("Logged in successfully");
     
-    const redirectPath = newUser.role === "ADMIN" ? "/dashboard/admin" : "/dashboard";
+    const redirectPath = "/dashboard";
     console.log("Redirecting to:", redirectPath);
     
     // Force navigation using window.location for reliability in iframe
