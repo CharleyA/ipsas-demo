@@ -205,8 +205,8 @@ export class ReportService {
       },
     });
 
-    const totalDebits = isUsdAccount ? (periodAgg._sum.debitFc || new Decimal(0)) : (periodAgg._sum.debitLc || new Decimal(0));
-    const totalCredits = isUsdAccount ? (periodAgg._sum.creditFc || new Decimal(0)) : (periodAgg._sum.creditLc || new Decimal(0));
+    const totalDebits = useFc ? (periodAgg._sum.debitFc || new Decimal(0)) : (periodAgg._sum.debitLc || new Decimal(0));
+    const totalCredits = useFc ? (periodAgg._sum.creditFc || new Decimal(0)) : (periodAgg._sum.creditLc || new Decimal(0));
     const closingBalance = openingBalance.add(totalDebits).minus(totalCredits);
     const netMovement = totalDebits.minus(totalCredits);
 
