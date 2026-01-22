@@ -34,42 +34,64 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
 import { ReportToolbar } from "@/components/reports/report-toolbar";
 
-function GeneralLedgerContent() {
-  const { token } = useAuth();
-  const searchParams = useSearchParams();
-  const urlAccountId = searchParams.get("accountId");
-  const [data, setData] = useState<any>(null);
-  const [accounts, setAccounts] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedAccountId, setSelectedAccountId] = useState("");
-  const [startDate, setStartDate] = useState(
-    new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0]
-  );
-  const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
+  function GeneralLedgerContent() {
+    const { token } = useAuth();
+    const searchParams = useSearchParams();
+    const urlAccountId = searchParams.get("accountId");
+    const voucherId = searchParams.get("voucherId");
+    
+    const [data, setData] = useState<any>(null);
+    const [accounts, setAccounts] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [selectedAccountId, setSelectedAccountId] = useState("");
+    const [affectedAccounts, setAffectedAccounts] = useState<any[]>([]);
+    const [voucherInfo, setVoucherInfo] = useState<any>(null);
+    
+    const [startDate, setStartDate] = useState(
+      searchParams.get("startDate") || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0]
+    );
+    const [endDate, setEndDate] = useState(
+      searchParams.get("endDate") || new Date().toISOString().split("T")[0]
+    );
 
-  const fetchAccounts = async () => {
-    try {
-      const response = await fetch("/api/accounts", {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      const result = await response.json();
-      setAccounts(result);
-      
-      // Prioritize URL parameter for drill-down
-      if (urlAccountId) {
-        setSelectedAccountId(urlAccountId);
-      } else if (result.length > 0) {
-        setSelectedAccountId(result[0].id);
+    const fetchAccounts = async () => {
+      try {
+        const response = await fetch("/api/accounts", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const result = await response.json();
+        setAccounts(result);
+        
+        if (urlAccountId) {
+          setSelectedAccountId(urlAccountId);
+        } else if (result.length > 0) {
+          setSelectedAccountId(result[0].id);
+        }
+      } catch (error) {
+        toast.error("Failed to fetch accounts");
       }
-    } catch (error) {
-      toast.error("Failed to fetch accounts");
-    }
-  };
+    };
+
+    const fetchVoucherAffectedAccounts = async () => {
+      if (!voucherId) return;
+      try {
+        const response = await fetch(`/api/vouchers/${voucherId}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const voucher = await response.json();
+        setVoucherInfo(voucher);
+        
+        const ids = [...new Set(voucher.lines.map((l: any) => l.accountId))];
+        const affected = accounts.filter(acc => ids.includes(acc.id));
+        setAffectedAccounts(affected);
+      } catch (error) {
+        console.error("Failed to fetch voucher info", error);
+      }
+    };
 
     const fetchReport = async () => {
       if (!selectedAccountId) return;
       setIsLoading(true);
-      const voucherId = searchParams.get("voucherId");
       try {
         const url = new URL(`/api/reports/general-ledger`, window.location.origin);
         url.searchParams.set("accountId", selectedAccountId);
@@ -89,54 +111,95 @@ function GeneralLedgerContent() {
       }
     };
 
+    useEffect(() => {
+      if (token) fetchAccounts();
+    }, [token]);
 
-  useEffect(() => {
-    if (token) fetchAccounts();
-  }, [token]);
+    useEffect(() => {
+      if (accounts.length > 0 && voucherId) {
+        fetchVoucherAffectedAccounts();
+      }
+    }, [accounts, voucherId]);
 
-  useEffect(() => {
-    if (token && selectedAccountId) fetchReport();
-  }, [token, selectedAccountId, startDate, endDate]);
+    useEffect(() => {
+      if (token && selectedAccountId) fetchReport();
+    }, [token, selectedAccountId, startDate, endDate]);
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/dashboard/reports">
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">General Ledger</h1>
-            <p className="text-muted-foreground">Detailed account activity</p>
-          </div>
-        </div>
-        <ReportToolbar 
-          reportName="General Ledger" 
-          endpoint="/api/reports/general-ledger" 
-          filters={{ accountId: selectedAccountId, startDate, endDate }} 
-        />
-      </div>
+    const displayedAccounts = voucherId && affectedAccounts.length > 0 
+      ? affectedAccounts 
+      : accounts;
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="flex flex-col gap-1 w-[300px]">
-              <label className="text-xs font-medium text-muted-foreground">Account</label>
-              <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select account" />
-                </SelectTrigger>
-                <SelectContent>
-                  {accounts.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>
-                      {acc.code} - {acc.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" asChild>
+              <Link href={voucherId ? `/dashboard/vouchers/${voucherId}` : "/dashboard/reports"}>
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">General Ledger</h1>
+              <p className="text-muted-foreground">
+                {voucherId ? `Viewing impact of ${voucherInfo?.number || "voucher"}` : "Detailed account activity"}
+              </p>
             </div>
+          </div>
+          <ReportToolbar 
+            reportName="General Ledger" 
+            endpoint="/api/reports/general-ledger" 
+            filters={{ accountId: selectedAccountId, startDate, endDate, voucherId }} 
+          />
+        </div>
+
+        {voucherId && (
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="p-4 flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <FileText className="w-4 h-4 text-primary" />
+                <span>Affected Accounts for {voucherInfo?.number}:</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {affectedAccounts.map(acc => (
+                  <Button 
+                    key={acc.id}
+                    variant={selectedAccountId === acc.id ? "default" : "outline"}
+                    size="sm"
+                    className="h-8 text-[11px]"
+                    onClick={() => setSelectedAccountId(acc.id)}
+                  >
+                    {acc.code}
+                  </Button>
+                ))}
+              </div>
+              <Button variant="ghost" size="sm" className="ml-auto h-8 text-xs" asChild>
+                <Link href="/dashboard/reports/general-ledger">
+                  Clear Voucher Filter
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardHeader>
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="flex flex-col gap-1 w-[300px]">
+                <label className="text-xs font-medium text-muted-foreground">Account</label>
+                <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {displayedAccounts.map((acc) => (
+                      <SelectItem key={acc.id} value={acc.id}>
+                        {acc.code} - {acc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-muted-foreground">Start Date</label>
               <Input 
