@@ -572,29 +572,141 @@ export default function AccountsPage() {
                   {viewMode === "table" ? (
                     filteredAccounts.length > 0 ? (
                       filteredAccounts.map(account => renderAccountRow(account))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                            No accounts found matching "{search}"
+                          </TableCell>
+                        </TableRow>
+                      )
                     ) : (
+                      renderTree(null)
+                    )}
+                    {!isLoading && accounts.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
-                          No accounts found matching "{search}"
+                        <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                          No accounts created yet. Use 'Populate IPSAS COA' to start.
                         </TableCell>
                       </TableRow>
-                    )
-                  ) : (
-                    renderTree(null)
-                  )}
-                  {!isLoading && accounts.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
-                        No accounts created yet. Use 'Populate IPSAS COA' to start.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Edit Account Dialog */}
+        <Dialog open={!!editingAccount} onOpenChange={(open) => !open && setEditingAccount(null)}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Edit Account</DialogTitle>
+              <DialogDescription>
+                Update the details for account {editingAccount?.code}.
+              </DialogDescription>
+            </DialogHeader>
+            {editingAccount && (
+              <div className="grid gap-6 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-code">Account Code</Label>
+                    <Input
+                      id="edit-code"
+                      value={editingAccount.code}
+                      onChange={(e) => setEditingAccount({ ...editingAccount, code: e.target.value })}
+                      className="font-mono"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-type">Account Type</Label>
+                    <Select 
+                      value={editingAccount.type} 
+                      onValueChange={(v) => setEditingAccount({ ...editingAccount, type: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ASSET">Asset</SelectItem>
+                        <SelectItem value="LIABILITY">Liability</SelectItem>
+                        <SelectItem value="NET_ASSETS_EQUITY">Equity</SelectItem>
+                        <SelectItem value="REVENUE">Revenue</SelectItem>
+                        <SelectItem value="EXPENSE">Expense</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-name">Account Name</Label>
+                  <Input
+                    id="edit-name"
+                    value={editingAccount.name}
+                    onChange={(e) => setEditingAccount({ ...editingAccount, name: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-parent">Parent Account (Optional)</Label>
+                  <Select 
+                    value={editingAccount.parentId || "none"} 
+                    onValueChange={(v) => setEditingAccount({ ...editingAccount, parentId: v === "none" ? null : v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select parent..." />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <SelectItem value="none">None (Header Account)</SelectItem>
+                      {accounts
+                        .filter(a => a.id !== editingAccount.id) // Prevent self-parenting
+                        .map(a => (
+                          <SelectItem key={a.id} value={a.id}>{a.code} - {a.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="edit-active"
+                    checked={editingAccount.isActive}
+                    onChange={(e) => setEditingAccount({ ...editingAccount, isActive: e.target.checked })}
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <Label htmlFor="edit-active">Account is Active</Label>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingAccount(null)}>Cancel</Button>
+              <Button onClick={handleUpdateAccount} disabled={isUpdating}>
+                {isUpdating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!isDeletingAccount} onOpenChange={(open) => !open && setIsDeletingAccount(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the account <strong>{isDeletingAccount?.code} - {isDeletingAccount?.name}</strong>.
+                This action cannot be undone and will fail if the account has any transactions or sub-accounts.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDeleteAccount}
+                className="bg-rose-600 hover:bg-rose-700 text-white"
+              >
+                Delete Account
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    );
+  }
+
