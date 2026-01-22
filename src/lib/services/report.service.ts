@@ -134,7 +134,7 @@ export class ReportService {
 
     const totalDebits = rows.reduce((acc, r) => acc.add(r.debit), new Decimal(0));
     const totalCredits = rows.reduce((acc, r) => acc.add(r.credit), new Decimal(0));
-    const netMovement = closingBalance.minus(openingBalance);
+    const netMovement = runningBalance.minus(openingBalance);
 
     // Group for Daily Activity Chart
     const dailyMap = new Map<string, { date: string, debits: number, credits: number }>();
