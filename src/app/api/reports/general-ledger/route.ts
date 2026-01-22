@@ -35,11 +35,13 @@ export async function GET(req: NextRequest) {
       accountId,
       startDate,
       endDate,
-      { 
-        voucherId, 
-        page: isExport ? undefined : page, 
-        pageSize: isExport ? undefined : pageSize 
-      }
+        { 
+          voucherId: voucherId || undefined, 
+          page: isExport ? undefined : page, 
+          pageSize: isExport ? undefined : pageSize,
+          reportingCurrency
+        }
+
     );
 
     if (exportFormat === "json") {
