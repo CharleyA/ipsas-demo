@@ -347,16 +347,19 @@ export default function FinancialPerformancePage() {
               <CardContent className="h-[300px] mt-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie
-                      data={data.chartData.expenseComposition}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
+                      <Pie
+                        data={data.chartData.expenseComposition}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={5}
+                        dataKey="value"
+                        minAngle={15}
+                        label={({ name, percent }) => 
+                          percent > 0.05 ? `${name} ${(percent * 100).toFixed(0)}%` : ""
+                        }
+                      >
                         {data.chartData.expenseComposition.map((entry: any, index: number) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
