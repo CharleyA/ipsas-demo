@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(authReq.url);
     const startDateStr = searchParams.get("startDate");
     const endDateStr = searchParams.get("endDate");
+    const reportingCurrency = searchParams.get("currency") || "ZWG";
     const exportFormat = (searchParams.get("format") || "json") as ExportFormat;
 
     if (!startDateStr || !endDateStr) {
@@ -24,7 +25,8 @@ export async function GET(req: NextRequest) {
     const report = await ReportService.getCashflow(
       authReq.user.organisationId,
       startDate,
-      endDate
+      endDate,
+      { reportingCurrency }
     );
 
     if (exportFormat === "json") {
