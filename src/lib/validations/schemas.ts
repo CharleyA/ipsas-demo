@@ -79,7 +79,7 @@ export const createExchangeRateSchema = z.object({
   fromCurrencyCode: z.string().length(3),
   toCurrencyCode: z.string().length(3),
   rate: z.number().positive(),
-  effectiveDate: z.string().datetime().or(z.date()),
+  effectiveDate: z.union([z.string(), z.date()]).pipe(z.coerce.date()),
   source: z.string().max(100).optional(),
 });
 
