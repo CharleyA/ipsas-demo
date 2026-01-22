@@ -40,6 +40,12 @@ export class APService {
       throw new Error("Could not resolve Trade Payables account (2111) for this currency");
     }
 
+    const supplier = await prisma.supplier.findUnique({
+      where: { id: data.supplierId },
+      select: { name: true, code: true }
+    });
+    const supplierName = supplier ? `${supplier.name} (${supplier.code})` : data.supplierId;
+
     return await prisma.$transaction(async (tx) => {
       // 1. Create Voucher (AP_BILL)
       const voucherLines = [
@@ -47,7 +53,7 @@ export class APService {
         {
           lineNumber: data.lines.length + 1,
           accountId: payableAccount.id,
-          description: `AP Bill (${data.currencyCode}) - Supplier ${data.supplierId}`,
+          description: `Trade Payable (${data.currencyCode}) - ${supplierName}`,
           currencyCode: data.currencyCode,
           amountFc: totalAmountFc,
           fxRate: fxRate,
