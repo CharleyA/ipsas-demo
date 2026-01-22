@@ -11,12 +11,27 @@ export async function withAuth(
   roles?: string[]
 ) {
   const authHeader = req.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  let token: string | null = null;
+
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1];
+  } else {
+    // Check for token in cookies
+    const cookieHeader = req.headers.get("cookie");
+    if (cookieHeader) {
+      const cookies = Object.fromEntries(
+        cookieHeader.split("; ").map((c) => c.split("="))
+      );
+      token = cookies.token || null;
+    }
+  }
+
+  if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const token = authHeader.split(" ")[1];
   const decoded = await verifyToken(token);
+
 
   if (!decoded) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
