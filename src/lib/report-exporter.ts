@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import * as ExcelJS from "exceljs";
 import Papa from "papaparse";
-import { generatePDFFromHTML, type PDFGenerationOptions } from "./pdf";
+import { generatePDF, type PDFGenerationOptions } from "./pdf";
 import { Prisma } from "@prisma/client";
 
 export type ExportFormat = "json" | "csv" | "xlsx" | "pdf";
