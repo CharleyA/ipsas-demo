@@ -148,30 +148,30 @@ export class ARService {
         description: `Fee Payment (${data.currencyCode}) - Student ${data.studentId}`,
         reference: data.reference,
         studentId: data.studentId,
-        lines: [
-          // DR Bank/Cash
-          {
-            lineNumber: 1,
-            accountId: data.bankAccountId,
-            description: `Fee Receipt - ${data.paymentMethod || 'Cash'}`,
-            currencyCode: data.currencyCode,
-            amountFc: data.amount,
-            fxRate: fxRate,
-            amountLc: amountLc,
-            debit: amountLc,
-          },
-          // CR Fees Receivable
-          {
-            lineNumber: 2,
-            accountId: receivableAccount.id,
-            description: `Unallocated Payment (${data.currencyCode}) - Student ${data.studentId}`,
-            currencyCode: data.currencyCode,
-            amountFc: data.amount,
-            fxRate: fxRate,
-            amountLc: amountLc,
-            credit: amountLc,
-          }
-        ]
+          lines: [
+            // DR Bank/Cash
+            {
+              lineNumber: 1,
+              accountId: data.bankAccountId,
+              description: `Fee Receipt - ${data.paymentMethod || 'Cash'}`,
+              currencyCode: data.currencyCode,
+              amountFc: data.amount,
+              fxRate: fxRate,
+              amountLc: amountLc,
+              debit: data.amount,
+            },
+            // CR Fees Receivable
+            {
+              lineNumber: 2,
+              accountId: receivableAccount.id,
+              description: `Unallocated Payment (${data.currencyCode}) - Student ${data.studentId}`,
+              currencyCode: data.currencyCode,
+              amountFc: data.amount,
+              fxRate: fxRate,
+              amountLc: amountLc,
+              credit: data.amount,
+            }
+          ]
       }, actorId);
 
       // 2. Create ARReceipt
