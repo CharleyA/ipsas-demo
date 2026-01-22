@@ -64,19 +64,26 @@ export default function NewARInvoiceForm() {
   });
 
   useEffect(() => {
-    const fetchStudents = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch("/api/students", {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        const data = await res.json();
-        setStudents(Array.isArray(data) ? data : []);
+        const [stuRes, curRes] = await Promise.all([
+          fetch("/api/students", {
+            headers: { "Authorization": `Bearer ${token}` }
+          }),
+          fetch(`/api/organisations/${user?.organisationId}/currencies`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          })
+        ]);
+        const stuData = await stuRes.json();
+        const curData = await curRes.json();
+        setStudents(Array.isArray(stuData) ? stuData : []);
+        setCurrencies(Array.isArray(curData) ? curData : []);
       } catch (error) {
-        console.error("Failed to fetch students", error);
+        console.error("Failed to fetch data", error);
       }
     };
-    if (token) fetchStudents();
-  }, [token]);
+    if (token && user?.organisationId) fetchData();
+  }, [token, user?.organisationId]);
 
   async function onSubmit(values: CreateARInvoiceInput) {
     setIsLoading(true);
