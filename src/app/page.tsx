@@ -192,9 +192,10 @@ export default function HomePage() {
             <Wallet className="w-4 h-4" />
             <span>IPSAS Accounting System</span>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Supporting Zimbabwe&apos;s public sector financial management reforms
-          </p>
+          <div className="text-center md:text-right text-sm text-muted-foreground space-y-1">
+            <p>Supporting Zimbabwe&apos;s public sector financial management reforms</p>
+            <p>Designed and developed by iThink Systems</p>
+          </div>
         </div>
       </footer>
     </div>
