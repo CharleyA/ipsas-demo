@@ -227,6 +227,8 @@ export class UserService {
   }
 
   static async addToOrganisation(data: AddUserToOrganisationInput, actorId: string) {
+    const { isApprover, ...rest } = data;
+
     const orgUser = await prisma.organisationUser.upsert({
       where: {
         organisationId_userId: {
@@ -235,15 +237,13 @@ export class UserService {
         },
       },
       update: {
-        role: data.role,
-        isApprover: data.isApprover,
+        role: rest.role,
         isActive: true,
       },
       create: {
-        userId: data.userId,
-        organisationId: data.organisationId,
-        role: data.role,
-        isApprover: data.isApprover,
+        userId: rest.userId,
+        organisationId: rest.organisationId,
+        role: rest.role,
         isActive: true,
       },
       include: {
@@ -252,16 +252,44 @@ export class UserService {
       },
     });
 
+    let finalOrgUser = orgUser;
+
+    if (typeof isApprover === "boolean") {
+      await prisma.$executeRaw`
+        UPDATE "organisation_users"
+        SET "isApprover" = ${isApprover}
+        WHERE "organisationId" = ${data.organisationId}
+          AND "userId" = ${data.userId}
+      `;
+
+      const refreshed = await prisma.organisationUser.findUnique({
+        where: {
+          organisationId_userId: {
+            organisationId: data.organisationId,
+            userId: data.userId,
+          },
+        },
+        include: {
+          user: { select: { id: true, email: true, firstName: true, lastName: true } },
+          organisation: { select: { id: true, code: true, name: true } },
+        },
+      });
+
+      if (refreshed) {
+        finalOrgUser = refreshed;
+      }
+    }
+
     await AuditService.log({
       userId: actorId,
       organisationId: data.organisationId,
       action: "ADD_USER_TO_ORG",
       entityType: "OrganisationUser",
-      entityId: orgUser.id,
-      newValues: orgUser,
+      entityId: finalOrgUser.id,
+      newValues: finalOrgUser,
     });
 
-    return orgUser;
+    return finalOrgUser;
   }
 
   static async removeFromOrganisation(organisationId: string, userId: string, actorId: string) {
