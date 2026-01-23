@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
-import { Loader2, LayoutDashboard, Plus } from "lucide-react";
+import { Loader2, LayoutDashboard, Plus, MessageCircle, X } from "lucide-react";
 import { HeadmasterDashboard } from "@/components/dashboard/headmaster-dashboard";
 import { AuditorDashboard } from "@/components/dashboard/auditor-dashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [chatInput, setChatInput] = useState("");
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
       id: "welcome",
@@ -108,6 +109,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <div id="assistant" className="sr-only" />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -143,52 +145,76 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <Card id="assistant" className="scroll-mt-24">
-        <CardHeader>
-          <CardTitle>Assistant</CardTitle>
-          <CardDescription>
-            AI chatbot for read-only insights and draft-only workflows. No submit, approve, or post actions.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-md border border-border">
-            <ScrollArea className="h-72">
-              <div className="space-y-3 p-4">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={message.role === "user" ? "flex justify-end" : "flex justify-start"}
-                  >
-                    <div
-                      className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-foreground"
-                      }`}
-                    >
-                      {message.content}
-                    </div>
-                  </div>
-                ))}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+        {isChatOpen && (
+          <Card className="w-80 sm:w-96">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <div>
+                <CardTitle className="text-base">Assistant</CardTitle>
+                <CardDescription>
+                  Read-only insights and draft-only workflows.
+                </CardDescription>
               </div>
-            </ScrollArea>
-          </div>
-          <form className="flex items-center gap-2" onSubmit={handleChatSubmit}>
-            <Input
-              value={chatInput}
-              onChange={(event) => setChatInput(event.target.value)}
-              placeholder="Ask about reports, vouchers, or drafts..."
-              aria-label="Assistant prompt"
-            />
-            <Button type="submit" disabled={!chatInput.trim()}>
-              Send
-            </Button>
-          </form>
-          <p className="text-xs text-muted-foreground">
-            Read-only and draft-only assistance. This chatbot will not submit, approve, or post transactions.
-          </p>
-        </CardContent>
-      </Card>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsChatOpen(false)}
+                aria-label="Close assistant"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="rounded-md border border-border">
+                <ScrollArea className="h-64">
+                  <div className="space-y-3 p-4">
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={message.role === "user" ? "flex justify-end" : "flex justify-start"}
+                      >
+                        <div
+                          className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                            message.role === "user"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-foreground"
+                          }`}
+                        >
+                          {message.content}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+              <form className="flex items-center gap-2" onSubmit={handleChatSubmit}>
+                <Input
+                  value={chatInput}
+                  onChange={(event) => setChatInput(event.target.value)}
+                  placeholder="Ask about reports, vouchers, or drafts..."
+                  aria-label="Assistant prompt"
+                />
+                <Button type="submit" disabled={!chatInput.trim()}>
+                  Send
+                </Button>
+              </form>
+              <p className="text-xs text-muted-foreground">
+                Read-only and draft-only assistance. No submit, approve, or post actions.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+        <Button
+          type="button"
+          size="icon"
+          className="rounded-full h-12 w-12"
+          onClick={() => setIsChatOpen((prev) => !prev)}
+          aria-label="Open assistant"
+        >
+          <MessageCircle className="h-5 w-5" />
+        </Button>
+      </div>
     </div>
   );
 }
