@@ -118,15 +118,18 @@ export default function AccountingMappingsPage() {
             apExpenseAccountId: orgResult.data.apExpenseAccountId || "",
             apBankAccountId: orgResult.data.apBankAccountId || "",
             cashInHandAccountId: orgResult.data.cashInHandAccountId || "",
-            fxBankAccountId: orgResult.data.fxBankAccountId || "",
             fxGainLossAccountId: orgResult.data.fxGainLossAccountId || "",
           });
         }
 
         const accountsData = Array.isArray(accResult) ? accResult : accResult.data || [];
         const bankAccountsData = Array.isArray(bankResult) ? bankResult : bankResult.data || [];
+        const currenciesData = Array.isArray(currenciesResult)
+          ? currenciesResult
+          : currenciesResult.data || [];
         setAccounts(accountsData);
         setBankAccounts(bankAccountsData);
+        setCurrencyMappings(currenciesData);
       } catch (error) {
         toast.error("An error occurred while fetching data");
       } finally {
