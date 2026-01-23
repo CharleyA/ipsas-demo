@@ -6,6 +6,7 @@ import { z } from "zod";
 const updateOrgCurrencySchema = z.object({
   isActive: z.boolean().optional(),
   isBaseCurrency: z.boolean().optional(),
+  defaultBankAccountId: z.string().nullable().optional(),
 });
 
 export async function PATCH(
