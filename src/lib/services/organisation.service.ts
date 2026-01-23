@@ -176,7 +176,12 @@ export class OrganisationService {
     return orgCurrency;
   }
 
-  static async updateCurrency(organisationId: string, currencyCode: string, data: { isActive?: boolean; isBaseCurrency?: boolean }, actorId: string) {
+  static async updateCurrency(
+    organisationId: string,
+    currencyCode: string,
+    data: { isActive?: boolean; isBaseCurrency?: boolean; defaultBankAccountId?: string | null },
+    actorId: string
+  ) {
     const oldOrgCurrency = await prisma.organisationCurrency.findUnique({
       where: { organisationId_currencyCode: { organisationId, currencyCode } },
     });
