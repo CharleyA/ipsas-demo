@@ -168,6 +168,54 @@ export default function AccountingMappingsPage() {
     }
   }
 
+  const handleCurrencyBankChange = (currencyCode: string, bankAccountId: string) => {
+    setCurrencyMappings((prev) =>
+      prev.map((currency) =>
+        currency.currencyCode === currencyCode
+          ? { ...currency, defaultBankAccountId: bankAccountId }
+          : currency
+      )
+    );
+  };
+
+  async function saveCurrencyDefaults() {
+    if (!user?.organisationId || !token) return;
+
+    setIsSavingCurrencies(true);
+    try {
+      const updates = await Promise.all(
+        foreignCurrencies.map(async (currency) => {
+          const response = await fetch(
+            `/api/organisations/${user.organisationId}/currencies/${currency.currencyCode}`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+                "x-organisation-id": user.organisationId,
+              },
+              body: JSON.stringify({
+                defaultBankAccountId: currency.defaultBankAccountId || null,
+              }),
+            }
+          );
+          return response.json();
+        })
+      );
+
+      const failure = updates.find((result) => !result.success);
+      if (failure) {
+        toast.error(failure.error || "Failed to save foreign currency defaults");
+      } else {
+        toast.success("Foreign currency defaults updated");
+      }
+    } catch (error) {
+      toast.error("An error occurred while saving foreign currency defaults");
+    } finally {
+      setIsSavingCurrencies(false);
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex h-[400px] items-center justify-center">
