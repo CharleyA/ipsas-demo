@@ -45,6 +45,24 @@ export default function AccountingMappingsPage() {
     return filtered;
   };
 
+  const getFxGainLossAccounts = () => {
+    const fxAccounts = accounts.filter((account) => account.isFxGainLoss);
+    if (fxAccounts.length > 0) return fxAccounts;
+    return accounts.filter((account) => ["EXPENSE", "REVENUE"].includes(account.type));
+  };
+
+  const getForeignCurrencyBankAccounts = () => {
+    if (!bankAccounts.length) return [];
+    const foreign = bankAccounts.filter((account) => account.currencyCode !== baseCurrency);
+    return foreign.length > 0 ? foreign : bankAccounts;
+  };
+
+  const foreignBankAccountOptions = getForeignCurrencyBankAccounts().map((account) => ({
+    id: account.accountId,
+    code: account.account?.code || account.accountId,
+    name: `${account.bankName} (${account.accountNumber}) [${account.currencyCode}]`,
+  }));
+
   const form = useForm<UpdateOrganisationInput>({
     resolver: zodResolver(updateOrganisationSchema),
     defaultValues: {
