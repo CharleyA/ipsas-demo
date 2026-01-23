@@ -60,6 +60,8 @@ const quickActions = [
 ];
 
 export default function HomePage() {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-background">
       <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
@@ -75,12 +77,25 @@ export default function HomePage() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/login">Sign In</Link>
-              </Button>
-              <Button size="sm" asChild>
-                <Link href="/register">Get Started</Link>
-              </Button>
+              {user ? (
+                <>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href="/docs">Documentation</Link>
+                  </Button>
+                  <Button size="sm" asChild>
+                    <Link href="/dashboard">Open Dashboard</Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href="/login">Sign In</Link>
+                  </Button>
+                  <Button size="sm" asChild>
+                    <Link href="/register">Get Started</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
