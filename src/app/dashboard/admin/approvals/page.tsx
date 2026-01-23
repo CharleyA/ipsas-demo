@@ -1,19 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { 
-  ShieldCheck, 
-  Loader2, 
-  ArrowLeft, 
-  Check, 
-  X,
-  UserCheck,
-  ShieldAlert,
-  Save,
+import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  Check,
+  Filter,
+  Loader2,
   Search,
-  Filter
+  ShieldAlert,
+  UserCheck,
 } from "lucide-react";
-
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -53,15 +49,19 @@ export default function ApprovalWorkflowPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch = 
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesRole = roleFilter === "ALL" || user.role === roleFilter;
+  const filteredUsers = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
 
-    return matchesSearch && matchesRole;
-  });
+    return users.filter((user) => {
+      const matchesSearch =
+        user.email.toLowerCase().includes(query) ||
+        `${user.firstName} ${user.lastName}`.toLowerCase().includes(query);
+
+      const matchesRole = roleFilter === "ALL" || user.role === roleFilter;
+
+      return matchesSearch && matchesRole;
+    });
+  }, [users, searchQuery, roleFilter]);
 
   useEffect(() => {
     async function fetchUsers() {
@@ -69,15 +69,17 @@ export default function ApprovalWorkflowPage() {
 
       try {
         const response = await fetch("/api/users", {
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
             "x-organisation-id": currentUser.organisationId,
-            "x-user-id": currentUser.id
+            "x-user-id": currentUser.id,
           },
         });
         const result = await response.json();
         if (result.success) {
           setUsers(result.data);
+        } else {
+          toast.error(result.error || "Failed to fetch users");
         }
       } catch (error) {
         toast.error("Failed to fetch users");
@@ -100,7 +102,7 @@ export default function ApprovalWorkflowPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
           "x-organisation-id": currentUser.organisationId,
-          "x-user-id": currentUser.id
+          "x-user-id": currentUser.id,
         },
         body: JSON.stringify(data),
       });
@@ -108,7 +110,7 @@ export default function ApprovalWorkflowPage() {
       const result = await response.json();
 
       if (result.success) {
-        setUsers(users.map(u => u.id === userId ? { ...u, ...data } : u));
+        setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, ...data } : u)));
         toast.success("User workflow settings updated");
       } else {
         toast.error(result.error || "Failed to update user");
@@ -159,8 +161,8 @@ export default function ApprovalWorkflowPage() {
             <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input 
-                  placeholder="Search by name or email..." 
+                <Input
+                  placeholder="Search by name or email..."
                   className="pl-9"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -215,7 +217,7 @@ export default function ApprovalWorkflowPage() {
                           onValueChange={(value) => updateUserStatus(user.id, { role: value })}
                           disabled={isSaving === user.id}
                         >
-                          <SelectTrigger className="w-[140px] h-8 text-xs">
+                          <SelectTrigger className="h-8 w-[140px] text-xs">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -232,14 +234,16 @@ export default function ApprovalWorkflowPage() {
                         <div className="flex justify-center">
                           <Switch
                             checked={user.isApprover}
-                            onCheckedChange={(checked) => updateUserStatus(user.id, { isApprover: checked })}
+                            onCheckedChange={(checked) =>
+                              updateUserStatus(user.id, { isApprover: checked })
+                            }
                             disabled={isSaving === user.id}
                           />
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
                         {user.isApprover ? (
-                          <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20">
+                          <Badge className="border-green-500/20 bg-green-500/10 text-green-500 hover:bg-green-500/20">
                             <Check className="mr-1 h-3 w-3" /> Approver
                           </Badge>
                         ) : (
@@ -262,23 +266,23 @@ export default function ApprovalWorkflowPage() {
               <ShieldAlert className="h-5 w-5" />
               Workflow Rules
             </CardTitle>
-            <CardDescription>
-              Current system configuration for approval logic.
-            </CardDescription>
+            <CardDescription>Current system configuration for approval logic.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 h-2 w-2 rounded-full bg-amber-500" />
               <p>
-                <strong>Implicit Approvers:</strong> By default, users with <strong>Bursar</strong>, 
-                <strong>Headmaster</strong>, <strong>Accountant</strong>, and <strong>Admin</strong> roles are usually required for final posting, 
-                but specific "Approver" status allows any user to be part of the review chain.
+                <strong>Implicit Approvers:</strong> By default, users with <strong>Bursar</strong>,
+                <strong>Headmaster</strong>, <strong>Accountant</strong>, and <strong>Admin</strong> roles
+                are usually required for final posting, but specific "Approver" status allows any
+                user to be part of the review chain.
               </p>
             </div>
             <div className="flex items-start gap-3">
               <div className="mt-0.5 h-2 w-2 rounded-full bg-amber-500" />
               <p>
-                <strong>Audit Trail:</strong> Every approval action is logged in the system audit log with a timestamp and user ID.
+                <strong>Audit Trail:</strong> Every approval action is logged in the system audit log
+                with a timestamp and user ID.
               </p>
             </div>
           </CardContent>
