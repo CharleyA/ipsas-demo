@@ -115,6 +115,15 @@ export default async function DocumentationPage() {
               </p>
             </div>
 
+            <div className="rounded-lg border border-border bg-card/50 p-4">
+              <h3 className="text-sm font-semibold text-foreground">Floating Assistant</h3>
+              <p className="text-sm text-muted-foreground">
+                Use the chat button in the bottom-right corner to ask questions about the documentation.
+                The assistant is available on documentation pages and authenticated areas, and stays hidden
+                on the public homepage. It provides read-only insights and draft-only guidance.
+              </p>
+            </div>
+
             <Card>
               <CardContent className="space-y-5 py-8">
                 {contentBlocks.map((block, index) => {
