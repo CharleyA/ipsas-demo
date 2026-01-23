@@ -34,7 +34,7 @@ export default function AccountingMappingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
-  const [baseCurrency, setBaseCurrency] = useState<string>("\");
+  const [baseCurrency, setBaseCurrency] = useState<string>("");
 
   const getAccountsByType = (type: string, options?: { cashOnly?: boolean }) => {
     const filtered = accounts.filter((account) => account.type === type);
