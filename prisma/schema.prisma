@@ -27,6 +27,8 @@ model Organisation {
   apExpenseAccountId    String?
   apBankAccountId       String?
   cashInHandAccountId   String?
+  fxBankAccountId       String?
+  fxGainLossAccountId   String?
   chartOfAccounts       Account[]
   bankAccounts          BankAccount[]
   costCentres           CostCentre[]
