@@ -76,7 +76,6 @@ export default function AccountingMappingsPage() {
       apExpenseAccountId: "",
       apBankAccountId: "",
       cashInHandAccountId: "",
-      fxBankAccountId: "",
       fxGainLossAccountId: "",
     },
   });
