@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Loader2, LayoutDashboard, Plus } from "lucide-react";
 import { HeadmasterDashboard } from "@/components/dashboard/headmaster-dashboard";
 import { AuditorDashboard } from "@/components/dashboard/auditor-dashboard";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
 export default function DashboardPage() {
@@ -89,6 +90,56 @@ export default function DashboardPage() {
           </p>
         </div>
       )}
+
+      <Card id="assistant" className="scroll-mt-24">
+        <CardHeader>
+          <CardTitle>Assistant (Read-only & Draft-only)</CardTitle>
+          <CardDescription>
+            Uses existing APIs for retrieval and drafting only. No submit, approve, or post actions.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">Read-only tools</h3>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>/api/dashboard, /api/organisations/current</li>
+                <li>/api/reports/trial-balance, /api/reports/general-ledger</li>
+                <li>/api/reports/ap-ageing, /api/reports/ar-ageing</li>
+                <li>/api/reports/financial-position, /api/reports/financial-performance</li>
+                <li>/api/reports/cashflow, /api/reports/audit-log</li>
+              </ul>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">Entity lookups</h3>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>/api/vouchers, /api/ap/bills, /api/ap/payments</li>
+                <li>/api/ar/invoices, /api/ar/receipts</li>
+                <li>/api/suppliers, /api/students, /api/accounts</li>
+                <li>/api/assets/register</li>
+              </ul>
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">Draft-only actions</h3>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>POST /api/vouchers</li>
+                <li>POST /api/ap/bills, /api/ap/payments</li>
+                <li>POST /api/ar/invoices, /api/ar/receipts</li>
+              </ul>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">Example flows</h3>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>Unpaid AP &gt; 30 days → /api/reports/ap-ageing</li>
+                <li>Explain voucher → /api/vouchers/[id] + /api/reports/audit-log</li>
+                <li>Draft receipt → /api/students → POST /api/ar/receipts</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
