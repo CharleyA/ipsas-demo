@@ -85,9 +85,10 @@ export default function AccountingMappingsPage() {
           });
         }
 
-        if (accResult.success) {
-          setAccounts(accResult.data);
-        }
+        const accountsData = Array.isArray(accResult)
+          ? accResult
+          : accResult.data || [];
+        setAccounts(accountsData);
       } catch (error) {
         toast.error("An error occurred while fetching data");
       } finally {
