@@ -49,6 +49,8 @@ export const updateOrganisationSchema = createOrganisationSchema.partial().exten
   apExpenseAccountId: z.string().nullable().optional(),
   apBankAccountId: z.string().nullable().optional(),
   cashInHandAccountId: z.string().nullable().optional(),
+  fxBankAccountId: z.string().nullable().optional(),
+  fxGainLossAccountId: z.string().nullable().optional(),
 });
 
 export const loginSchema = z.object({
