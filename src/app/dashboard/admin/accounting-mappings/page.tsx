@@ -34,7 +34,9 @@ export default function AccountingMappingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+  const [currencyMappings, setCurrencyMappings] = useState<any[]>([]);
   const [baseCurrency, setBaseCurrency] = useState<string>("");
+  const [isSavingCurrencies, setIsSavingCurrencies] = useState(false);
 
   const getAccountsByType = (type: string, options?: { cashOnly?: boolean }) => {
     const filtered = accounts.filter((account) => account.type === type);
@@ -51,17 +53,18 @@ export default function AccountingMappingsPage() {
     return accounts.filter((account) => ["EXPENSE", "REVENUE"].includes(account.type));
   };
 
-  const getForeignCurrencyBankAccounts = () => {
-    if (!bankAccounts.length) return [];
-    const foreign = bankAccounts.filter((account) => account.currencyCode !== baseCurrency);
-    return foreign.length > 0 ? foreign : bankAccounts;
-  };
+  const foreignCurrencies = currencyMappings.filter(
+    (currency) => !currency.isBaseCurrency && currency.isActive !== false
+  );
 
-  const foreignBankAccountOptions = getForeignCurrencyBankAccounts().map((account) => ({
-    id: account.accountId,
-    code: account.account?.code || account.accountId,
-    name: `${account.bankName} (${account.accountNumber}) [${account.currencyCode}]`,
-  }));
+  const getBankAccountOptionsForCurrency = (currencyCode: string) =>
+    bankAccounts
+      .filter((account) => account.currencyCode === currencyCode)
+      .map((account) => ({
+        id: account.id,
+        code: account.currencyCode,
+        name: `${account.bankName} (${account.accountNumber})`,
+      }));
 
   const form = useForm<UpdateOrganisationInput>({
     resolver: zodResolver(updateOrganisationSchema),
