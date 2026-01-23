@@ -34,6 +34,15 @@ export default function AccountingMappingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [accounts, setAccounts] = useState<any[]>([]);
 
+  const getAccountsByType = (type: string, options?: { cashOnly?: boolean }) => {
+    const filtered = accounts.filter((account) => account.type === type);
+    if (options?.cashOnly) {
+      const cashAccounts = filtered.filter((account) => account.isCashAccount);
+      return cashAccounts.length > 0 ? cashAccounts : filtered;
+    }
+    return filtered;
+  };
+
   const form = useForm<UpdateOrganisationInput>({
     resolver: zodResolver(updateOrganisationSchema),
     defaultValues: {
