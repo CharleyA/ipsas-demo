@@ -385,56 +385,117 @@ export default function AccountingMappingsPage() {
               </CardContent>
             </Card>
 
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-purple-500" />
-                  Other Defaults
-                </CardTitle>
-                <CardDescription>General system-wide account mappings.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="cashInHandAccountId"
-                  render={({ field }) => (
-                    <FormItem className="max-w-md">
-                      <FormLabel>Cash-in-Hand Account</FormLabel>
-                      <FormControl>
-                        <AccountSelect
-                          accounts={getAccountsByType("ASSET", { cashOnly: true })}
-                          value={field.value || ""}
-                          onValueChange={field.onChange}
-                          placeholder="Select cash account..."
-                        />
-                      </FormControl>
-                      <FormDescription>Default account for petty cash transactions.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5 text-purple-500" />
+                    Other Defaults
+                  </CardTitle>
+                  <CardDescription>General system-wide account mappings.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="cashInHandAccountId"
+                    render={({ field }) => (
+                      <FormItem className="max-w-md">
+                        <FormLabel>Cash-in-Hand Account</FormLabel>
+                        <FormControl>
+                          <AccountSelect
+                            accounts={getAccountsByType("ASSET", { cashOnly: true })}
+                            value={field.value || ""}
+                            onValueChange={field.onChange}
+                            placeholder="Select cash account..."
+                          />
+                        </FormControl>
+                        <FormDescription>Default account for petty cash transactions.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="fxGainLossAccountId"
-                  render={({ field }) => (
-                    <FormItem className="max-w-md">
-                      <FormLabel>FX Gain/Loss Account</FormLabel>
-                      <FormControl>
-                        <AccountSelect
-                          accounts={getFxGainLossAccounts()}
-                          value={field.value || ""}
-                          onValueChange={field.onChange}
-                          placeholder="Select exchange gain/loss account..."
-                        />
-                      </FormControl>
-                      <FormDescription>Account used to post exchange rate differences.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
+                  <FormField
+                    control={form.control}
+                    name="fxGainLossAccountId"
+                    render={({ field }) => (
+                      <FormItem className="max-w-md">
+                        <FormLabel>FX Gain/Loss Account</FormLabel>
+                        <FormControl>
+                          <AccountSelect
+                            accounts={getFxGainLossAccounts()}
+                            value={field.value || ""}
+                            onValueChange={field.onChange}
+                            placeholder="Select exchange gain/loss account..."
+                          />
+                        </FormControl>
+                        <FormDescription>Account used to post exchange rate differences.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Wallet className="h-5 w-5 text-emerald-500" />
+                    Foreign Currency Defaults
+                  </CardTitle>
+                  <CardDescription>
+                    Assign the default bank account used for each foreign currency.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {foreignCurrencies.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No active foreign currencies configured for this organisation.
+                    </p>
+                  ) : (
+                    foreignCurrencies.map((currency) => {
+                      const options = getBankAccountOptionsForCurrency(currency.currencyCode);
+                      return (
+                        <div
+                          key={currency.currencyCode}
+                          className="flex flex-col gap-2 md:flex-row md:items-center"
+                        >
+                          <div className="w-24 text-sm font-medium">{currency.currencyCode}</div>
+                          <div className="flex-1">
+                            <AccountSelect
+                              accounts={options}
+                              value={currency.defaultBankAccountId || ""}
+                              onValueChange={(value) =>
+                                handleCurrencyBankChange(currency.currencyCode, value)
+                              }
+                              placeholder={`Select ${currency.currencyCode} bank...`}
+                              disabled={options.length === 0}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })
                   )}
-                />
-              </CardContent>
-            </Card>
+
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={isSavingCurrencies || foreignCurrencies.length === 0}
+                      onClick={saveCurrencyDefaults}
+                    >
+                      {isSavingCurrencies ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving Defaults...
+                        </>
+                      ) : (
+                        "Save Foreign Currency Defaults"
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
           </div>
 
           <div className="flex justify-end">
