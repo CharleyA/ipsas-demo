@@ -416,29 +416,6 @@ export default function AccountingMappingsPage() {
 
                 <FormField
                   control={form.control}
-                  name="fxBankAccountId"
-                  render={({ field }) => (
-                    <FormItem className="max-w-md">
-                      <FormLabel>Default Foreign Currency Bank</FormLabel>
-                      <FormControl>
-                        <AccountSelect
-                          accounts={foreignBankAccountOptions}
-                          value={field.value || ""}
-                          onValueChange={field.onChange}
-                          placeholder="Select foreign currency bank..."
-                          disabled={foreignBankAccountOptions.length === 0}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Used as the default bank for non-base currencies (e.g. USD).
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="fxGainLossAccountId"
                   render={({ field }) => (
                     <FormItem className="max-w-md">
