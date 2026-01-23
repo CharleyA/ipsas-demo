@@ -45,19 +45,25 @@ import { NavUser } from "./nav-user";
 const menuItems = [
   {
     title: "General",
-    items: [
-          {
-            title: "Dashboard",
-            href: "/dashboard",
-            icon: LayoutDashboard,
-            roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"],
-          },
-          {
-            title: "Control Panel",
-            href: "/dashboard/admin",
-            icon: ShieldCheck,
-            roles: ["ADMIN"],
-          },
+        items: [
+            {
+              title: "Dashboard",
+              href: "/dashboard",
+              icon: LayoutDashboard,
+              roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"],
+            },
+            {
+              title: "Documentation",
+              href: "/docs",
+              icon: BookOpen,
+              roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"],
+            },
+            {
+              title: "Control Panel",
+              href: "/dashboard/admin",
+              icon: ShieldCheck,
+              roles: ["ADMIN"],
+            },
           {
             title: "Approvals",
             href: "/dashboard/approvals",
