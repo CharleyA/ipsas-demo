@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
       console.log("Auth State:", { token: !!token, isLoading, pathname });
       if (!isLoading) {
-        if (!token && !pathname.startsWith("/login") && pathname !== "/") {
+        if (!token && !pathname.startsWith("/login") && pathname !== "/" && !pathname.startsWith("/docs")) {
           console.log("Redirecting to login");
           router.push("/login");
         } else if (token && pathname.startsWith("/login")) {
@@ -145,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setChatInput("");
   };
 
-  const showAssistant = Boolean(token) && pathname !== "/";
+  const showAssistant = pathname.startsWith("/docs") || (Boolean(token) && pathname !== "/");
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
