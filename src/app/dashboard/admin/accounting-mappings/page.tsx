@@ -85,7 +85,7 @@ export default function AccountingMappingsPage() {
       if (!user?.organisationId || !token) return;
 
       try {
-        const [orgRes, accRes, bankRes] = await Promise.all([
+        const [orgRes, accRes, bankRes, currenciesRes] = await Promise.all([
           fetch(`/api/organisations/${user.organisationId}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
@@ -95,11 +95,18 @@ export default function AccountingMappingsPage() {
           fetch(`/api/bank/accounts`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
+          fetch(`/api/organisations/${user.organisationId}/currencies`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "x-organisation-id": user.organisationId,
+            },
+          }),
         ]);
 
         const orgResult = await orgRes.json();
         const accResult = await accRes.json();
         const bankResult = await bankRes.json();
+        const currenciesResult = await currenciesRes.json();
 
         if (orgResult.success) {
           setBaseCurrency(orgResult.data.baseCurrency || "");
