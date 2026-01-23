@@ -16,6 +16,7 @@ import {
   History,
   ArrowRightLeft,
   Settings,
+  BookOpen,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -42,13 +43,13 @@ export default function AdminDashboardPage() {
       icon: Building2,
       color: "text-blue-500",
     },
-      {
-        title: "User Management",
-        description: "Manage users, roles and access permissions.",
-        href: "/dashboard/admin/users",
-        icon: Users,
-        color: "text-green-500",
-      },
+    {
+      title: "User Management",
+      description: "Manage users, roles and access permissions.",
+      href: "/dashboard/admin/users",
+      icon: Users,
+      color: "text-green-500",
+    },
     {
       title: "Currency & Exchange",
       description: "Configure multi-currency and rates.",
@@ -71,6 +72,13 @@ export default function AdminDashboardPage() {
       color: "text-cyan-500",
     },
     {
+      title: "Documentation",
+      description: "Maintain the public system documentation.",
+      href: "/dashboard/admin/documentation",
+      icon: BookOpen,
+      color: "text-emerald-500",
+    },
+    {
       title: "Approval Workflows",
       description: "Assign approval permissions and thresholds.",
       href: "/dashboard/admin/approvals",
@@ -79,14 +87,14 @@ export default function AdminDashboardPage() {
     },
   ];
 
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Control Panel</h1>
-          <p className="text-muted-foreground">
-            Welcome, {user.firstName}. You have full administrative access to system tools and maintenance.
-          </p>
-        </div>
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Control Panel</h1>
+        <p className="text-muted-foreground">
+          Welcome, {user.firstName}. You have full administrative access to system tools and maintenance.
+        </p>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {adminTools.map((tool) => (
