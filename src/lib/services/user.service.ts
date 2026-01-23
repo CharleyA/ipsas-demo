@@ -142,7 +142,12 @@ export class UserService {
     };
   }
 
-  static async updateOrganisationUser(organisationId: string, userId: string, data: { role?: any; isApprover?: boolean; isActive?: boolean }, actorId: string) {
+  static async updateOrganisationUser(
+    organisationId: string,
+    userId: string,
+    data: { role?: any; isApprover?: boolean; isActive?: boolean },
+    actorId: string
+  ) {
     const oldOrgUser = await prisma.organisationUser.findUnique({
       where: {
         organisationId_userId: { organisationId, userId },
@@ -151,15 +156,36 @@ export class UserService {
 
     if (!oldOrgUser) throw new Error("User not found in this organisation");
 
-    const orgUser = await prisma.organisationUser.update({
+    const { isApprover, ...rest } = data;
+
+    if (Object.keys(rest).length > 0) {
+      await prisma.organisationUser.update({
+        where: {
+          organisationId_userId: { organisationId, userId },
+        },
+        data: rest,
+      });
+    }
+
+    if (typeof isApprover === "boolean") {
+      await prisma.$executeRaw`
+        UPDATE "organisation_users"
+        SET "isApprover" = ${isApprover}
+        WHERE "organisationId" = ${organisationId}
+          AND "userId" = ${userId}
+      `;
+    }
+
+    const orgUser = await prisma.organisationUser.findUnique({
       where: {
         organisationId_userId: { organisationId, userId },
       },
-      data,
       include: {
         user: { select: { id: true, email: true, firstName: true, lastName: true } },
       },
     });
+
+    if (!orgUser) throw new Error("User not found in this organisation");
 
     await AuditService.log({
       userId: actorId,
