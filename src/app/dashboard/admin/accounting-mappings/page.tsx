@@ -83,19 +83,24 @@ export default function AccountingMappingsPage() {
       if (!user?.organisationId || !token) return;
 
       try {
-        const [orgRes, accRes] = await Promise.all([
+        const [orgRes, accRes, bankRes] = await Promise.all([
           fetch(`/api/organisations/${user.organisationId}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
           fetch(`/api/accounts`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
+          fetch(`/api/bank/accounts`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
         ]);
 
         const orgResult = await orgRes.json();
         const accResult = await accRes.json();
+        const bankResult = await bankRes.json();
 
         if (orgResult.success) {
+          setBaseCurrency(orgResult.data.baseCurrency || "");
           form.reset({
             arReceivableAccountId: orgResult.data.arReceivableAccountId || "",
             arRevenueAccountId: orgResult.data.arRevenueAccountId || "",
@@ -104,11 +109,15 @@ export default function AccountingMappingsPage() {
             apExpenseAccountId: orgResult.data.apExpenseAccountId || "",
             apBankAccountId: orgResult.data.apBankAccountId || "",
             cashInHandAccountId: orgResult.data.cashInHandAccountId || "",
+            fxBankAccountId: orgResult.data.fxBankAccountId || "",
+            fxGainLossAccountId: orgResult.data.fxGainLossAccountId || "",
           });
         }
 
         const accountsData = Array.isArray(accResult) ? accResult : accResult.data || [];
+        const bankAccountsData = Array.isArray(bankResult) ? bankResult : bankResult.data || [];
         setAccounts(accountsData);
+        setBankAccounts(bankAccountsData);
       } catch (error) {
         toast.error("An error occurred while fetching data");
       } finally {
