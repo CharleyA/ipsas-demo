@@ -10,3 +10,4 @@ export { ARService } from "./ar.service";
 export { APService } from "./ap.service";
 export { DimensionService } from "./dimension.service";
 export { StatementService } from "./statement.service";
+export { DocumentationService } from "./documentation.service";
