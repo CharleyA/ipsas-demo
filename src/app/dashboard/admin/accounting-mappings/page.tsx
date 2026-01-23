@@ -173,12 +173,12 @@ export default function AccountingMappingsPage() {
                     <FormItem>
                       <FormLabel>Default Receivable Account</FormLabel>
                       <FormControl>
-                        <AccountSelect
-                          accounts={accounts}
-                          value={field.value || ""}
-                          onValueChange={field.onChange}
-                          placeholder="Select receivable account..."
-                        />
+                          <AccountSelect
+                            accounts={getAccountsByType("ASSET")}
+                            value={field.value || ""}
+                            onValueChange={field.onChange}
+                            placeholder="Select receivable account..."
+                          />
                       </FormControl>
                       <FormDescription>Typically an Asset (Debtors) account.</FormDescription>
                       <FormMessage />
