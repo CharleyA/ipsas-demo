@@ -201,28 +201,46 @@ export class UserService {
   }
 
   static async listByOrganisation(organisationId: string) {
-    const orgUsers = await prisma.organisationUser.findMany({
-      where: { organisationId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-            isActive: true,
-            createdAt: true,
-          },
-        },
-      },
-    });
+    const orgUsers = await prisma.$queryRaw<
+      Array<{
+        organisationUserId: string;
+        userId: string;
+        role: string;
+        isApprover: boolean;
+        orgIsActive: boolean;
+        email: string;
+        firstName: string;
+        lastName: string;
+        userIsActive: boolean;
+        createdAt: Date;
+      }>
+    >`
+      SELECT
+        ou.id AS "organisationUserId",
+        ou."userId" AS "userId",
+        ou.role AS "role",
+        ou."isApprover" AS "isApprover",
+        ou."isActive" AS "orgIsActive",
+        u.email AS "email",
+        u."firstName" AS "firstName",
+        u."lastName" AS "lastName",
+        u."isActive" AS "userIsActive",
+        u."createdAt" AS "createdAt"
+      FROM organisation_users ou
+      JOIN users u ON u.id = ou."userId"
+      WHERE ou."organisationId" = ${organisationId}
+    `;
 
     return orgUsers.map((ou) => ({
-      ...ou.user,
+      id: ou.userId,
+      email: ou.email,
+      firstName: ou.firstName,
+      lastName: ou.lastName,
+      createdAt: ou.createdAt,
       role: ou.role,
       isApprover: ou.isApprover,
-      organisationUserId: ou.id,
-      isActive: ou.isActive && ou.user.isActive,
+      organisationUserId: ou.organisationUserId,
+      isActive: ou.orgIsActive && ou.userIsActive,
     }));
   }
 
