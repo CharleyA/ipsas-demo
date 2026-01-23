@@ -264,12 +264,12 @@ export default function AccountingMappingsPage() {
                     <FormItem>
                       <FormLabel>Default Expense Account</FormLabel>
                       <FormControl>
-                        <AccountSelect
-                          accounts={accounts}
-                          value={field.value || ""}
-                          onValueChange={field.onChange}
-                          placeholder="Select expense account..."
-                        />
+                          <AccountSelect
+                            accounts={getAccountsByType("EXPENSE")}
+                            value={field.value || ""}
+                            onValueChange={field.onChange}
+                            placeholder="Select expense account..."
+                          />
                       </FormControl>
                       <FormDescription>Used as a fallback for miscellaneous bills.</FormDescription>
                       <FormMessage />
