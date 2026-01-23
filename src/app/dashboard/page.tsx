@@ -10,7 +10,6 @@ import { Loader2, LayoutDashboard, Plus } from "lucide-react";
 import { HeadmasterDashboard } from "@/components/dashboard/headmaster-dashboard";
 import { AuditorDashboard } from "@/components/dashboard/auditor-dashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
 
 export default function DashboardPage() {
   const { user, token } = useAuth();
