@@ -206,6 +206,7 @@ export class OrganisationService {
       data: {
         isActive: data.isActive,
         isBaseCurrency: data.isBaseCurrency,
+        defaultBankAccountId: data.defaultBankAccountId ?? undefined,
       },
     });
 
