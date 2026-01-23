@@ -3,50 +3,15 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
-import { Loader2, LayoutDashboard, Plus, MessageCircle, X } from "lucide-react";
+import { Loader2, LayoutDashboard, Plus } from "lucide-react";
 import { HeadmasterDashboard } from "@/components/dashboard/headmaster-dashboard";
 import { AuditorDashboard } from "@/components/dashboard/auditor-dashboard";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DashboardPage() {
   const { user, token } = useAuth();
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [chatInput, setChatInput] = useState("");
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      id: "welcome",
-      role: "assistant",
-      content:
-        "Hi! I can help with reports, entity lookups, and draft-only actions. Ask me what you need and I’ll point you to the right workflow.",
-    },
-  ]);
-
-  const getAssistantResponse = (input: string) => {
-    const normalized = input.toLowerCase();
-
-    if (normalized.includes("ap") || normalized.includes("payable") || normalized.includes("supplier")) {
-      return "For payables, try AP ageing and supplier lookups. Endpoints: /api/reports/ap-ageing, /api/suppliers, /api/ap/bills.";
-    }
-
-    if (normalized.includes("ar") || normalized.includes("invoice") || normalized.includes("receipt")) {
-      return "For receivables, check AR ageing and student accounts. Endpoints: /api/reports/ar-ageing, /api/students, /api/ar/invoices, /api/ar/receipts.";
-    }
-
-    if (normalized.includes("trial") || normalized.includes("ledger") || normalized.includes("gl")) {
-      return "For ledger analysis, use /api/reports/trial-balance or /api/reports/general-ledger.";
-    }
-
-    if (normalized.includes("cash") || normalized.includes("cashflow")) {
-      return "For cash movements, use /api/reports/cashflow and /api/dashboard for summaries.";
-    }
-
-    return "I can help with reports, lookups, and draft-only actions. Tell me which module or record you want to explore.";
-  };
 
   const fetchDashboardData = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
@@ -87,26 +52,6 @@ export default function DashboardPage() {
   const isHeadmaster = user?.role === "HEADMASTER" || user?.role === "ADMIN";
   const isAuditor = user?.role === "AUDITOR";
 
-  const handleChatSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const trimmed = chatInput.trim();
-    if (!trimmed) return;
-
-    const userMessage = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: trimmed,
-    };
-    const assistantMessage = {
-      id: crypto.randomUUID(),
-      role: "assistant",
-      content: getAssistantResponse(trimmed),
-    };
-
-    setMessages((prev) => [...prev, userMessage, assistantMessage]);
-    setChatInput("");
-  };
-
   return (
     <div className="space-y-6">
       <div id="assistant" className="sr-only" />
@@ -144,77 +89,6 @@ export default function DashboardPage() {
           </p>
         </div>
       )}
-
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
-        {isChatOpen && (
-          <Card className="w-80 sm:w-96">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <div>
-                <CardTitle className="text-base">Assistant</CardTitle>
-                <CardDescription>
-                  Read-only insights and draft-only workflows.
-                </CardDescription>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsChatOpen(false)}
-                aria-label="Close assistant"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="rounded-md border border-border">
-                <ScrollArea className="h-64">
-                  <div className="space-y-3 p-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={message.role === "user" ? "flex justify-end" : "flex justify-start"}
-                      >
-                        <div
-                          className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                            message.role === "user"
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-foreground"
-                          }`}
-                        >
-                          {message.content}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
-              <form className="flex items-center gap-2" onSubmit={handleChatSubmit}>
-                <Input
-                  value={chatInput}
-                  onChange={(event) => setChatInput(event.target.value)}
-                  placeholder="Ask about reports, vouchers, or drafts..."
-                  aria-label="Assistant prompt"
-                />
-                <Button type="submit" disabled={!chatInput.trim()}>
-                  Send
-                </Button>
-              </form>
-              <p className="text-xs text-muted-foreground">
-                Read-only and draft-only assistance. No submit, approve, or post actions.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-        <Button
-          type="button"
-          size="icon"
-          className="rounded-full h-12 w-12"
-          onClick={() => setIsChatOpen((prev) => !prev)}
-          aria-label="Open assistant"
-        >
-          <MessageCircle className="h-5 w-5" />
-        </Button>
-      </div>
     </div>
   );
 }
