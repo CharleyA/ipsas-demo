@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
 import { Loader2, LayoutDashboard, Plus } from "lucide-react";
 import { HeadmasterDashboard } from "@/components/dashboard/headmaster-dashboard";
@@ -14,6 +16,37 @@ export default function DashboardPage() {
   const { user, token } = useAuth();
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [chatInput, setChatInput] = useState("");
+  const [messages, setMessages] = useState([
+    {
+      id: "welcome",
+      role: "assistant",
+      content:
+        "Hi! I can help with reports, entity lookups, and draft-only actions. Ask me what you need and I’ll point you to the right workflow.",
+    },
+  ]);
+
+  const getAssistantResponse = (input: string) => {
+    const normalized = input.toLowerCase();
+
+    if (normalized.includes("ap") || normalized.includes("payable") || normalized.includes("supplier")) {
+      return "For payables, try AP ageing and supplier lookups. Endpoints: /api/reports/ap-ageing, /api/suppliers, /api/ap/bills.";
+    }
+
+    if (normalized.includes("ar") || normalized.includes("invoice") || normalized.includes("receipt")) {
+      return "For receivables, check AR ageing and student accounts. Endpoints: /api/reports/ar-ageing, /api/students, /api/ar/invoices, /api/ar/receipts.";
+    }
+
+    if (normalized.includes("trial") || normalized.includes("ledger") || normalized.includes("gl")) {
+      return "For ledger analysis, use /api/reports/trial-balance or /api/reports/general-ledger.";
+    }
+
+    if (normalized.includes("cash") || normalized.includes("cashflow")) {
+      return "For cash movements, use /api/reports/cashflow and /api/dashboard for summaries.";
+    }
+
+    return "I can help with reports, lookups, and draft-only actions. Tell me which module or record you want to explore.";
+  };
 
   const fetchDashboardData = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
@@ -54,6 +87,26 @@ export default function DashboardPage() {
   const isHeadmaster = user?.role === "HEADMASTER" || user?.role === "ADMIN";
   const isAuditor = user?.role === "AUDITOR";
 
+  const handleChatSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = chatInput.trim();
+    if (!trimmed) return;
+
+    const userMessage = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content: trimmed,
+    };
+    const assistantMessage = {
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content: getAssistantResponse(trimmed),
+    };
+
+    setMessages((prev) => [...prev, userMessage, assistantMessage]);
+    setChatInput("");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -93,51 +146,48 @@ export default function DashboardPage() {
 
       <Card id="assistant" className="scroll-mt-24">
         <CardHeader>
-          <CardTitle>Assistant (Read-only & Draft-only)</CardTitle>
+          <CardTitle>Assistant</CardTitle>
           <CardDescription>
-            Uses existing APIs for retrieval and drafting only. No submit, approve, or post actions.
+            AI chatbot for read-only insights and draft-only workflows. No submit, approve, or post actions.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold">Read-only tools</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>/api/dashboard, /api/organisations/current</li>
-                <li>/api/reports/trial-balance, /api/reports/general-ledger</li>
-                <li>/api/reports/ap-ageing, /api/reports/ar-ageing</li>
-                <li>/api/reports/financial-position, /api/reports/financial-performance</li>
-                <li>/api/reports/cashflow, /api/reports/audit-log</li>
-              </ul>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold">Entity lookups</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>/api/vouchers, /api/ap/bills, /api/ap/payments</li>
-                <li>/api/ar/invoices, /api/ar/receipts</li>
-                <li>/api/suppliers, /api/students, /api/accounts</li>
-                <li>/api/assets/register</li>
-              </ul>
-            </div>
+          <div className="rounded-md border border-border">
+            <ScrollArea className="h-72">
+              <div className="space-y-3 p-4">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={message.role === "user" ? "flex justify-end" : "flex justify-start"}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-foreground"
+                      }`}
+                    >
+                      {message.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold">Draft-only actions</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>POST /api/vouchers</li>
-                <li>POST /api/ap/bills, /api/ap/payments</li>
-                <li>POST /api/ar/invoices, /api/ar/receipts</li>
-              </ul>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold">Example flows</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>Unpaid AP &gt; 30 days → /api/reports/ap-ageing</li>
-                <li>Explain voucher → /api/vouchers/[id] + /api/reports/audit-log</li>
-                <li>Draft receipt → /api/students → POST /api/ar/receipts</li>
-              </ul>
-            </div>
-          </div>
+          <form className="flex items-center gap-2" onSubmit={handleChatSubmit}>
+            <Input
+              value={chatInput}
+              onChange={(event) => setChatInput(event.target.value)}
+              placeholder="Ask about reports, vouchers, or drafts..."
+              aria-label="Assistant prompt"
+            />
+            <Button type="submit" disabled={!chatInput.trim()}>
+              Send
+            </Button>
+          </form>
+          <p className="text-xs text-muted-foreground">
+            Read-only and draft-only assistance. This chatbot will not submit, approve, or post transactions.
+          </p>
         </CardContent>
       </Card>
     </div>
