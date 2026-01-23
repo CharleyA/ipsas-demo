@@ -22,6 +22,8 @@ interface Account {
   id: string;
   code: string;
   name: string;
+  type?: string;
+  isCashAccount?: boolean;
 }
 
 interface AccountSelectProps {
