@@ -24,6 +24,7 @@ import {
   Receipt,
   CreditCard,
   FileStack,
+  Bot,
 } from "lucide-react";
 
 
@@ -50,6 +51,12 @@ const menuItems = [
               title: "Dashboard",
               href: "/dashboard",
               icon: LayoutDashboard,
+              roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"],
+            },
+            {
+              title: "Assistant",
+              href: "/dashboard#assistant",
+              icon: Bot,
               roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR"],
             },
             {
