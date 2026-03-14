@@ -9,6 +9,7 @@ import {
   Sun,
   Monitor,
 } from "lucide-react";
+import Link from "next/link";
 
 import {
   Avatar,
@@ -83,13 +84,17 @@ export function NavUser() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  <BadgeCheck className="mr-2 size-4" />
-                  Account
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/account">
+                    <BadgeCheck className="mr-2 size-4" />
+                    Account
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Bell className="mr-2 size-4" />
-                  Notifications
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/notifications">
+                    <Bell className="mr-2 size-4" />
+                    Notifications
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
