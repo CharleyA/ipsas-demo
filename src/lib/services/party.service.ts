@@ -1,5 +1,5 @@
 import prisma from "@/lib/db";
-import { CreateStudentInput, UpdateStudentInput } from "@/lib/validations/schemas";
+import { CreateGuardianInput, CreateStudentInput, LinkGuardianInput, UpdateGuardianInput, UpdateStudentInput } from "@/lib/validations/schemas";
 import { AuditService } from "./audit.service";
 
 export class StudentService {
@@ -73,6 +73,145 @@ export class StudentService {
   }
 }
 
+
+export class GuardianService {
+  static async create(data: CreateGuardianInput, actorId: string) {
+    const guardian = await prisma.guardian.create({
+      data: {
+        organisationId: data.organisationId,
+        fullName: data.fullName,
+        relationship: data.relationship,
+        primaryPhone: data.primaryPhone,
+        secondaryPhone: data.secondaryPhone,
+        address: data.address,
+        email: data.email,
+      },
+    });
+
+    if (data.studentIds?.length) {
+      await prisma.studentGuardian.createMany({
+        data: data.studentIds.map((studentId) => ({
+          organisationId: data.organisationId,
+          studentId,
+          guardianId: guardian.id,
+          isPrimaryContact: Boolean(data.isPrimaryContact),
+          isBillingContact: Boolean(data.isBillingContact),
+        })),
+        skipDuplicates: true,
+      });
+    }
+
+    await AuditService.log({
+      userId: actorId,
+      organisationId: data.organisationId,
+      action: "CREATE",
+      entityType: "Guardian",
+      entityId: guardian.id,
+      newValues: guardian,
+    });
+
+    return guardian;
+  }
+
+  static async update(id: string, data: UpdateGuardianInput, actorId: string) {
+    const oldGuardian = await prisma.guardian.findUnique({ where: { id } });
+    if (!oldGuardian) throw new Error("Guardian not found");
+
+    const guardian = await prisma.guardian.update({
+      where: { id },
+      data: {
+        fullName: data.fullName,
+        relationship: data.relationship,
+        primaryPhone: data.primaryPhone,
+        secondaryPhone: data.secondaryPhone,
+        address: data.address,
+        email: data.email,
+        isActive: data.isActive,
+      },
+    });
+
+    await AuditService.log({
+      userId: actorId,
+      organisationId: guardian.organisationId,
+      action: "UPDATE",
+      entityType: "Guardian",
+      entityId: id,
+      oldValues: oldGuardian,
+      newValues: guardian,
+    });
+
+    return guardian;
+  }
+
+  static async remove(id: string, actorId: string) {
+    const guardian = await prisma.guardian.findUnique({ where: { id } });
+    if (!guardian) throw new Error("Guardian not found");
+
+    await prisma.guardian.delete({ where: { id } });
+
+    await AuditService.log({
+      userId: actorId,
+      organisationId: guardian.organisationId,
+      action: "DELETE",
+      entityType: "Guardian",
+      entityId: id,
+      oldValues: guardian,
+    });
+  }
+
+  static async listByOrganisation(organisationId: string) {
+    return prisma.guardian.findMany({
+      where: { organisationId },
+      include: {
+        studentLinks: {
+          include: {
+            student: {
+              select: { id: true, studentNumber: true, firstName: true, lastName: true, class: true, grade: true },
+            },
+          },
+        },
+      },
+      orderBy: { fullName: "asc" },
+    });
+  }
+
+  static async listByStudent(organisationId: string, studentId: string) {
+    return prisma.studentGuardian.findMany({
+      where: { organisationId, studentId },
+      include: { guardian: true },
+      orderBy: { createdAt: "asc" },
+    });
+  }
+
+  static async linkToStudent(organisationId: string, studentId: string, data: LinkGuardianInput, actorId: string) {
+    const link = await prisma.studentGuardian.upsert({
+      where: { studentId_guardianId: { studentId, guardianId: data.guardianId } },
+      update: {
+        isPrimaryContact: Boolean(data.isPrimaryContact),
+        isBillingContact: Boolean(data.isBillingContact),
+      },
+      create: {
+        organisationId,
+        studentId,
+        guardianId: data.guardianId,
+        isPrimaryContact: Boolean(data.isPrimaryContact),
+        isBillingContact: Boolean(data.isBillingContact),
+      },
+      include: { guardian: true },
+    });
+
+    await AuditService.log({
+      userId: actorId,
+      organisationId,
+      action: "LINK",
+      entityType: "StudentGuardian",
+      entityId: link.id,
+      newValues: link,
+    });
+
+    return link;
+  }
+}
 
 export class SupplierService {
   static async create(data: any, actorId: string) {

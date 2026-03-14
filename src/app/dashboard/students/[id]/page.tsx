@@ -31,12 +31,16 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
 import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function StudentDetailPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
   const { token } = useAuth();
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [guardians, setGuardians] = useState<any[]>([]);
+  const [studentGuardians, setStudentGuardians] = useState<any[]>([]);
+  const [selectedGuardianId, setSelectedGuardianId] = useState<string>("");
 
   const fetchStatement = async () => {
     setIsLoading(true);
@@ -54,8 +58,41 @@ export default function StudentDetailPage(props: { params: Promise<{ id: string 
     }
   };
 
+  const fetchGuardians = async () => {
+    const [allRes, linkedRes] = await Promise.all([
+      fetch(`/api/guardians`, { headers: { "Authorization": `Bearer ${token}` } }),
+      fetch(`/api/students/${params.id}/guardians`, { headers: { "Authorization": `Bearer ${token}` } }),
+    ]);
+    const [allData, linkedData] = await Promise.all([allRes.json(), linkedRes.json()]);
+    setGuardians(Array.isArray(allData) ? allData : []);
+    setStudentGuardians(Array.isArray(linkedData) ? linkedData : []);
+  };
+
+  const linkGuardian = async () => {
+    if (!selectedGuardianId) return;
+    const res = await fetch(`/api/students/${params.id}/guardians`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({ guardianId: selectedGuardianId }),
+    });
+    const payload = await res.json();
+    if (!res.ok) {
+      toast.error(payload.error || "Failed to link guardian");
+      return;
+    }
+    toast.success("Guardian linked");
+    setSelectedGuardianId("");
+    await fetchGuardians();
+  };
+
   useEffect(() => {
-    if (token) fetchStatement();
+    if (token) {
+      fetchStatement();
+      fetchGuardians();
+    }
   }, [token]);
 
   if (isLoading) {
@@ -146,6 +183,57 @@ export default function StudentDetailPage(props: { params: Promise<{ id: string 
           </CardHeader>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Guardians</CardTitle>
+          <CardDescription>Linked guardians for this student.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Select value={selectedGuardianId} onValueChange={setSelectedGuardianId}>
+              <SelectTrigger className="w-[320px]">
+                <SelectValue placeholder="Select guardian to link" />
+              </SelectTrigger>
+              <SelectContent>
+                {guardians
+                  .filter((g) => !studentGuardians.some((sg) => sg.guardianId === g.id))
+                  .map((g) => (
+                    <SelectItem key={g.id} value={g.id}>{g.fullName} ({g.relationship})</SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            <Button onClick={linkGuardian} disabled={!selectedGuardianId}>Link Guardian</Button>
+          </div>
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Relationship</TableHead>
+                <TableHead>Primary Phone</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Primary Contact</TableHead>
+                <TableHead>Billing Contact</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {studentGuardians.length === 0 ? (
+                <TableRow><TableCell colSpan={6} className="text-center">No guardians linked yet.</TableCell></TableRow>
+              ) : studentGuardians.map((sg) => (
+                <TableRow key={sg.id}>
+                  <TableCell>{sg.guardian?.fullName}</TableCell>
+                  <TableCell>{sg.guardian?.relationship}</TableCell>
+                  <TableCell>{sg.guardian?.primaryPhone}</TableCell>
+                  <TableCell>{sg.guardian?.email || "-"}</TableCell>
+                  <TableCell>{sg.isPrimaryContact ? "Yes" : "No"}</TableCell>
+                  <TableCell>{sg.isBillingContact ? "Yes" : "No"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

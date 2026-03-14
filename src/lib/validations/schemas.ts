@@ -294,8 +294,34 @@ export type CreateAPPaymentInput = z.infer<typeof createAPPaymentSchema>;
 export type AllocateAPPaymentInput = z.infer<typeof allocateAPPaymentSchema>;
 export type CreateSupplierInput = z.infer<typeof createSupplierSchema>;
 export type UpdateSupplierInput = z.infer<typeof updateSupplierSchema>;
+export const createGuardianSchema = z.object({
+  organisationId: z.string(),
+  fullName: z.string().min(1).max(200),
+  relationship: z.string().min(1).max(100),
+  primaryPhone: z.string().min(1).max(30),
+  secondaryPhone: z.string().max(30).optional(),
+  address: z.string().max(300).optional(),
+  email: z.string().email().optional(),
+  studentIds: z.array(z.string()).optional(),
+  isPrimaryContact: z.boolean().optional(),
+  isBillingContact: z.boolean().optional(),
+});
+
+export const updateGuardianSchema = createGuardianSchema.partial().extend({
+  isActive: z.boolean().optional(),
+});
+
+export const linkGuardianSchema = z.object({
+  guardianId: z.string(),
+  isPrimaryContact: z.boolean().optional(),
+  isBillingContact: z.boolean().optional(),
+});
+
 export type CreateStudentInput = z.infer<typeof createStudentSchema>;
 export type UpdateStudentInput = z.infer<typeof updateStudentSchema>;
+export type CreateGuardianInput = z.infer<typeof createGuardianSchema>;
+export type UpdateGuardianInput = z.infer<typeof updateGuardianSchema>;
+export type LinkGuardianInput = z.infer<typeof linkGuardianSchema>;
 
 export const addUserToOrganisationSchema = z.object({
   userId: z.string().min(1),

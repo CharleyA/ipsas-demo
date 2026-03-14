@@ -7,6 +7,10 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const classFilter = searchParams.get("class");
 
+    if (authReq.user.role === "TEACHER" && (!classFilter || classFilter === "all")) {
+      return NextResponse.json({ error: "Teachers must request a specific class." }, { status: 403 });
+    }
+
     const baseWhere: any = {
       organisationId: authReq.user.organisationId,
       isActive: true,
@@ -15,13 +19,15 @@ export async function GET(req: NextRequest) {
 
     const students = await prisma.student.findMany({
       where: baseWhere,
-      include: { arInvoices: true },
+      include: { arInvoices: true, arReceipts: { orderBy: { createdAt: "desc" } } },
       orderBy: { lastName: "asc" },
     });
 
     const studentStats = students.map((s) => {
       const totalAmount = s.arInvoices.reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
       const totalBalance = s.arInvoices.reduce((sum, inv) => sum + Number(inv.balance || 0), 0);
+      const totalPaid = s.arReceipts.reduce((sum, rec) => sum + Number(rec.amount || 0), 0);
+      const lastPaymentDate = s.arReceipts[0]?.createdAt ?? null;
 
       let status: "PAID" | "PARTIAL" | "UNPAID" = "UNPAID";
       if (totalAmount > 0 && totalBalance === 0) status = "PAID";
@@ -36,7 +42,9 @@ export async function GET(req: NextRequest) {
         grade: s.grade,
         class: s.class,
         totalAmount,
+        totalPaid,
         totalBalance,
+        lastPaymentDate,
         status,
       };
     });

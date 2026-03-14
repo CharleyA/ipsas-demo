@@ -93,19 +93,25 @@ export default function TeachersPortalPage() {
                     <TableHead>Name</TableHead>
                     <TableHead>Class</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Outstanding</TableHead>
+                    <TableHead className="text-right">Billed</TableHead>
+                    <TableHead className="text-right">Paid</TableHead>
+                    <TableHead className="text-right">Balance</TableHead>
+                    <TableHead>Last Payment</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {students.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} className="text-center">No students found.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={8} className="text-center">No students found.</TableCell></TableRow>
                   ) : students.map((s) => (
                     <TableRow key={s.id}>
                       <TableCell>{s.studentNumber}</TableCell>
                       <TableCell>{s.firstName} {s.lastName}</TableCell>
                       <TableCell>{s.class || "-"}</TableCell>
                       <TableCell>{s.status}</TableCell>
+                      <TableCell className="text-right">{Number(s.totalAmount || 0).toFixed(2)}</TableCell>
+                      <TableCell className="text-right">{Number(s.totalPaid || 0).toFixed(2)}</TableCell>
                       <TableCell className="text-right">{Number(s.totalBalance || 0).toFixed(2)}</TableCell>
+                      <TableCell>{s.lastPaymentDate ? new Date(s.lastPaymentDate).toLocaleDateString() : "-"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
