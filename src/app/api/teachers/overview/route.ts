@@ -7,9 +7,6 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const classFilter = searchParams.get("class");
 
-    if (authReq.user.role === "TEACHER" && (!classFilter || classFilter === "all")) {
-      return NextResponse.json({ error: "Teachers must request a specific class." }, { status: 403 });
-    }
 
     const baseWhere: any = {
       organisationId: authReq.user.organisationId,

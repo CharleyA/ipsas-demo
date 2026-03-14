@@ -58,7 +58,7 @@ const menuItems = [
         title: "Teachers Portal",
         href: "/dashboard/teachers",
         icon: Users,
-        roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
+        roles: ["TEACHER", "ADMIN", "HEADMASTER", "BURSAR"],
       },
       {
         title: "Documentation",
