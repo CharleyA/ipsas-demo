@@ -65,11 +65,13 @@ export const createUserSchema = z.object({
   password: z.string().min(8).max(100),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
+  ecNumber: z.string().min(2).max(50).optional(),
 });
 
 export const updateUserSchema = z.object({
   firstName: z.string().min(1).max(100).optional(),
   lastName: z.string().min(1).max(100).optional(),
+  ecNumber: z.string().min(2).max(50).nullable().optional(),
   isActive: z.boolean().optional(),
 });
 

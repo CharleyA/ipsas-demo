@@ -15,6 +15,7 @@ export default function TeachersPortalPage() {
   const [students, setStudents] = useState<any[]>([]);
   const [recentPayments, setRecentPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [teacherLocked, setTeacherLocked] = useState<boolean>(false);
 
   const fetchData = async (classFilter: string) => {
     setLoading(true);
@@ -23,7 +24,14 @@ export default function TeachersPortalPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setClasses(Array.isArray(data.classes) ? data.classes : []);
+      const fetchedClasses = Array.isArray(data.classes) ? data.classes : [];
+      setClasses(fetchedClasses);
+      setTeacherLocked(Boolean(data.teacherLocked));
+
+      if (Boolean(data.teacherLocked) && selectedClass === "all" && fetchedClasses.length > 0) {
+        setSelectedClass(fetchedClasses[0]);
+      }
+
       setSummary(data.summary || null);
       setStudents(Array.isArray(data.students) ? data.students : []);
       setRecentPayments(Array.isArray(data.recentPayments) ? data.recentPayments : []);
@@ -48,7 +56,7 @@ export default function TeachersPortalPage() {
             <SelectValue placeholder="Select Class" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Classes</SelectItem>
+            {!teacherLocked && <SelectItem value="all">All Classes</SelectItem>}
             {classes.map((c) => (
               <SelectItem key={c} value={c}>{c}</SelectItem>
             ))}

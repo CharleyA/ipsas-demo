@@ -60,29 +60,32 @@ model Organisation {
   feeTemplates          FeeTemplate[]
   feeGenerationBatches  FeeGenerationBatch[]
   notifications         Notification[]
+  classTeacherAssignments ClassTeacherAssignment[]
 
   @@map("organisations")
 }
 
 model User {
-  id              String             @id @default(cuid())
-  email           String             @unique
-  passwordHash    String
-  firstName       String
-  lastName        String
-  isActive        Boolean            @default(true)
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  approvalTasks   ApprovalTask[]
-  auditLogs       AuditLog[]
-  uploadedFiles   FileAttachment[]
-  importJobs      ImportJob[]
-  organisations   OrganisationUser[]
-  createdVouchers Voucher[]          @relation("VoucherCreatedBy")
-  notifications   Notification[]
-  budgetsCreated  Budget[]           @relation("BudgetCreatedBy")
-  budgetsReviewed Budget[]           @relation("BudgetReviewedBy")
-  budgetsApproved Budget[]           @relation("BudgetApprovedBy")
+  id                      String                   @id @default(cuid())
+  email                   String                   @unique
+  passwordHash            String
+  firstName               String
+  lastName                String
+  ecNumber                String?                  @unique
+  isActive                Boolean                  @default(true)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  approvalTasks           ApprovalTask[]
+  auditLogs               AuditLog[]
+  uploadedFiles           FileAttachment[]
+  importJobs              ImportJob[]
+  organisations           OrganisationUser[]
+  createdVouchers         Voucher[]                @relation("VoucherCreatedBy")
+  notifications           Notification[]
+  budgetsCreated          Budget[]                 @relation("BudgetCreatedBy")
+  budgetsReviewed         Budget[]                 @relation("BudgetReviewedBy")
+  budgetsApproved         Budget[]                 @relation("BudgetApprovedBy")
+  classTeacherAssignments ClassTeacherAssignment[]
 
   @@map("users")
 }
@@ -527,6 +530,25 @@ model StudentGuardian {
   @@unique([studentId, guardianId])
   @@index([organisationId, studentId])
   @@map("student_guardians")
+}
+
+model ClassTeacherAssignment {
+  id             String       @id @default(cuid())
+  organisationId String
+  teacherUserId  String
+  grade          String?
+  className      String
+  academicYear   String
+  isPrimary      Boolean      @default(false)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  teacher        User         @relation(fields: [teacherUserId], references: [id], onDelete: Cascade)
+
+  @@index([organisationId, teacherUserId])
+  @@unique([organisationId, teacherUserId, className, academicYear])
+  @@map("class_teacher_assignments")
 }
 
 model ARInvoice {

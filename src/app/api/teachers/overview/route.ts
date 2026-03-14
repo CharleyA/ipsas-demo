@@ -7,11 +7,32 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const classFilter = searchParams.get("class");
 
+    const isTeacher = authReq.user.role === "TEACHER";
+    const teacherAssignments = isTeacher
+      ? await prisma.classTeacherAssignment.findMany({
+          where: {
+            organisationId: authReq.user.organisationId,
+            teacherUserId: authReq.user.id,
+            isActive: true,
+          },
+          select: { className: true },
+        })
+      : [];
+
+    const assignedClasses = teacherAssignments.map((a) => a.className).filter(Boolean);
+
+    const classConstraint = isTeacher
+      ? classFilter && classFilter !== "all"
+        ? { class: classFilter }
+        : { class: { in: assignedClasses.length ? assignedClasses : ["__NO_CLASS__"] } }
+      : classFilter && classFilter !== "all"
+      ? { class: classFilter }
+      : {};
 
     const baseWhere: any = {
       organisationId: authReq.user.organisationId,
       isActive: true,
-      ...(classFilter && classFilter !== "all" ? { class: classFilter } : {}),
+      ...classConstraint,
     };
 
     const students = await prisma.student.findMany({
@@ -58,17 +79,25 @@ export async function GET(req: NextRequest) {
       { totalStudents: 0, paid: 0, partial: 0, unpaid: 0, totalOutstanding: 0 }
     );
 
-    const classes = await prisma.student.findMany({
-      where: { organisationId: authReq.user.organisationId, class: { not: null } },
-      distinct: ["class"],
-      select: { class: true },
-      orderBy: { class: "asc" },
-    });
+    const classes = isTeacher
+      ? assignedClasses.map((className) => ({ class: className }))
+      : await prisma.student.findMany({
+          where: { organisationId: authReq.user.organisationId, class: { not: null } },
+          distinct: ["class"],
+          select: { class: true },
+          orderBy: { class: "asc" },
+        });
 
     const receipts = await prisma.aRReceipt.findMany({
       where: {
         organisationId: authReq.user.organisationId,
-        ...(classFilter && classFilter !== "all" ? { student: { class: classFilter } } : {}),
+        ...(isTeacher
+          ? classFilter && classFilter !== "all"
+            ? { student: { class: classFilter } }
+            : { student: { class: { in: assignedClasses.length ? assignedClasses : ["__NO_CLASS__"] } } }
+          : classFilter && classFilter !== "all"
+          ? { student: { class: classFilter } }
+          : {}),
       },
       include: { student: true },
       orderBy: { createdAt: "desc" },
@@ -87,6 +116,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       classes: classes.map((c) => c.class).filter(Boolean),
+      teacherLocked: isTeacher,
       summary,
       students: studentStats,
       recentPayments,

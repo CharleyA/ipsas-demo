@@ -51,6 +51,13 @@ export default function AdminDashboardPage() {
       color: "text-green-500",
     },
     {
+      title: "Teacher Assignments",
+      description: "Map teachers (with EC No) to grade/class per year.",
+      href: "/dashboard/admin/teacher-assignments",
+      icon: Users,
+      color: "text-teal-500",
+    },
+    {
       title: "Currency & Exchange",
       description: "Configure multi-currency and rates.",
       href: "/dashboard/settings/currencies",

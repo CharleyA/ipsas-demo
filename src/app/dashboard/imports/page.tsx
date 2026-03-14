@@ -41,6 +41,13 @@ const importTypes = [
     href: "/dashboard/imports/receipts",
     color: "text-red-500",
   },
+  {
+    title: "Teacher Class Assignments",
+    description: "Upload teacher EC number + class mappings for lock-by-class access.",
+    icon: Users,
+    href: "/dashboard/imports/teacher-assignments",
+    color: "text-teal-500",
+  },
 ];
 
 export default function ImportsPage() {

@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
         email: existing.email,
         firstName: existing.firstName,
         lastName: existing.lastName,
+        ecNumber: existing.ecNumber,
         isActive: existing.isActive,
       }, 200);
     }
