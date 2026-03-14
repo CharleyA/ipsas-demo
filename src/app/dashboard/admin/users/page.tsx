@@ -315,6 +315,7 @@ export default function UserManagementPage() {
                     <SelectItem value="BURSAR">Bursar / Manager</SelectItem>
                     <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
                     <SelectItem value="CLERK">Data Entry Clerk</SelectItem>
+                    <SelectItem value="TEACHER">Teacher</SelectItem>
                     <SelectItem value="AUDITOR">Auditor (Read-only)</SelectItem>
                   </SelectContent>
                 </Select>
@@ -466,6 +467,7 @@ export default function UserManagementPage() {
                     <SelectItem value="BURSAR">Bursar / Manager</SelectItem>
                     <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
                     <SelectItem value="CLERK">Data Entry Clerk</SelectItem>
+                    <SelectItem value="TEACHER">Teacher</SelectItem>
                     <SelectItem value="AUDITOR">Auditor (Read-only)</SelectItem>
                   </SelectContent>
                 </Select>
