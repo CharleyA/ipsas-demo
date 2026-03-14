@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-const TEMPLATE = `Teacher Email,EC Number,Grade,Class,Academic Year,Active\nteacher1@school.ac.zw,EC12345,Grade 6,6A,2026,Yes`;
+const TEMPLATE = `Teacher First Name,Teacher Surname,Teacher Email,EC Number,Grade,Class,Academic Year,Active\nTariro,Moyo,teacher1@school.ac.zw,EC12345,Grade 6,6A,2026,Yes`;
 
 export default function TeacherAssignmentsImportPage() {
   const { token } = useAuth();
@@ -50,6 +50,8 @@ export default function TeacherAssignmentsImportPage() {
           let failed = 0;
 
           for (const row of rows) {
+            const firstName = String(row["Teacher First Name"] || "").trim().toLowerCase();
+            const surname = String(row["Teacher Surname"] || "").trim().toLowerCase();
             const email = String(row["Teacher Email"] || "").trim().toLowerCase();
             const ec = String(row["EC Number"] || "").trim();
             const className = String(row["Class"] || "").trim();
@@ -57,7 +59,14 @@ export default function TeacherAssignmentsImportPage() {
             const academicYear = String(row["Academic Year"] || "").trim();
             const isActive = String(row["Active"] || "Yes").toLowerCase() !== "no";
 
-            const teacher = teacherUsers.find((u) => String(u.email).toLowerCase() === email);
+            const teacher = teacherUsers.find((u) => {
+              const emailMatch = email && String(u.email).toLowerCase() === email;
+              const ecMatch = ec && String(u.ecNumber || "").toLowerCase() === ec.toLowerCase();
+              const nameMatch = firstName && surname
+                ? String(u.firstName || "").toLowerCase() === firstName && String(u.lastName || "").toLowerCase() === surname
+                : false;
+              return emailMatch || ecMatch || nameMatch;
+            });
             if (!teacher || !className || !academicYear) {
               failed++;
               continue;
