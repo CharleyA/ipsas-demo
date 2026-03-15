@@ -72,6 +72,7 @@ export const updateUserSchema = z.object({
   firstName: z.string().min(1).max(100).optional(),
   lastName: z.string().min(1).max(100).optional(),
   ecNumber: z.string().min(2).max(50).nullable().optional(),
+  avatarUrl: z.string().max(500000).nullable().optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -295,7 +296,16 @@ export const createStudentSchema = z.object({
   }
 });
 
-export const updateStudentSchema = createStudentSchema.partial().extend({
+export const updateStudentSchema = z.object({
+  organisationId: z.string().optional(),
+  studentNumber: z.string().min(1).max(50).optional(),
+  firstName: z.string().min(1).max(100).optional(),
+  lastName: z.string().min(1).max(100).optional(),
+  grade: z.string().max(20).optional(),
+  class: z.string().min(1).max(20).optional(),
+  birthCertificateNumber: z.string().max(50).optional(),
+  nationalIdNumber: z.string().max(50).optional(),
+  homeAddress: z.string().max(300).optional(),
   parentName: z.string().max(200).optional(),
   parentPhone: z.string().max(20).optional(),
   parentEmail: z.string().email().optional(),

@@ -23,9 +23,15 @@ import Link from "next/link";
 
 export default function NewStudentPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [guardian, setGuardian] = useState({
+  const [fatherGuardian, setFatherGuardian] = useState({
     fullName: "",
-    relationship: "",
+    nationalIdNumber: "",
+    primaryPhone: "",
+    address: "",
+    email: "",
+  });
+  const [motherGuardian, setMotherGuardian] = useState({
+    fullName: "",
     nationalIdNumber: "",
     primaryPhone: "",
     address: "",
@@ -50,21 +56,22 @@ export default function NewStudentPage() {
   });
 
   async function onSubmit(values: CreateStudentInput) {
-    if (!guardian.fullName.trim() || !guardian.relationship.trim()) {
-      toast.error("Guardian full name and relationship are required");
-      return;
-    }
-    if (!guardian.nationalIdNumber.trim()) {
-      toast.error("Guardian National ID Number is required");
-      return;
-    }
-    if (!guardian.primaryPhone.trim()) {
-      toast.error("Guardian phone number is required");
-      return;
-    }
-    if (!guardian.address.trim()) {
-      toast.error("Guardian home address is required");
-      return;
+    const requiredGuardianFields = [
+      { label: "Father full name", value: fatherGuardian.fullName },
+      { label: "Father National ID Number", value: fatherGuardian.nationalIdNumber },
+      { label: "Father phone number", value: fatherGuardian.primaryPhone },
+      { label: "Father home address", value: fatherGuardian.address },
+      { label: "Mother/Guardian full name", value: motherGuardian.fullName },
+      { label: "Mother/Guardian National ID Number", value: motherGuardian.nationalIdNumber },
+      { label: "Mother/Guardian phone number", value: motherGuardian.primaryPhone },
+      { label: "Mother/Guardian home address", value: motherGuardian.address },
+    ];
+
+    for (const field of requiredGuardianFields) {
+      if (!String(field.value || "").trim()) {
+        toast.error(`${field.label} is required`);
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -84,25 +91,40 @@ export default function NewStudentPage() {
         throw new Error(student.error || "Failed to create student");
       }
 
-      const guardianResponse = await fetch("/api/guardians", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          ...guardian,
+      const guardiansPayload = [
+        {
+          ...fatherGuardian,
+          relationship: "Father",
           studentIds: [student.id],
           isPrimaryContact: true,
-        }),
-      });
+          isBillingContact: true,
+        },
+        {
+          ...motherGuardian,
+          relationship: "Mother/Guardian",
+          studentIds: [student.id],
+          isPrimaryContact: false,
+          isBillingContact: false,
+        },
+      ];
 
-      const guardianData = await guardianResponse.json();
-      if (!guardianResponse.ok) {
-        throw new Error(guardianData.error || "Student created, but failed to create guardian");
+      for (const guardian of guardiansPayload) {
+        const guardianResponse = await fetch("/api/guardians", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify(guardian),
+        });
+
+        const guardianData = await guardianResponse.json();
+        if (!guardianResponse.ok) {
+          throw new Error(guardianData.error || "Student created, but failed to create guardian records");
+        }
       }
 
-      toast.success("Student and guardian created successfully");
+      toast.success("Student and guardian records created successfully");
       router.push("/dashboard/students");
     } catch (error: any) {
       toast.error(error.message);
@@ -242,15 +264,29 @@ export default function NewStudentPage() {
                   )}
                 />
 
-                <div className="rounded-md border p-4 space-y-3">
+                <div className="rounded-md border p-4 space-y-4">
                   <h3 className="font-medium">Guardian Details (Required)</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <Input placeholder="Guardian full name" value={guardian.fullName} onChange={(e) => setGuardian({ ...guardian, fullName: e.target.value })} />
-                    <Input placeholder="Relationship" value={guardian.relationship} onChange={(e) => setGuardian({ ...guardian, relationship: e.target.value })} />
-                    <Input placeholder="Guardian National ID Number" value={guardian.nationalIdNumber} onChange={(e) => setGuardian({ ...guardian, nationalIdNumber: e.target.value })} />
-                    <Input placeholder="Guardian phone number" value={guardian.primaryPhone} onChange={(e) => setGuardian({ ...guardian, primaryPhone: e.target.value })} />
-                    <Input placeholder="Guardian home address" value={guardian.address} onChange={(e) => setGuardian({ ...guardian, address: e.target.value })} />
-                    <Input placeholder="Guardian email (optional)" value={guardian.email} onChange={(e) => setGuardian({ ...guardian, email: e.target.value })} />
+
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold">Father Details</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <Input placeholder="Father full name" value={fatherGuardian.fullName} onChange={(e) => setFatherGuardian({ ...fatherGuardian, fullName: e.target.value })} />
+                      <Input placeholder="Father National ID Number" value={fatherGuardian.nationalIdNumber} onChange={(e) => setFatherGuardian({ ...fatherGuardian, nationalIdNumber: e.target.value })} />
+                      <Input placeholder="Father phone number" value={fatherGuardian.primaryPhone} onChange={(e) => setFatherGuardian({ ...fatherGuardian, primaryPhone: e.target.value })} />
+                      <Input placeholder="Father home address" value={fatherGuardian.address} onChange={(e) => setFatherGuardian({ ...fatherGuardian, address: e.target.value })} />
+                      <Input placeholder="Father email (optional)" value={fatherGuardian.email} onChange={(e) => setFatherGuardian({ ...fatherGuardian, email: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold">Mother/Guardian Details</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <Input placeholder="Mother/Guardian full name" value={motherGuardian.fullName} onChange={(e) => setMotherGuardian({ ...motherGuardian, fullName: e.target.value })} />
+                      <Input placeholder="Mother/Guardian National ID Number" value={motherGuardian.nationalIdNumber} onChange={(e) => setMotherGuardian({ ...motherGuardian, nationalIdNumber: e.target.value })} />
+                      <Input placeholder="Mother/Guardian phone number" value={motherGuardian.primaryPhone} onChange={(e) => setMotherGuardian({ ...motherGuardian, primaryPhone: e.target.value })} />
+                      <Input placeholder="Mother/Guardian home address" value={motherGuardian.address} onChange={(e) => setMotherGuardian({ ...motherGuardian, address: e.target.value })} />
+                      <Input placeholder="Mother/Guardian email (optional)" value={motherGuardian.email} onChange={(e) => setMotherGuardian({ ...motherGuardian, email: e.target.value })} />
+                    </div>
                   </div>
                 </div>
               <div className="flex justify-end gap-2 pt-4">
