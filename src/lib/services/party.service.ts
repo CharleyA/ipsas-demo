@@ -12,6 +12,9 @@ export class StudentService {
         lastName: data.lastName,
         grade: data.grade,
         class: data.class,
+        birthCertificateNumber: data.birthCertificateNumber,
+        nationalIdNumber: data.nationalIdNumber,
+        homeAddress: data.homeAddress,
       },
     });
 
@@ -38,11 +41,14 @@ export class StudentService {
           lastName: data.lastName,
           grade: data.grade,
           class: data.class,
+          birthCertificateNumber: data.birthCertificateNumber,
+          nationalIdNumber: data.nationalIdNumber,
+          homeAddress: data.homeAddress,
           parentName: data.parentName,
-        parentPhone: data.parentPhone,
-        parentEmail: data.parentEmail,
-        enrollmentDate: data.enrollmentDate ? new Date(data.enrollmentDate) : undefined,
-        isActive: data.isActive,
+          parentPhone: data.parentPhone,
+          parentEmail: data.parentEmail,
+          enrollmentDate: data.enrollmentDate ? new Date(data.enrollmentDate) : undefined,
+          isActive: data.isActive,
       },
     });
 
@@ -81,6 +87,7 @@ export class GuardianService {
         organisationId: data.organisationId,
         fullName: data.fullName,
         relationship: data.relationship,
+        nationalIdNumber: data.nationalIdNumber,
         primaryPhone: data.primaryPhone,
         secondaryPhone: data.secondaryPhone,
         address: data.address,
@@ -122,6 +129,7 @@ export class GuardianService {
       data: {
         fullName: data.fullName,
         relationship: data.relationship,
+        nationalIdNumber: data.nationalIdNumber,
         primaryPhone: data.primaryPhone,
         secondaryPhone: data.secondaryPhone,
         address: data.address,

@@ -470,20 +470,23 @@ model ApprovalTask {
 }
 
 model Student {
-  id             String            @id @default(cuid())
-  organisationId String
-  studentNumber  String
-  firstName      String
-  lastName       String
-  grade          String?
-  class          String?
-  isActive       Boolean           @default(true)
-  parentName     String?
-  parentPhone    String?
-  parentEmail    String?
-  enrollmentDate DateTime?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  id                     String            @id @default(cuid())
+  organisationId         String
+  studentNumber          String
+  firstName              String
+  lastName               String
+  grade                  String?
+  class                  String?
+  birthCertificateNumber String?
+  nationalIdNumber       String?
+  homeAddress            String?
+  isActive               Boolean           @default(true)
+  parentName             String?
+  parentPhone            String?
+  parentEmail            String?
+  enrollmentDate         DateTime?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
   arInvoices     ARInvoice[]
   arReceipts     ARReceipt[]
   organisation   Organisation      @relation(fields: [organisationId], references: [id])
@@ -495,17 +498,18 @@ model Student {
 }
 
 model Guardian {
-  id             String            @id @default(cuid())
-  organisationId String
-  fullName       String
-  relationship   String
-  primaryPhone   String
-  secondaryPhone String?
-  address        String?
-  email          String?
-  isActive       Boolean           @default(true)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  id               String            @id @default(cuid())
+  organisationId   String
+  fullName         String
+  relationship     String
+  nationalIdNumber String?
+  primaryPhone     String
+  secondaryPhone   String?
+  address          String?
+  email            String?
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   organisation   Organisation      @relation(fields: [organisationId], references: [id])
   studentLinks   StudentGuardian[]
 

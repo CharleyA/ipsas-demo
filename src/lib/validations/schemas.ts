@@ -268,8 +268,31 @@ export const createStudentSchema = z.object({
   studentNumber: z.string().min(1).max(50),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
-  grade: z.string().max(20).optional(),
-  class: z.string().max(20).optional(),
+  grade: z.string().max(20),
+  class: z.string().min(1).max(20),
+  birthCertificateNumber: z.string().max(50).optional(),
+  nationalIdNumber: z.string().max(50).optional(),
+  homeAddress: z.string().max(300).optional(),
+}).superRefine((data, ctx) => {
+  const gradeValue = (data.grade || "").toLowerCase().replace(/\s+/g, "");
+  const isLowerForms = ["form1", "form2", "form3", "form4"].includes(gradeValue);
+  const isUpperForms = ["form5", "form6"].includes(gradeValue);
+
+  if (isLowerForms && !data.birthCertificateNumber?.trim()) {
+    ctx.addIssue({
+      path: ["birthCertificateNumber"],
+      code: z.ZodIssueCode.custom,
+      message: "Birth Certificate Number is required for Form 1–4",
+    });
+  }
+
+  if (isUpperForms && !data.nationalIdNumber?.trim()) {
+    ctx.addIssue({
+      path: ["nationalIdNumber"],
+      code: z.ZodIssueCode.custom,
+      message: "National ID Number is required for Form 5–6",
+    });
+  }
 });
 
 export const updateStudentSchema = createStudentSchema.partial().extend({
@@ -300,9 +323,10 @@ export const createGuardianSchema = z.object({
   organisationId: z.string(),
   fullName: z.string().min(1).max(200),
   relationship: z.string().min(1).max(100),
+  nationalIdNumber: z.string().min(1).max(50),
   primaryPhone: z.string().min(1).max(30),
   secondaryPhone: z.string().max(30).optional(),
-  address: z.string().max(300).optional(),
+  address: z.string().min(1).max(300),
   email: z.string().email().optional(),
   studentIds: z.array(z.string()).optional(),
   isPrimaryContact: z.boolean().optional(),
