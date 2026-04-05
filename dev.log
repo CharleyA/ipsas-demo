@@ -1,0 +1,22 @@
+
+> nextjs-new@0.1.0 dev
+> prisma generate && next dev --turbopack
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.2.0) to ./node_modules/.prisma/client in 328ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+
+ ⚠ Port 3000 is in use, using available port 3001 instead.
+   ▲ Next.js 15.3.6 (Turbopack)
+   - Local:        http://localhost:3001
+   - Network:      http://172.20.0.20:3001
+
+ ✓ Starting...
+ ✓ Compiled middleware in 209ms
+ ✓ Ready in 1217ms
