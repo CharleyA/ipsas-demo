@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth';
+import { getAuthContext } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { ImportType, ImportStatus, VoucherType, AccountType, VoucherStatus, UserRole, Prisma } from '@prisma/client';
 import { VoucherService } from '@/lib/services/voucher.service';
@@ -55,7 +55,7 @@ export async function POST(
                 lastName: row.lastName,
                 grade: row.grade ? String(row.grade) : null,
                 class: row.class ? String(row.class) : null,
-                isActive: row.isActive === 'true' || row.isActive === true || row.isActive === 'TRUE',
+                isActive: row.isActive === 'true' || row.isActive === true || row.isActive === 'TRUE' || row.isActive === 'yes' || row.isActive === 'YES',
               },
               create: {
                 organisationId: job.organisationId,
@@ -64,7 +64,7 @@ export async function POST(
                 lastName: row.lastName,
                 grade: row.grade ? String(row.grade) : null,
                 class: row.class ? String(row.class) : null,
-                isActive: row.isActive === 'true' || row.isActive === true || row.isActive === 'TRUE' || row.isActive === undefined,
+                isActive: row.isActive === 'true' || row.isActive === true || row.isActive === 'TRUE' || row.isActive === 'yes' || row.isActive === 'YES' || row.isActive === undefined,
               },
           });
           processedCount++;
@@ -201,7 +201,6 @@ export async function POST(
           const fxRate = parseFloat(row.fxRate || '1');
           const amountLc = amount * fxRate;
 
-          // If allocating to invoices, we usually credit Accounts Receivable
           const creditAccountId = receivableAccountId || revenueAccountId;
 
           const voucher = await VoucherService.create({
@@ -237,7 +236,6 @@ export async function POST(
             ]
           }, auth.userId);
 
-          // Create the AR Receipt record
           const arReceipt = await prisma.aRReceipt.create({
             data: {
               organisationId: job.organisationId,
@@ -250,7 +248,6 @@ export async function POST(
             }
           });
 
-          // Auto-allocate if requested (simplistic: allocate to oldest invoices first)
           if (row.autoAllocate === 'true' || row.autoAllocate === true) {
              const invoices = await prisma.aRInvoice.findMany({
                where: { studentId: student.id, balance: { gt: 0 }, status: 'POSTED' },
@@ -285,7 +282,6 @@ export async function POST(
           }
 
           if (row.postImmediately === 'true' || row.postImmediately === true) {
-            // Check role for posting
             const userOrg = await prisma.organisationUser.findUnique({
               where: { organisationId_userId: { organisationId: job.organisationId, userId: auth.userId } }
             });
@@ -312,7 +308,6 @@ export async function POST(
         }
       }
     } else if (job.type === ImportType.OPENING_BALANCES) {
-      // For opening balances, we generate a SINGLE balanced journal voucher
       const period = await prisma.fiscalPeriod.findFirst({
         where: { organisationId: job.organisationId, status: 'OPEN' },
         orderBy: [{ year: 'asc' }, { period: 'asc' }],
@@ -320,7 +315,6 @@ export async function POST(
 
       if (!period) throw new Error('No open fiscal period found for opening balances.');
 
-      // Find or create Opening Balance Equity account
       let obeAccount = await prisma.account.findFirst({
         where: { organisationId: job.organisationId, code: 'OBE' }
       });
@@ -341,7 +335,6 @@ export async function POST(
       let totalDebitLc = new Decimal(0);
       let totalCreditLc = new Decimal(0);
 
-      // We need to resolve account codes to IDs first
       const accountMap = new Map<string, string>();
       const accounts = await prisma.account.findMany({ where: { organisationId: job.organisationId } });
       accounts.forEach(a => accountMap.set(a.code, a.id));
@@ -400,14 +393,13 @@ export async function POST(
       }
 
       if (lines.length > 0) {
-        // Balance it with OBE
         const diffLc = totalDebitLc.sub(totalCreditLc);
         if (!diffLc.isZero()) {
           lines.push({
             lineNumber: lines.length + 1,
             accountId: obeAccount.id,
             description: 'Opening Balance Balancing Entry',
-            currencyCode: 'ZWG', // Base currency for balancing
+            currencyCode: 'ZWG',
             fxRate: new Decimal(1),
             amountFc: diffLc.abs(),
             amountLc: diffLc.abs(),
@@ -434,7 +426,6 @@ export async function POST(
       }
     }
 
-    // Finalize job
     await prisma.importJob.update({
       where: { id: jobId },
       data: {

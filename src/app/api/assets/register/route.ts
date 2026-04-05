@@ -7,10 +7,11 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status") || undefined;
     const categoryId = searchParams.get("categoryId") || undefined;
-    
+    const location = searchParams.get("location") || undefined;
+
     const assets = await AssetService.listByOrganisation(
       authReq.user.organisationId,
-      { status, categoryId }
+      { status, categoryId, location }
     );
     return NextResponse.json(assets);
   });
