@@ -448,7 +448,7 @@ export class PendingAssetService {
           include: {
             bill: {
               select: {
-                billNumber: true,
+                id: true,
                 supplier: {
                   select: {
                     name: true,

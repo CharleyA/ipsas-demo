@@ -3774,3 +3774,437 @@ prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notificatio
 prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
 prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
  GET /api/notifications 200 in 54ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 77ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 70ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 83ms
+prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."passwordHash", "public"."users"."firstName", "public"."users"."lastName", "public"."users"."ecNumber", "public"."users"."avatarUrl", "public"."users"."isActive", "public"."users"."createdAt", "public"."users"."updatedAt" FROM "public"."users" WHERE ("public"."users"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."organisation_users"."id", "public"."organisation_users"."organisationId", "public"."organisation_users"."userId", "public"."organisation_users"."role"::text, "public"."organisation_users"."isApprover", "public"."organisation_users"."isActive", "public"."organisation_users"."createdAt", "public"."organisation_users"."updatedAt" FROM "public"."organisation_users" WHERE ("public"."organisation_users"."isActive" = $1 AND "public"."organisation_users"."userId" = $2) ORDER BY "public"."organisation_users"."id" ASC LIMIT $3 OFFSET $4
+prisma:query SELECT "public"."organisations"."id", "public"."organisations"."code", "public"."organisations"."name", "public"."organisations"."type"::text, "public"."organisations"."baseCurrency", "public"."organisations"."fiscalYearStart", "public"."organisations"."address", "public"."organisations"."phone", "public"."organisations"."email", "public"."organisations"."isActive", "public"."organisations"."createdAt", "public"."organisations"."updatedAt", "public"."organisations"."arReceivableAccountId", "public"."organisations"."arRevenueAccountId", "public"."organisations"."arBankAccountId", "public"."organisations"."apPayableAccountId", "public"."organisations"."apExpenseAccountId", "public"."organisations"."apBankAccountId", "public"."organisations"."cashInHandAccountId", "public"."organisations"."fxBankAccountId", "public"."organisations"."fxGainLossAccountId" FROM "public"."organisations" WHERE "public"."organisations"."id" IN ($1) OFFSET $2
+ POST /api/auth/login 200 in 186ms
+prisma:query SELECT "public"."assets"."id", "public"."assets"."organisationId", "public"."assets"."categoryId", "public"."assets"."assetNumber", "public"."assets"."description", "public"."assets"."serialNumber", "public"."assets"."location", "public"."assets"."custodian", "public"."assets"."acquisitionDate", "public"."assets"."acquisitionCost", "public"."assets"."residualValue", "public"."assets"."accumulatedDepreciation", "public"."assets"."netBookValue", "public"."assets"."status"::text, "public"."assets"."disposalDate", "public"."assets"."disposalAmount", "public"."assets"."disposalNotes", "public"."assets"."disposalVoucherId", "public"."assets"."sourceApBillLineId", "public"."assets"."createdAt", "public"."assets"."updatedAt" FROM "public"."assets" LEFT JOIN "public"."asset_categories" AS "orderby_1" ON ("orderby_1"."id") = ("public"."assets"."categoryId") WHERE "public"."assets"."organisationId" = $1 ORDER BY "orderby_1"."name" ASC, "public"."assets"."assetNumber" ASC OFFSET $2
+prisma:query SELECT "public"."asset_categories"."id", "public"."asset_categories"."organisationId", "public"."asset_categories"."code", "public"."asset_categories"."name", "public"."asset_categories"."assetAccountId", "public"."asset_categories"."depreciationAccountId", "public"."asset_categories"."accumulatedDepAccountId", "public"."asset_categories"."depreciationMethod"::text, "public"."asset_categories"."usefulLifeMonths", "public"."asset_categories"."residualValuePercent", "public"."asset_categories"."isActive", "public"."asset_categories"."createdAt", "public"."asset_categories"."updatedAt" FROM "public"."asset_categories" WHERE "public"."asset_categories"."id" IN (NULL) OFFSET $1
+ GET /api/assets/register 200 in 38ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 60ms
+prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."passwordHash", "public"."users"."firstName", "public"."users"."lastName", "public"."users"."ecNumber", "public"."users"."avatarUrl", "public"."users"."isActive", "public"."users"."createdAt", "public"."users"."updatedAt" FROM "public"."users" WHERE ("public"."users"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."organisation_users"."id", "public"."organisation_users"."organisationId", "public"."organisation_users"."userId", "public"."organisation_users"."role"::text, "public"."organisation_users"."isApprover", "public"."organisation_users"."isActive", "public"."organisation_users"."createdAt", "public"."organisation_users"."updatedAt" FROM "public"."organisation_users" WHERE ("public"."organisation_users"."isActive" = $1 AND "public"."organisation_users"."userId" = $2) ORDER BY "public"."organisation_users"."id" ASC LIMIT $3 OFFSET $4
+prisma:query SELECT "public"."organisations"."id", "public"."organisations"."code", "public"."organisations"."name", "public"."organisations"."type"::text, "public"."organisations"."baseCurrency", "public"."organisations"."fiscalYearStart", "public"."organisations"."address", "public"."organisations"."phone", "public"."organisations"."email", "public"."organisations"."isActive", "public"."organisations"."createdAt", "public"."organisations"."updatedAt", "public"."organisations"."arReceivableAccountId", "public"."organisations"."arRevenueAccountId", "public"."organisations"."arBankAccountId", "public"."organisations"."apPayableAccountId", "public"."organisations"."apExpenseAccountId", "public"."organisations"."apBankAccountId", "public"."organisations"."cashInHandAccountId", "public"."organisations"."fxBankAccountId", "public"."organisations"."fxGainLossAccountId" FROM "public"."organisations" WHERE "public"."organisations"."id" IN ($1) OFFSET $2
+ POST /api/auth/login 200 in 104ms
+prisma:error 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].pendingAsset.findMany()` invocation in
+/home/user/app/.next/server/chunks/[root-of-the-server]__8613e48e._.js:709:155
+
+  706 }
+  707 class PendingAssetService {
+  708     static async listByOrganisation(organisationId) {
+→ 709         return __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].pendingAsset.findMany({
+                where: {
+                  organisationId: "cmnmcjixt0002ybwo37kdxarf",
+                  status: "PENDING"
+                },
+                include: {
+                  category: true,
+                  apBillLine: {
+                    include: {
+                      bill: {
+                        select: {
+                          billNumber: true,
+                          ~~~~~~~~~~
+                          supplier: {
+                            select: {
+                              name: true
+                            }
+                          },
+              ?           id?: true,
+              ?           organisationId?: true,
+              ?           voucherId?: true,
+              ?           supplierId?: true,
+              ?           currencyCode?: true,
+              ?           amount?: true,
+              ?           balance?: true,
+              ?           dueDate?: true,
+              ?           poId?: true,
+              ?           grnId?: true,
+              ?           matchStatus?: true,
+              ?           createdAt?: true,
+              ?           updatedAt?: true,
+              ?           allocations?: true,
+              ?           lines?: true,
+              ?           currency?: true,
+              ?           voucher?: true,
+              ?           grn?: true,
+              ?           _count?: true
+                        }
+                      }
+                    }
+                  }
+                },
+                orderBy: {
+                  createdAt: "desc"
+                }
+              })
+
+Unknown field `billNumber` for select statement on model `APBill`. Available options are marked with ?.
+ ⨯ Error [PrismaClientValidationError]: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].pendingAsset.findMany()` invocation in
+/home/user/app/.next/server/chunks/[root-of-the-server]__8613e48e._.js:709:155
+
+  706 }
+  707 class PendingAssetService {
+  708     static async listByOrganisation(organisationId) {
+→ 709         return __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].pendingAsset.findMany({
+                where: {
+                  organisationId: "cmnmcjixt0002ybwo37kdxarf",
+                  status: "PENDING"
+                },
+                include: {
+                  category: true,
+                  apBillLine: {
+                    include: {
+                      bill: {
+                        select: {
+                          billNumber: true,
+                          ~~~~~~~~~~
+                          supplier: {
+                            select: {
+                              name: true
+                            }
+                          },
+              ?           id?: true,
+              ?           organisationId?: true,
+              ?           voucherId?: true,
+              ?           supplierId?: true,
+              ?           currencyCode?: true,
+              ?           amount?: true,
+              ?           balance?: true,
+              ?           dueDate?: true,
+              ?           poId?: true,
+              ?           grnId?: true,
+              ?           matchStatus?: true,
+              ?           createdAt?: true,
+              ?           updatedAt?: true,
+              ?           allocations?: true,
+              ?           lines?: true,
+              ?           currency?: true,
+              ?           voucher?: true,
+              ?           grn?: true,
+              ?           _count?: true
+                        }
+                      }
+                    }
+                  }
+                },
+                orderBy: {
+                  createdAt: "desc"
+                }
+              })
+
+Unknown field `billNumber` for select statement on model `APBill`. Available options are marked with ?.
+    at <unknown> (src/lib/services/asset.service.ts:440:31)
+    at async (src/app/api/assets/pending/route.ts:7:20)
+  438 | export class PendingAssetService {
+  439 |   static async listByOrganisation(organisationId: string) {
+> 440 |     return prisma.pendingAsset.findMany({
+      |                               ^
+  441 |       where: {
+  442 |         organisationId,
+  443 |         status: "PENDING", {
+  clientVersion: '7.2.0'
+}
+ ⨯ Error [PrismaClientValidationError]: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].pendingAsset.findMany()` invocation in
+/home/user/app/.next/server/chunks/[root-of-the-server]__8613e48e._.js:709:155
+
+  706 }
+  707 class PendingAssetService {
+  708     static async listByOrganisation(organisationId) {
+→ 709         return __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].pendingAsset.findMany({
+                where: {
+                  organisationId: "cmnmcjixt0002ybwo37kdxarf",
+                  status: "PENDING"
+                },
+                include: {
+                  category: true,
+                  apBillLine: {
+                    include: {
+                      bill: {
+                        select: {
+                          billNumber: true,
+                          ~~~~~~~~~~
+                          supplier: {
+                            select: {
+                              name: true
+                            }
+                          },
+              ?           id?: true,
+              ?           organisationId?: true,
+              ?           voucherId?: true,
+              ?           supplierId?: true,
+              ?           currencyCode?: true,
+              ?           amount?: true,
+              ?           balance?: true,
+              ?           dueDate?: true,
+              ?           poId?: true,
+              ?           grnId?: true,
+              ?           matchStatus?: true,
+              ?           createdAt?: true,
+              ?           updatedAt?: true,
+              ?           allocations?: true,
+              ?           lines?: true,
+              ?           currency?: true,
+              ?           voucher?: true,
+              ?           grn?: true,
+              ?           _count?: true
+                        }
+                      }
+                    }
+                  }
+                },
+                orderBy: {
+                  createdAt: "desc"
+                }
+              })
+
+Unknown field `billNumber` for select statement on model `APBill`. Available options are marked with ?.
+    at <unknown> (src/lib/services/asset.service.ts:440:31)
+    at async (src/app/api/assets/pending/route.ts:7:20)
+  438 | export class PendingAssetService {
+  439 |   static async listByOrganisation(organisationId: string) {
+> 440 |     return prisma.pendingAsset.findMany({
+      |                               ^
+  441 |       where: {
+  442 |         organisationId,
+  443 |         status: "PENDING", {
+  clientVersion: '7.2.0'
+}
+ GET /api/assets/pending 500 in 120ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 78ms
+prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."passwordHash", "public"."users"."firstName", "public"."users"."lastName", "public"."users"."ecNumber", "public"."users"."avatarUrl", "public"."users"."isActive", "public"."users"."createdAt", "public"."users"."updatedAt" FROM "public"."users" WHERE ("public"."users"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."organisation_users"."id", "public"."organisation_users"."organisationId", "public"."organisation_users"."userId", "public"."organisation_users"."role"::text, "public"."organisation_users"."isApprover", "public"."organisation_users"."isActive", "public"."organisation_users"."createdAt", "public"."organisation_users"."updatedAt" FROM "public"."organisation_users" WHERE ("public"."organisation_users"."isActive" = $1 AND "public"."organisation_users"."userId" = $2) ORDER BY "public"."organisation_users"."id" ASC LIMIT $3 OFFSET $4
+prisma:query SELECT "public"."organisations"."id", "public"."organisations"."code", "public"."organisations"."name", "public"."organisations"."type"::text, "public"."organisations"."baseCurrency", "public"."organisations"."fiscalYearStart", "public"."organisations"."address", "public"."organisations"."phone", "public"."organisations"."email", "public"."organisations"."isActive", "public"."organisations"."createdAt", "public"."organisations"."updatedAt", "public"."organisations"."arReceivableAccountId", "public"."organisations"."arRevenueAccountId", "public"."organisations"."arBankAccountId", "public"."organisations"."apPayableAccountId", "public"."organisations"."apExpenseAccountId", "public"."organisations"."apBankAccountId", "public"."organisations"."cashInHandAccountId", "public"."organisations"."fxBankAccountId", "public"."organisations"."fxGainLossAccountId" FROM "public"."organisations" WHERE "public"."organisations"."id" IN ($1) OFFSET $2
+ POST /api/auth/login 200 in 132ms
+prisma:error 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].pendingAsset.findMany()` invocation in
+/home/user/app/.next/server/chunks/[root-of-the-server]__8613e48e._.js:709:155
+
+  706 }
+  707 class PendingAssetService {
+  708     static async listByOrganisation(organisationId) {
+→ 709         return __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].pendingAsset.findMany({
+                where: {
+                  organisationId: "cmnmcjixt0002ybwo37kdxarf",
+                  status: "PENDING"
+                },
+                include: {
+                  category: true,
+                  apBillLine: {
+                    include: {
+                      bill: {
+                        select: {
+                          billNumber: true,
+                          ~~~~~~~~~~
+                          supplier: {
+                            select: {
+                              name: true
+                            }
+                          },
+              ?           id?: true,
+              ?           organisationId?: true,
+              ?           voucherId?: true,
+              ?           supplierId?: true,
+              ?           currencyCode?: true,
+              ?           amount?: true,
+              ?           balance?: true,
+              ?           dueDate?: true,
+              ?           poId?: true,
+              ?           grnId?: true,
+              ?           matchStatus?: true,
+              ?           createdAt?: true,
+              ?           updatedAt?: true,
+              ?           allocations?: true,
+              ?           lines?: true,
+              ?           currency?: true,
+              ?           voucher?: true,
+              ?           grn?: true,
+              ?           _count?: true
+                        }
+                      }
+                    }
+                  }
+                },
+                orderBy: {
+                  createdAt: "desc"
+                }
+              })
+
+Unknown field `billNumber` for select statement on model `APBill`. Available options are marked with ?.
+ ⨯ Error [PrismaClientValidationError]: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].pendingAsset.findMany()` invocation in
+/home/user/app/.next/server/chunks/[root-of-the-server]__8613e48e._.js:709:155
+
+  706 }
+  707 class PendingAssetService {
+  708     static async listByOrganisation(organisationId) {
+→ 709         return __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].pendingAsset.findMany({
+                where: {
+                  organisationId: "cmnmcjixt0002ybwo37kdxarf",
+                  status: "PENDING"
+                },
+                include: {
+                  category: true,
+                  apBillLine: {
+                    include: {
+                      bill: {
+                        select: {
+                          billNumber: true,
+                          ~~~~~~~~~~
+                          supplier: {
+                            select: {
+                              name: true
+                            }
+                          },
+              ?           id?: true,
+              ?           organisationId?: true,
+              ?           voucherId?: true,
+              ?           supplierId?: true,
+              ?           currencyCode?: true,
+              ?           amount?: true,
+              ?           balance?: true,
+              ?           dueDate?: true,
+              ?           poId?: true,
+              ?           grnId?: true,
+              ?           matchStatus?: true,
+              ?           createdAt?: true,
+              ?           updatedAt?: true,
+              ?           allocations?: true,
+              ?           lines?: true,
+              ?           currency?: true,
+              ?           voucher?: true,
+              ?           grn?: true,
+              ?           _count?: true
+                        }
+                      }
+                    }
+                  }
+                },
+                orderBy: {
+                  createdAt: "desc"
+                }
+              })
+
+Unknown field `billNumber` for select statement on model `APBill`. Available options are marked with ?.
+    at <unknown> (src/lib/services/asset.service.ts:440:31)
+    at async (src/app/api/assets/pending/route.ts:7:20)
+  438 | export class PendingAssetService {
+  439 |   static async listByOrganisation(organisationId: string) {
+> 440 |     return prisma.pendingAsset.findMany({
+      |                               ^
+  441 |       where: {
+  442 |         organisationId,
+  443 |         status: "PENDING", {
+  clientVersion: '7.2.0'
+}
+ ⨯ Error [PrismaClientValidationError]: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].pendingAsset.findMany()` invocation in
+/home/user/app/.next/server/chunks/[root-of-the-server]__8613e48e._.js:709:155
+
+  706 }
+  707 class PendingAssetService {
+  708     static async listByOrganisation(organisationId) {
+→ 709         return __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].pendingAsset.findMany({
+                where: {
+                  organisationId: "cmnmcjixt0002ybwo37kdxarf",
+                  status: "PENDING"
+                },
+                include: {
+                  category: true,
+                  apBillLine: {
+                    include: {
+                      bill: {
+                        select: {
+                          billNumber: true,
+                          ~~~~~~~~~~
+                          supplier: {
+                            select: {
+                              name: true
+                            }
+                          },
+              ?           id?: true,
+              ?           organisationId?: true,
+              ?           voucherId?: true,
+              ?           supplierId?: true,
+              ?           currencyCode?: true,
+              ?           amount?: true,
+              ?           balance?: true,
+              ?           dueDate?: true,
+              ?           poId?: true,
+              ?           grnId?: true,
+              ?           matchStatus?: true,
+              ?           createdAt?: true,
+              ?           updatedAt?: true,
+              ?           allocations?: true,
+              ?           lines?: true,
+              ?           currency?: true,
+              ?           voucher?: true,
+              ?           grn?: true,
+              ?           _count?: true
+                        }
+                      }
+                    }
+                  }
+                },
+                orderBy: {
+                  createdAt: "desc"
+                }
+              })
+
+Unknown field `billNumber` for select statement on model `APBill`. Available options are marked with ?.
+    at <unknown> (src/lib/services/asset.service.ts:440:31)
+    at async (src/app/api/assets/pending/route.ts:7:20)
+  438 | export class PendingAssetService {
+  439 |   static async listByOrganisation(organisationId: string) {
+> 440 |     return prisma.pendingAsset.findMany({
+      |                               ^
+  441 |       where: {
+  442 |         organisationId,
+  443 |         status: "PENDING", {
+  clientVersion: '7.2.0'
+}
+ GET /api/assets/pending 500 in 107ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 38ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 58ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 62ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 58ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 54ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 65ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 74ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 33ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 66ms
+ ✓ Compiled in 242ms

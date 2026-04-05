@@ -73,22 +73,28 @@ export default function AssetsPage() {
   const fetchAssets = async () => {
     setIsLoading(true);
     try {
-      const [assetsRes, pendingRes] = await Promise.all([
-        fetch("/api/assets/register", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch("/api/assets/pending", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-      ]);
+      const assetsRes = await fetch("/api/assets/register", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const assetsData = await assetsRes.json();
-      const pendingData = await pendingRes.json();
       setAssets(Array.isArray(assetsData) ? assetsData : []);
-      setPendingCount(Array.isArray(pendingData) ? pendingData.length : 0);
     } catch {
       toast.error("Failed to fetch assets");
     } finally {
       setIsLoading(false);
+    }
+
+    // Pending count is supplementary — fetch independently so it can't block the main list
+    try {
+      const pendingRes = await fetch("/api/assets/pending", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (pendingRes.ok) {
+        const pendingData = await pendingRes.json();
+        setPendingCount(Array.isArray(pendingData) ? pendingData.length : 0);
+      }
+    } catch {
+      // non-critical — silently ignore
     }
   };
 
