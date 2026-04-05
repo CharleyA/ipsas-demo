@@ -6,49 +6,20 @@ Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
 
-✔ Generated Prisma Client (v7.2.0) to ./node_modules/.prisma/client in 328ms
+✔ Generated Prisma Client (v7.2.0) to ./node_modules/.prisma/client in 461ms
 
 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 
-Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
 
- ⚠ Port 3000 is in use, using available port 3001 instead.
    ▲ Next.js 15.3.6 (Turbopack)
-   - Local:        http://localhost:3001
-   - Network:      http://172.20.0.20:3001
+   - Local:        http://localhost:3000
+   - Network:      http://172.20.0.20:3000
+   - Environments: .env
 
  ✓ Starting...
- ✓ Compiled middleware in 209ms
- ✓ Ready in 1217ms
+ ✓ Compiled middleware in 271ms
+ ✓ Ready in 1236ms
  ○ Compiling / ...
- ✓ Compiled / in 2.9s
- GET /?_cb=1775428632292 200 in 3204ms
- ○ Compiling /login ...
- ✓ Compiled /login in 1441ms
- GET /login 200 in 1505ms
- ○ Compiling /api/auth/login ...
- ✓ Compiled /api/auth/login in 764ms
-prisma:error 
-Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].user.findUnique()` invocation in
-/home/user/app/.next/server/chunks/[root-of-the-server]__8cefaeef._.js:190:159
-
-  187 ;
-  188 class AuthService {
-  189     static async login(data) {
-→ 190         const user = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].user.findUnique(
-Can't reach database server at 127.0.0.1:5432
- POST /api/auth/login 401 in 1031ms
- GET /?_cb=1775428725934 200 in 130ms
- GET /login 200 in 54ms
-prisma:error 
-Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].user.findUnique()` invocation in
-/home/user/app/.next/server/chunks/[root-of-the-server]__8cefaeef._.js:190:159
-
-  187 ;
-  188 class AuthService {
-  189     static async login(data) {
-→ 190         const user = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].user.findUnique(
-Can't reach database server at 127.0.0.1:5432
- POST /api/auth/login 401 in 49ms
-   Reload env: .env
- GET /login 200 in 125ms
+ ✓ Compiled / in 2.8s
+ GET /?_cb=1775428947913 200 in 3058ms
