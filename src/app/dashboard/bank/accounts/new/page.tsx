@@ -156,13 +156,13 @@ export default function NewBankAccountPage() {
               <Label htmlFor="currency">Currency</Label>
               <Select 
                 value={formData.currencyCode} 
-                onValueChange={(val) => setFormData({ ...formData, currencyCode: val })}
+                onValueChange={(val) => setFormData({ ...formData, currencyCode: val === "default" ? "" : val })}
               >
                 <SelectTrigger id="currency">
                   <SelectValue placeholder="System Default (Organisation Base Currency)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">System Default (Organisation Base Currency)</SelectItem>
+                  <SelectItem value="default">System Default (Organisation Base Currency)</SelectItem>
                   {isLoadingCurrencies ? (
                     <div className="flex items-center justify-center p-2">
                       <Loader2 className="w-4 h-4 animate-spin" />

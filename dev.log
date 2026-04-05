@@ -2387,3 +2387,13 @@ prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notificatio
  GET /api/notifications 200 in 56ms
 prisma:query SELECT "public"."currencies"."id", "public"."currencies"."code", "public"."currencies"."name", "public"."currencies"."symbol", "public"."currencies"."decimals", "public"."currencies"."isActive", "public"."currencies"."createdAt", "public"."currencies"."updatedAt" FROM "public"."currencies" WHERE "public"."currencies"."isActive" = $1 ORDER BY "public"."currencies"."code" ASC OFFSET $2
  GET /api/currencies 200 in 52ms
+ GET /dashboard/bank/accounts/new?_cb=1775433001639 200 in 313ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 97ms
+prisma:query SELECT "public"."currencies"."id", "public"."currencies"."code", "public"."currencies"."name", "public"."currencies"."symbol", "public"."currencies"."decimals", "public"."currencies"."isActive", "public"."currencies"."createdAt", "public"."currencies"."updatedAt" FROM "public"."currencies" WHERE "public"."currencies"."isActive" = $1 ORDER BY "public"."currencies"."code" ASC OFFSET $2
+ GET /api/currencies 200 in 76ms
+ ✓ Compiled in 188ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 31ms
