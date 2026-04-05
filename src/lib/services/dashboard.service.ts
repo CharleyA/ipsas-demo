@@ -252,6 +252,115 @@ export class DashboardService {
     };
   }
 
+  static async getBursarMetrics(organisationId: string) {
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+
+    // Receipts this month
+    const receiptsThisMonth = await prisma.aRReceipt.aggregate({
+      where: { organisationId, receiptDate: { gte: monthStart } },
+      _sum: { amount: true },
+      _count: { id: true },
+    });
+
+    // Outstanding AR balance
+    const arBalance = await prisma.aRInvoice.aggregate({
+      where: { organisationId, balance: { gt: 0 } },
+      _sum: { balance: true },
+      _count: { id: true },
+    });
+
+    // Invoices by status
+    const invoicesByStatus = await prisma.aRInvoice.groupBy({
+      by: ["status"],
+      where: { organisationId },
+      _count: { id: true },
+    });
+
+    // Recent receipts
+    const recentReceipts = await prisma.aRReceipt.findMany({
+      where: { organisationId },
+      include: { student: { select: { firstName: true, lastName: true, admissionNumber: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    });
+
+    // Monthly receipts trend (last 6 months)
+    const months: { month: string; receipts: number; invoiced: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+      const [rec, inv] = await Promise.all([
+        prisma.aRReceipt.aggregate({ where: { organisationId, receiptDate: { gte: d, lt: end } }, _sum: { amount: true } }),
+        prisma.aRInvoice.aggregate({ where: { organisationId, invoiceDate: { gte: d, lt: end } }, _sum: { totalAmount: true } }),
+      ]);
+      months.push({ month: d.toISOString(), receipts: Number(rec._sum.amount || 0), invoiced: Number(inv._sum.totalAmount || 0) });
+    }
+
+    return {
+      receiptsThisMonth: Number(receiptsThisMonth._sum.amount || 0),
+      receiptsCountThisMonth: receiptsThisMonth._count.id,
+      outstandingBalance: Number(arBalance._sum.balance || 0),
+      outstandingCount: arBalance._count.id,
+      invoicesByStatus: invoicesByStatus.map((s) => ({ status: s.status, count: s._count.id })),
+      recentReceipts: recentReceipts.map((r) => ({
+        id: r.id,
+        receiptNumber: r.receiptNumber,
+        student: r.student ? `${r.student.firstName} ${r.student.lastName}` : "Unknown",
+        admissionNumber: r.student?.admissionNumber || "-",
+        amount: Number(r.amount),
+        date: r.receiptDate,
+        status: r.status,
+      })),
+      monthlyTrend: months,
+    };
+  }
+
+  static async getClerkMetrics(organisationId: string) {
+    const now = new Date();
+
+    // Pending approvals
+    const pendingApprovals = await prisma.approvalTask.count({
+      where: { organisationId, status: "PENDING" },
+    });
+
+    // Recent vouchers
+    const recentVouchers = await prisma.voucher.findMany({
+      where: { organisationId },
+      include: { createdBy: { select: { firstName: true, lastName: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    });
+
+    // Voucher counts by status
+    const vouchersByStatus = await prisma.voucher.groupBy({
+      by: ["status"],
+      where: { organisationId },
+      _count: { id: true },
+    });
+
+    // Students count
+    const studentsCount = await prisma.student.count({ where: { organisationId } });
+
+    // Suppliers count
+    const suppliersCount = await prisma.supplier.count({ where: { organisationId } });
+
+    return {
+      pendingApprovals,
+      studentsCount,
+      suppliersCount,
+      vouchersByStatus: vouchersByStatus.map((v) => ({ status: v.status, count: v._count.id })),
+      recentVouchers: recentVouchers.map((v) => ({
+        id: v.id,
+        reference: v.reference,
+        description: v.description,
+        status: v.status,
+        date: v.voucherDate,
+        createdBy: v.createdBy ? `${v.createdBy.firstName} ${v.createdBy.lastName}` : "Unknown",
+      })),
+    };
+  }
+
   static async getAuditorMetrics(organisationId: string) {
     const now = new Date();
     
