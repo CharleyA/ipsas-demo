@@ -38,3 +38,15 @@ Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts_
 → 190         const user = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].user.findUnique(
 Can't reach database server at 127.0.0.1:5432
  POST /api/auth/login 401 in 1031ms
+ GET /?_cb=1775428725934 200 in 130ms
+ GET /login 200 in 54ms
+prisma:error 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].user.findUnique()` invocation in
+/home/user/app/.next/server/chunks/[root-of-the-server]__8cefaeef._.js:190:159
+
+  187 ;
+  188 class AuthService {
+  189     static async login(data) {
+→ 190         const user = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].user.findUnique(
+Can't reach database server at 127.0.0.1:5432
+ POST /api/auth/login 401 in 49ms
