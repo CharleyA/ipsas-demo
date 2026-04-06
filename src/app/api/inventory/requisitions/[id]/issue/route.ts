@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/middleware-utils";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/db";
 import { InventoryMovementService } from "@/lib/services/inventory.service";
 
 export async function POST(

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/middleware-utils";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/db";
 
 async function generateReqNumber(organisationId: string): Promise<string> {
   const year = new Date().getFullYear();
