@@ -5016,3 +5016,6 @@ prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notificatio
 prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
 prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
  GET /api/notifications 200 in 102ms
+ ✓ Compiled middleware in 1ms
+ ✓ Compiled middleware in 1ms
+ ✓ Compiled middleware in 0ms

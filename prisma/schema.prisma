@@ -57,6 +57,7 @@ model Organisation {
   inventoryCategories   InventoryCategory[]
   inventoryItems        InventoryItem[]
   inventoryMovements    InventoryMovement[]
+  stockRequisitions     StockRequisition[]
   feeTemplates          FeeTemplate[]
   feeGenerationBatches  FeeGenerationBatch[]
   notifications         Notification[]
@@ -1269,6 +1270,7 @@ model InventoryItem {
   movements         InventoryMovement[]
   poLines           PurchaseOrderLine[]
   apBillLines       APBillLine[]
+  requisitionLines  StockRequisitionLine[]
 
   @@unique([organisationId, code])
   @@map("inventory_items")
@@ -1374,4 +1376,51 @@ enum BudgetStatus {
   REVIEWED
   APPROVED
   LOCKED
+}
+
+model StockRequisition {
+  id             String               @id @default(cuid())
+  organisationId String
+  reqNumber      String
+  requestedById  String
+  department     String?
+  requestDate    DateTime             @db.Date
+  requiredDate   DateTime?            @db.Date
+  status         RequisitionStatus    @default(DRAFT)
+  notes          String?
+  approvedById   String?
+  approvedAt     DateTime?
+  rejectedById   String?
+  rejectedAt     DateTime?
+  rejectionNote  String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  organisation   Organisation         @relation(fields: [organisationId], references: [id])
+  lines          StockRequisitionLine[]
+
+  @@unique([organisationId, reqNumber])
+  @@map("stock_requisitions")
+}
+
+model StockRequisitionLine {
+  id              String           @id @default(cuid())
+  requisitionId   String
+  itemId          String
+  qtyRequested    Decimal          @db.Decimal(18, 4)
+  qtyIssued       Decimal          @default(0) @db.Decimal(18, 4)
+  notes           String?
+  requisition     StockRequisition @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+  item            InventoryItem    @relation(fields: [itemId], references: [id])
+
+  @@map("stock_requisition_lines")
+}
+
+enum RequisitionStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  PARTIALLY_ISSUED
+  FULLY_ISSUED
+  REJECTED
+  CANCELLED
 }

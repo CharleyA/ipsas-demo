@@ -25,6 +25,9 @@ import {
   CreditCard,
   FileStack,
   Bot,
+  PackageCheck,
+  Truck,
+  ClipboardCheck,
 } from "lucide-react";
 
 
@@ -148,6 +151,18 @@ const menuItems = [
             roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
           },
           {
+            title: "Goods Received (GRN)",
+            href: "/dashboard/procurement/grn",
+            icon: PackageCheck,
+            roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "Stock Requisitions",
+            href: "/dashboard/inventory/requisitions",
+            icon: ClipboardList,
+            roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
             title: "Fixed Assets",
             href: "/dashboard/assets",
             icon: Package,
@@ -157,6 +172,18 @@ const menuItems = [
             title: "Inventory",
             href: "/dashboard/inventory",
             icon: Boxes,
+            roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "Issue Stock",
+            href: "/dashboard/inventory/issue",
+            icon: Truck,
+            roles: ["ADMIN", "CLERK", "BURSAR", "ACCOUNTANT"],
+          },
+          {
+            title: "Stock Movements",
+            href: "/dashboard/inventory/movements",
+            icon: ClipboardCheck,
             roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
           },
         ],
