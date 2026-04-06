@@ -32,6 +32,9 @@ import {
   Upload,
   Play,
   Tag,
+  CalendarDays,
+  PlusCircle,
+  Inbox,
 } from "lucide-react";
 
 
@@ -80,9 +83,9 @@ const menuItems = [
         roles: ["ADMIN"],
       },
       {
-        title: "Approvals",
+        title: "Approvals Inbox",
         href: "/dashboard/approvals",
-        icon: ShieldCheck,
+        icon: Inbox,
         roles: ["ADMIN", "BURSAR", "HEADMASTER", "ACCOUNTANT"],
       },
     ],
@@ -107,6 +110,18 @@ const menuItems = [
         href: "/dashboard/budgets",
         icon: BookOpen,
         roles: ["ADMIN", "BURSAR", "ACCOUNTANT", "HEADMASTER"],
+      },
+      {
+        title: "New Budget",
+        href: "/dashboard/budgets",
+        icon: PlusCircle,
+        roles: ["ADMIN", "BURSAR", "ACCOUNTANT"],
+      },
+      {
+        title: "Fiscal Periods",
+        href: "/dashboard/settings/fiscal-periods",
+        icon: CalendarDays,
+        roles: ["ADMIN", "BURSAR", "ACCOUNTANT", "AUDITOR"],
       },
     ],
   },
