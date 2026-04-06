@@ -28,6 +28,10 @@ import {
   PackageCheck,
   Truck,
   ClipboardCheck,
+  ListChecks,
+  Upload,
+  Play,
+  Tag,
 } from "lucide-react";
 
 
@@ -167,6 +171,30 @@ const menuItems = [
             href: "/dashboard/assets",
             icon: Package,
             roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "Asset Register",
+            href: "/dashboard/assets/register",
+            icon: ListChecks,
+            roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "Asset Categories",
+            href: "/dashboard/assets/categories",
+            icon: Tag,
+            roles: ["ADMIN", "BURSAR", "ACCOUNTANT"],
+          },
+          {
+            title: "Import Assets",
+            href: "/dashboard/assets/import",
+            icon: Upload,
+            roles: ["ADMIN", "CLERK", "BURSAR", "ACCOUNTANT"],
+          },
+          {
+            title: "Run Depreciation",
+            href: "/dashboard/assets/depreciation",
+            icon: Play,
+            roles: ["ADMIN", "BURSAR", "ACCOUNTANT"],
           },
           {
             title: "Inventory",
