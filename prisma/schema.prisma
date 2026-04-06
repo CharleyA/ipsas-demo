@@ -58,6 +58,7 @@ model Organisation {
   inventoryItems        InventoryItem[]
   inventoryMovements    InventoryMovement[]
   stockRequisitions     StockRequisition[]
+  stockTakeSessions     StockTakeSession[]
   feeTemplates          FeeTemplate[]
   feeGenerationBatches  FeeGenerationBatch[]
   notifications         Notification[]
@@ -88,6 +89,9 @@ model User {
   budgetsReviewed         Budget[]                 @relation("BudgetReviewedBy")
   budgetsApproved         Budget[]                 @relation("BudgetApprovedBy")
   classTeacherAssignments ClassTeacherAssignment[]
+  stockTakesCreated       StockTakeSession[]       @relation("StockTakeCreatedBy")
+  stockTakesApproved      StockTakeSession[]       @relation("StockTakeApprovedBy")
+  stockTakesPosted        StockTakeSession[]       @relation("StockTakePostedBy")
 
   @@map("users")
 }
@@ -1271,6 +1275,7 @@ model InventoryItem {
   poLines           PurchaseOrderLine[]
   apBillLines       APBillLine[]
   requisitionLines  StockRequisitionLine[]
+  stockTakeLines    StockTakeLine[]
 
   @@unique([organisationId, code])
   @@map("inventory_items")
@@ -1423,4 +1428,50 @@ enum RequisitionStatus {
   FULLY_ISSUED
   REJECTED
   CANCELLED
+}
+
+model StockTakeSession {
+  id             String            @id @default(cuid())
+  organisationId String
+  reference      String
+  countDate      DateTime          @db.Date
+  status         StockTakeStatus   @default(DRAFT)
+  notes          String?
+  createdById    String
+  approvedById   String?
+  approvedAt     DateTime?
+  postedById     String?
+  postedAt       DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  organisation   Organisation      @relation(fields: [organisationId], references: [id])
+  createdBy      User              @relation("StockTakeCreatedBy", fields: [createdById], references: [id])
+  approvedBy     User?             @relation("StockTakeApprovedBy", fields: [approvedById], references: [id])
+  postedBy       User?             @relation("StockTakePostedBy", fields: [postedById], references: [id])
+  lines          StockTakeLine[]
+
+  @@index([organisationId, createdAt])
+  @@map("stock_take_sessions")
+}
+
+model StockTakeLine {
+  id              String           @id @default(cuid())
+  sessionId       String
+  itemId          String
+  systemQty       Decimal          @default(0) @db.Decimal(18, 4)
+  physicalQty     Decimal          @default(0) @db.Decimal(18, 4)
+  variance        Decimal          @default(0) @db.Decimal(18, 4)
+  notes           String?
+  postedMovementId String?
+  session         StockTakeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  item            InventoryItem    @relation(fields: [itemId], references: [id])
+
+  @@map("stock_take_lines")
+}
+
+enum StockTakeStatus {
+  DRAFT
+  COUNTED
+  APPROVED
+  POSTED
 }
