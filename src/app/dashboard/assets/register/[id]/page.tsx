@@ -20,6 +20,9 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft,
@@ -32,6 +35,9 @@ import {
   Tag,
   BarChart2,
   Trash2,
+  Pencil,
+  X,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -79,12 +85,29 @@ interface Asset {
   }[];
 }
 
+interface EditForm {
+  description: string;
+  serialNumber: string;
+  location: string;
+  custodian: string;
+  notes: string;
+}
+
 export default function AssetDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [asset, setAsset] = useState<Asset | null>(null);
   const [loading, setLoading] = useState(true);
   const [disposing, setDisposing] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState<EditForm>({
+    description: "",
+    serialNumber: "",
+    location: "",
+    custodian: "",
+    notes: "",
+  });
 
   useEffect(() => {
     fetch(`/api/assets/register/${id}`)
@@ -96,6 +119,47 @@ export default function AssetDetailPage() {
       .catch((e) => toast.error(e.message || "Failed to load asset"))
       .finally(() => setLoading(false));
   }, [id]);
+
+  function startEdit() {
+    if (!asset) return;
+    setForm({
+      description: asset.description || "",
+      serialNumber: asset.serialNumber || "",
+      location: asset.location || "",
+      custodian: asset.custodian || "",
+      notes: asset.notes || "",
+    });
+    setEditing(true);
+  }
+
+  function cancelEdit() {
+    setEditing(false);
+  }
+
+  async function saveEdit() {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/assets/register/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: form.description,
+          serialNumber: form.serialNumber || null,
+          location: form.location || null,
+          custodian: form.custodian || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save");
+      setAsset((prev) => prev ? { ...prev, ...data } : prev);
+      setEditing(false);
+      toast.success("Asset updated successfully");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function handleDispose() {
     if (!confirm("Are you sure you want to dispose of this asset? This cannot be undone.")) return;
@@ -157,12 +221,19 @@ export default function AssetDetailPage() {
             {asset.status}
           </Badge>
         </div>
-        {asset.status === "ACTIVE" && (
-          <Button variant="destructive" size="sm" onClick={handleDispose} disabled={disposing}>
-            {disposing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
-            Dispose Asset
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {asset.status === "ACTIVE" && !editing && (
+            <Button variant="outline" size="sm" onClick={startEdit}>
+              <Pencil className="w-4 h-4 mr-2" /> Edit
+            </Button>
+          )}
+          {asset.status === "ACTIVE" && (
+            <Button variant="destructive" size="sm" onClick={handleDispose} disabled={disposing}>
+              {disposing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+              Dispose
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -205,48 +276,133 @@ export default function AssetDetailPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Asset Details */}
+        {/* Asset Details — view or edit */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle className="flex items-center gap-2">
               <Package className="w-5 h-5" /> Asset Details
             </CardTitle>
+            {editing && (
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={saving}>
+                  <X className="w-4 h-4 mr-1" /> Cancel
+                </Button>
+                <Button size="sm" onClick={saveEdit} disabled={saving}>
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Check className="w-4 h-4 mr-1" />}
+                  Save
+                </Button>
+              </div>
+            )}
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground flex items-center gap-1"><Tag className="w-3 h-3" /> Asset Number</p>
-                <p className="font-medium mt-0.5">{asset.assetNumber}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground flex items-center gap-1"><Tag className="w-3 h-3" /> Serial Number</p>
-                <p className="font-medium mt-0.5">{asset.serialNumber || "-"}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground flex items-center gap-1"><Calendar className="w-3 h-3" /> Acquisition Date</p>
-                <p className="font-medium mt-0.5">{fmtDate(asset.acquisitionDate)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground flex items-center gap-1"><Tag className="w-3 h-3" /> Category</p>
-                <p className="font-medium mt-0.5">{asset.category?.name || "-"}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" /> Location</p>
-                <p className="font-medium mt-0.5">{asset.location || "-"}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground flex items-center gap-1"><User className="w-3 h-3" /> Custodian</p>
-                <p className="font-medium mt-0.5">{asset.custodian || "-"}</p>
-              </div>
-            </div>
-            {asset.notes && (
-              <>
-                <Separator />
-                <div>
-                  <p className="text-muted-foreground text-sm mb-1">Notes</p>
-                  <p className="text-sm">{asset.notes}</p>
+          <CardContent>
+            {editing ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground flex items-center gap-1 mb-1"><Tag className="w-3 h-3" /> Asset Number</p>
+                    <p className="font-medium">{asset.assetNumber}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground flex items-center gap-1 mb-1"><Calendar className="w-3 h-3" /> Acquisition Date</p>
+                    <p className="font-medium">{fmtDate(asset.acquisitionDate)}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground flex items-center gap-1 mb-1"><Tag className="w-3 h-3" /> Category</p>
+                    <p className="font-medium">{asset.category?.name || "-"}</p>
+                  </div>
                 </div>
-              </>
+                <Separator />
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Input
+                      id="description"
+                      value={form.description}
+                      onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="serialNumber">Serial Number</Label>
+                    <Input
+                      id="serialNumber"
+                      value={form.serialNumber}
+                      onChange={(e) => setForm((f) => ({ ...f, serialNumber: e.target.value }))}
+                      placeholder="Optional"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={form.location}
+                      onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+                      placeholder="e.g. Main Office, Block A"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="custodian">Custodian</Label>
+                    <Input
+                      id="custodian"
+                      value={form.custodian}
+                      onChange={(e) => setForm((f) => ({ ...f, custodian: e.target.value }))}
+                      placeholder="Name of responsible person"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={form.notes}
+                      onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                      placeholder="Any additional notes..."
+                      className="mt-1"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground flex items-center gap-1"><Tag className="w-3 h-3" /> Asset Number</p>
+                    <p className="font-medium mt-0.5">{asset.assetNumber}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground flex items-center gap-1"><Tag className="w-3 h-3" /> Serial Number</p>
+                    <p className="font-medium mt-0.5">{asset.serialNumber || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground flex items-center gap-1"><Calendar className="w-3 h-3" /> Acquisition Date</p>
+                    <p className="font-medium mt-0.5">{fmtDate(asset.acquisitionDate)}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground flex items-center gap-1"><Tag className="w-3 h-3" /> Category</p>
+                    <p className="font-medium mt-0.5">{asset.category?.name || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" /> Location</p>
+                    <p className="font-medium mt-0.5">{asset.location || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground flex items-center gap-1"><User className="w-3 h-3" /> Custodian</p>
+                    <p className="font-medium mt-0.5">{asset.custodian || "-"}</p>
+                  </div>
+                </div>
+                {asset.notes && (
+                  <>
+                    <Separator />
+                    <div>
+                      <p className="text-muted-foreground text-sm mb-1">Notes</p>
+                      <p className="text-sm">{asset.notes}</p>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>
