@@ -59,7 +59,7 @@ export default function InventoryMovementsPage() {
             <Link href="/dashboard/inventory/issue"><ArrowUpDown className="w-4 h-4 mr-2" />Issue Stock</Link>
           </Button>
           <Button asChild>
-            <Link href="/dashboard/inventory/receipts"><Plus className="w-4 h-4 mr-2" />Receive Stock</Link>
+            <Link href="/dashboard/inventory/items/new"><Plus className="w-4 h-4 mr-2" />Receive Stock</Link>
           </Button>
         </div>
       </div>
@@ -122,8 +122,10 @@ export default function InventoryMovementsPage() {
                       </Link>
                       <div className="text-xs text-muted-foreground">{m.item?.code}</div>
                     </TableCell>
-                    <TableCell className="font-medium">{m.reference || "-"}</TableCell>
-                    <TableCell>{m.description || "-"}</TableCell>
+                    <TableCell className="font-medium">
+                      {m.referenceType || m.referenceId ? `${m.referenceType || "REF"}${m.referenceId ? ` · ${m.referenceId}` : ""}` : (m.reference || "-")}
+                    </TableCell>
+                    <TableCell>{m.description || m.notes || "-"}</TableCell>
                     <TableCell className={`text-right font-mono ${m.movementType === "RECEIPT" ? "text-green-600" : "text-red-600"}`}>
                       {m.movementType === "RECEIPT" ? "+" : "-"}{Math.abs(Number(m.quantity || 0)).toFixed(2)}
                     </TableCell>

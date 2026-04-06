@@ -158,6 +158,9 @@ export default function InventoryPage() {
             <Button variant="outline" size="sm" className="w-full" asChild>
               <Link href="/dashboard/inventory/issue">Issue Stock</Link>
             </Button>
+            <Button variant="outline" size="sm" className="w-full" asChild>
+              <Link href="/dashboard/inventory/stock-take">Stock Take</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>

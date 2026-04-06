@@ -281,7 +281,7 @@ export default function InventoryItemDetailPage() {
                   <TableRow>
                     <TableHead>Date</TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead>Issued To / Notes</TableHead>
+                    <TableHead>Reference / Notes</TableHead>
                     <TableHead className="text-right">Qty</TableHead>
                     <TableHead className="text-right">Unit Cost</TableHead>
                     <TableHead className="text-right">Balance Qty</TableHead>
@@ -299,7 +299,8 @@ export default function InventoryItemDetailPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {m.issuedTo || m.notes || "-"}
+                          <div>{m.referenceType || m.issuedTo || "-"}{m.referenceId ? ` · ${m.referenceId}` : ""}</div>
+                          {m.notes ? <div className="text-xs text-muted-foreground/80">{m.notes}</div> : null}
                         </TableCell>
                         <TableCell className={`text-right font-mono ${isIn ? "text-green-600" : "text-red-600"}`}>
                           {isIn ? "+" : "-"}{Math.abs(Number(m.quantity)).toFixed(2)}

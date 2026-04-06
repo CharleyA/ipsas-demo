@@ -323,6 +323,8 @@ export class InventoryMovementService {
       itemId: string;
       movementDate: string | Date;
       quantity: number;
+      referenceType?: string;
+      referenceId?: string;
       notes?: string;
     },
     actorId: string
@@ -351,6 +353,8 @@ export class InventoryMovementService {
           totalCost: Math.abs(data.quantity) * avgCost,
           balanceQty: newQty,
           balanceValue: newValue,
+          referenceType: data.referenceType,
+          referenceId: data.referenceId,
           notes: data.notes,
           createdById: actorId,
         },
