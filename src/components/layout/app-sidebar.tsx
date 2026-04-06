@@ -245,6 +245,12 @@ const menuItems = [
             icon: ListChecks,
             roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
           },
+          {
+            title: "Variance Report",
+            href: "/dashboard/inventory/variance-report",
+            icon: AlertTriangle,
+            roles: ["ADMIN", "BURSAR", "AUDITOR", "ACCOUNTANT"],
+          },
         ],
       },
       {

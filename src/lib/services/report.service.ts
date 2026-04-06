@@ -341,6 +341,9 @@ export class ReportService {
       orderBy: { order: "asc" },
     });
 
+    // 1b. Check if statement lines are configured — warn if not
+    const mappedAccountCount = lines.reduce((s, l) => s + l.accountMaps.length, 0);
+
     // 2. Get balances for all accounts linked to these lines (including sub-accounts)
     const baseAccountIds = lines.flatMap(l => l.accountMaps.map(m => m.accountId));
     
@@ -521,6 +524,11 @@ export class ReportService {
       summary,
       chartData,
       reportingCurrency,
+      _meta: {
+        mappedAccountCount,
+        statementLineCount: lines.length,
+        isConfigured: lines.length > 0 && mappedAccountCount > 0,
+      },
     };
   }
 

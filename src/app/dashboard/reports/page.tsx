@@ -160,6 +160,13 @@ const reportCategories = [
         icon: AlertTriangle,
         roles: ["ADMIN", "AUDITOR", "HEADMASTER", "BURSAR", "ACCOUNTANT"],
       },
+      {
+        title: "Stock Variance Report",
+        description: "Physical vs system quantity differences from posted stock takes.",
+        href: "/dashboard/inventory/variance-report",
+        icon: AlertTriangle,
+        roles: ["ADMIN", "AUDITOR", "BURSAR", "ACCOUNTANT"],
+      },
     ],
   },
 ];
