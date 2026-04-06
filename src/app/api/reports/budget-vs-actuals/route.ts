@@ -16,58 +16,33 @@ export async function GET(req: NextRequest) {
 
     // Find budget to use
     let budget: any = null;
+    const budgetInclude = {
+      fiscalPeriod: true,
+      lines: {
+        include: {
+          account: { select: { id: true, code: true, name: true, type: true } },
+          fund: { select: { id: true, code: true, name: true } },
+          costCentre: { select: { id: true, code: true, name: true } },
+        },
+      },
+    };
+
     if (budgetId) {
       budget = await prisma.budget.findFirst({
         where: { id: budgetId, organisationId },
-        include: {
-          fiscalPeriod: true,
-          lines: {
-            include: {
-              account: { select: { id: true, code: true, name: true, type: true } },
-              fund: { select: { id: true, code: true, name: true } },
-              costCentre: { select: { id: true, code: true, name: true } },
-            },
-          },
-        },
+        include: budgetInclude,
       });
     } else if (fiscalPeriodId) {
-      // Find most recent approved/locked budget for the period
       budget = await prisma.budget.findFirst({
-        where: {
-          organisationId,
-          fiscalPeriodId,
-          status: { in: ["APPROVED", "LOCKED"] },
-        },
+        where: { organisationId, fiscalPeriodId, status: { in: ["APPROVED", "LOCKED"] } },
         orderBy: { version: "desc" },
-        include: {
-          fiscalPeriod: true,
-          lines: {
-            include: {
-              account: { select: { id: true, code: true, name: true, type: true } },
-              fund: { select: { id: true, code: true, name: true } },
-              costCentre: { select: { id: true, code: true, name: true } },
-            },
-          },
-        },
+        include: budgetInclude,
       });
     } else {
-      // Use the most recent approved budget
       budget = await prisma.budget.findFirst({
-        where: {
-          organisationId,
-          status: { in: ["APPROVED", "LOCKED"] },
-        },
+        where: { organisationId, status: { in: ["APPROVED", "LOCKED"] } },
         orderBy: { createdAt: "desc" },
-        include: {
-          fiscalPeriod: true,
-          lines: {
-            include: {
-              account: { select: { id: true, code: true, name: true, type: true } },
-              fund: { select: { id: true, code: true, name: true } },
-              costCentre: { select: { id: true, code: true, name: true } },
-            },
-          },
-        },
+        include: budgetInclude,
       });
     }
 
@@ -78,25 +53,30 @@ export async function GET(req: NextRequest) {
     const periodStart = budget.fiscalPeriod.startDate;
     const periodEnd = budget.fiscalPeriod.endDate;
 
-    // Get actual GL entries for this period
+    // Get actual GL entries for this period (POSTED only, via voucher status)
     const glEntries = await prisma.gLEntry.findMany({
       where: {
-        organisationId,
-        date: { gte: periodStart, lte: periodEnd },
-        header: { status: "POSTED" },
+        glHeader: {
+          organisationId,
+          entryDate: { gte: periodStart, lte: periodEnd },
+          voucher: { status: "POSTED" },
+        },
       },
       include: {
         account: { select: { id: true, code: true, name: true, type: true } },
       },
     });
 
-    // Aggregate actuals by account
+    // Aggregate actuals by account using local-currency fields
     const actualsByAccount: Record<string, number> = {};
     glEntries.forEach((entry) => {
       const key = entry.accountId;
-      const amount = entry.account.type === "EXPENSE" || entry.account.type === "ASSET"
-        ? Number(entry.debit) - Number(entry.credit)
-        : Number(entry.credit) - Number(entry.debit);
+      const dr = Number(entry.debitLc ?? 0);
+      const cr = Number(entry.creditLc ?? 0);
+      const amount =
+        entry.account.type === "EXPENSE" || entry.account.type === "ASSET"
+          ? dr - cr
+          : cr - dr;
       actualsByAccount[key] = (actualsByAccount[key] || 0) + amount;
     });
 
@@ -123,12 +103,11 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    // Summary
     const totalBudgeted = rows.reduce((s: number, r: any) => s + r.budgeted, 0);
     const totalActual = rows.reduce((s: number, r: any) => s + r.actual, 0);
     const totalVariance = totalActual - totalBudgeted;
 
-    // Chart data: budget vs actual by account type
+    // Chart: budget vs actual by account type
     const byType: Record<string, { budgeted: number; actual: number }> = {};
     rows.forEach((r: any) => {
       if (!byType[r.accountType]) byType[r.accountType] = { budgeted: 0, actual: 0 };

@@ -14,19 +14,20 @@ export async function GET(req: NextRequest) {
     const endDate = searchParams.get("endDate") || new Date().toISOString().split("T")[0];
     const { organisationId } = session;
 
-    // Get all GL entries for expense accounts in period
+    // Get all GL entries for expense accounts in period (POSTED only)
     const glEntries = await prisma.gLEntry.findMany({
       where: {
-        organisationId,
-        date: { gte: new Date(startDate), lte: new Date(endDate) },
-        header: { status: "POSTED" },
+        glHeader: {
+          organisationId,
+          entryDate: { gte: new Date(startDate), lte: new Date(endDate) },
+          voucher: { status: "POSTED" },
+        },
         account: { type: "EXPENSE" },
       },
       include: {
         account: { select: { id: true, code: true, name: true, type: true } },
         costCentre: { select: { id: true, code: true, name: true } },
         fund: { select: { id: true, code: true, name: true } },
-        header: { select: { id: true, status: true } },
       },
     });
 
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
         byCostCentre[ccId] = { costCentreName: ccName, costCentreCode: ccCode, total: 0, accounts: {} };
       }
 
-      const amount = Number(entry.debit) - Number(entry.credit);
+      const amount = Number(entry.debitLc ?? 0) - Number(entry.creditLc ?? 0);
       byCostCentre[ccId].total += amount;
 
       const accId = entry.accountId;

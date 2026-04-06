@@ -156,6 +156,18 @@ const menuItems = [
             icon: Building2,
             roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
           },
+          {
+            title: "Bills",
+            href: "/dashboard/ap/bills",
+            icon: FileText,
+            roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "Payments to Suppliers",
+            href: "/dashboard/ap/payments",
+            icon: CreditCard,
+            roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
+          },
         ],
       },
       {
