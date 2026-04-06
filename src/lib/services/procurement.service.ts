@@ -217,12 +217,55 @@ export class GRNService {
       });
 
       for (const line of data.lines) {
+        const poLine = await tx.purchaseOrderLine.findUnique({
+          where: { id: line.poLineId },
+        });
+
         await tx.purchaseOrderLine.update({
           where: { id: line.poLineId },
           data: {
             qtyReceived: { increment: line.qtyAccepted },
           },
         });
+
+        if (poLine?.itemType === "INVENTORY" && poLine.inventoryItemId && Number(line.qtyAccepted) > 0) {
+          const item = await tx.inventoryItem.findUnique({ where: { id: poLine.inventoryItemId } });
+          if (item) {
+            const currentQty = Number(item.quantityOnHand);
+            const currentValue = currentQty * Number(item.averageCost);
+            const unitCost = Number(poLine.unitPrice);
+            const newQty = currentQty + Number(line.qtyAccepted);
+            const newValue = currentValue + Number(line.qtyAccepted) * unitCost;
+            const newAvgCost = newQty > 0 ? newValue / newQty : unitCost;
+
+            await tx.inventoryMovement.create({
+              data: {
+                organisationId: data.organisationId,
+                itemId: poLine.inventoryItemId,
+                movementType: "RECEIPT",
+                movementDate: new Date(data.receivedDate),
+                quantity: Number(line.qtyAccepted),
+                unitCost,
+                totalCost: Number(line.qtyAccepted) * unitCost,
+                balanceQty: newQty,
+                balanceValue: newValue,
+                referenceType: "PURCHASE",
+                referenceId: grn.id,
+                notes: `GRN: ${grnNumber}`,
+                createdById: actorId,
+              },
+            });
+
+            await tx.inventoryItem.update({
+              where: { id: poLine.inventoryItemId },
+              data: {
+                quantityOnHand: newQty,
+                averageCost: newAvgCost,
+                lastPurchasePrice: unitCost,
+              },
+            });
+          }
+        }
       }
 
       const po = await tx.purchaseOrder.findUnique({

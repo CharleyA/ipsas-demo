@@ -1,0 +1,67 @@
+const { chromium } = require('/root/.openclaw/workspace/node_modules/playwright');
+const path = require('path');
+
+(async () => {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+  const base = 'https://ipsas-demo.ithinksys.co.zw';
+  const filePath = '/root/.openclaw/workspace/ipsas-demo/tmp/e2e-students-import.csv';
+  const studentNumber = 'E2E-IMP-001';
+
+  const log = (...args) => console.log('[e2e]', ...args);
+
+  try {
+    log('goto login');
+    await page.goto(base + '/login', { waitUntil: 'networkidle', timeout: 120000 });
+    await page.getByLabel('Email').fill('admin@school.ac.zw');
+    await page.getByLabel('Password').fill('Admin@123');
+    await page.getByRole('button', { name: /sign in/i }).click();
+    await page.waitForURL(/\/dashboard/, { timeout: 120000 });
+    log('logged in');
+
+    await page.goto(base + '/dashboard/imports/students', { waitUntil: 'networkidle', timeout: 120000 });
+    log('on import page');
+
+    await page.locator('input[type="file"]').setInputFiles(filePath);
+    await page.getByRole('button', { name: /upload & preview/i }).click();
+    log('uploaded');
+
+    await page.getByText('Preview: STUDENTS', { exact: false }).waitFor({ timeout: 120000 });
+    const previewText = await page.locator('body').innerText();
+    console.log('===PREVIEW_TEXT_START===');
+    console.log(previewText);
+    console.log('===PREVIEW_TEXT_END===');
+
+    await page.getByRole('button', { name: /commit .*records/i }).click();
+    log('commit clicked');
+
+    await page.locator('body').getByText(/Import completed/i).first().waitFor({ timeout: 120000 });
+    const finalText = await page.locator('body').innerText();
+    console.log('===FINAL_TEXT_START===');
+    console.log(finalText);
+    console.log('===FINAL_TEXT_END===');
+
+    await page.goto(base + '/dashboard/students', { waitUntil: 'networkidle', timeout: 120000 });
+    await page.waitForTimeout(1500);
+    const search = page.getByPlaceholder(/search/i);
+    if (await search.count()) {
+      await search.first().fill(studentNumber);
+      await page.waitForTimeout(1500);
+    }
+    const studentsText = await page.locator('body').innerText();
+    console.log('===STUDENTS_TEXT_START===');
+    console.log(studentsText);
+    console.log('===STUDENTS_TEXT_END===');
+
+    if (!studentsText.includes(studentNumber)) {
+      throw new Error(`Imported student ${studentNumber} not found in students page`);
+    }
+
+    await browser.close();
+  } catch (err) {
+    console.error('E2E_FAILED', err);
+    await page.screenshot({ path: path.join('/root/.openclaw/workspace/ipsas-demo/tmp', 'e2e-student-import-failure.png'), fullPage: true }).catch(() => {});
+    await browser.close();
+    process.exit(1);
+  }
+})();

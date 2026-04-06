@@ -41,6 +41,14 @@ export async function middleware(request: NextRequest) {
   }
 
   const decoded = await verifyToken(token);
+  // TEACHER role restriction
+  if (decoded?.role === "TEACHER") {
+    const allowed = pathname.startsWith("/dashboard/teachers") || pathname.startsWith("/api/teachers") || pathname.startsWith("/docs") || pathname === "/dashboard";
+    if (!allowed) {
+      return NextResponse.redirect(new URL("/dashboard/teachers", request.url));
+    }
+  }
+
   if (!decoded) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -31,12 +31,15 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
 import { format } from "date-fns";
+import { TablePagination, usePagination } from "@/components/ui/table-pagination";
 
 export default function APPaymentsPage() {
   const { token, user } = useAuth();
   const [payments, setPayments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const fetchPayments = async () => {
     setIsLoading(true);
@@ -60,6 +63,7 @@ export default function APPaymentsPage() {
   const filteredPayments = payments.filter(p => 
     `${p.supplier?.name} ${p.voucher?.number}`.toLowerCase().includes(search.toLowerCase())
   );
+  const pagedPayments = usePagination(filteredPayments, pageSize, page);
 
   return (
     <div className="space-y-6">
@@ -93,7 +97,7 @@ export default function APPaymentsPage() {
                 placeholder="Search payments..."
                 className="pl-8"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               />
             </div>
           </div>
@@ -108,6 +112,7 @@ export default function APPaymentsPage() {
               No payments found.
             </div>
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -122,7 +127,7 @@ export default function APPaymentsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPayments.map((payment) => (
+                {pagedPayments.map((payment) => (
                   <TableRow key={payment.id}>
                     <TableCell className="font-medium">
                       {payment.voucher?.number}
@@ -158,6 +163,8 @@ export default function APPaymentsPage() {
                 ))}
               </TableBody>
             </Table>
+          <TablePagination total={filteredPayments.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+            </>
           )}
         </CardContent>
       </Card>

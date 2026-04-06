@@ -38,12 +38,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TablePagination, usePagination } from "@/components/ui/table-pagination";
 
 export default function ReceiptsPage() {
   const { token } = useAuth();
   const [receipts, setReceipts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [methodFilter, setMethodFilter] = useState<string>("ALL");
 
@@ -76,6 +79,7 @@ export default function ReceiptsPage() {
     
     return matchesSearch && matchesStatus && matchesMethod;
   });
+  const pagedReceipts = usePagination(filteredReceipts, pageSize, page);
 
   const totalReceived = receipts.reduce(
     (sum, rec) => sum + Number(rec.amount || 0),
@@ -162,10 +166,10 @@ export default function ReceiptsPage() {
                   placeholder="Search receipts..."
                   className="pl-8"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
                 <SelectTrigger className="w-[150px]">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Status" />
@@ -179,7 +183,7 @@ export default function ReceiptsPage() {
                   <SelectItem value="CANCELLED">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={methodFilter} onValueChange={setMethodFilter}>
+              <Select value={methodFilter} onValueChange={(v) => { setMethodFilter(v); setPage(1); }}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Method" />
                 </SelectTrigger>
@@ -204,6 +208,7 @@ export default function ReceiptsPage() {
               No receipts found.
             </div>
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -218,7 +223,7 @@ export default function ReceiptsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredReceipts.map((receipt) => (
+                {pagedReceipts.map((receipt) => (
                   <TableRow key={receipt.id}>
                     <TableCell className="font-medium">
                       {receipt.voucher?.number}
@@ -258,6 +263,8 @@ export default function ReceiptsPage() {
                 ))}
               </TableBody>
             </Table>
+          <TablePagination total={filteredReceipts.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+            </>
           )}
         </CardContent>
       </Card>

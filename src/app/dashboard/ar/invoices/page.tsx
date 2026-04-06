@@ -29,6 +29,8 @@ import {
   Users,
   Zap,
   Filter,
+  Play,
+  Printer,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -39,6 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TablePagination, usePagination } from "@/components/ui/table-pagination";
 
 export default function InvoicesPage() {
   const { token } = useAuth();
@@ -46,6 +49,11 @@ export default function InvoicesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isBulkPosting, setIsBulkPosting] = useState(false);
+  const [isBulkPrinting, setIsBulkPrinting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const fetchInvoices = async () => {
     setIsLoading(true);
@@ -70,11 +78,12 @@ export default function InvoicesPage() {
     const matchesSearch = `${inv.voucher?.number} ${inv.student?.firstName} ${inv.student?.lastName} ${inv.student?.studentNumber}`
       .toLowerCase()
       .includes(search.toLowerCase());
-    
+
     const matchesStatus = statusFilter === "ALL" || inv.voucher?.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
+  const pagedInvoices = usePagination(filteredInvoices, pageSize, page);
 
   const totalOutstanding = invoices.reduce(
     (sum, inv) => sum + Number(inv.balance || 0),
@@ -100,6 +109,80 @@ export default function InvoicesPage() {
     APPROVED: "bg-blue-100 text-blue-800",
     POSTED: "bg-green-100 text-green-800",
     CANCELLED: "bg-red-100 text-red-800",
+  };
+
+  const allFilteredIds = pagedInvoices.map((inv) => inv.id);
+  const allFilteredSelected =
+    allFilteredIds.length > 0 && allFilteredIds.every((id) => selectedIds.includes(id));
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAllFiltered = () => {
+    if (allFilteredSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !allFilteredIds.includes(id)));
+      return;
+    }
+    setSelectedIds((prev) => Array.from(new Set([...prev, ...allFilteredIds])));
+  };
+
+  const handleBulkPost = async () => {
+    setIsBulkPosting(true);
+    try {
+      const response = await fetch("/api/ar/invoices/bulk-post", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          invoiceIds: selectedIds.length > 0 ? selectedIds : undefined,
+          status: selectedIds.length === 0 ? statusFilter : undefined,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Bulk post failed");
+      toast.success(`Bulk post completed: ${data.postedCount} posted, ${data.failedCount} failed`);
+      setSelectedIds([]);
+      fetchInvoices();
+    } catch (error: any) {
+      toast.error(error.message || "Bulk post failed");
+    } finally {
+      setIsBulkPosting(false);
+    }
+  };
+
+  const handleBulkPrint = async () => {
+    setIsBulkPrinting(true);
+    try {
+      const response = await fetch("/api/ar/invoices/bulk-pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          invoiceIds: selectedIds.length > 0 ? selectedIds : undefined,
+          status: selectedIds.length === 0 ? statusFilter : undefined,
+          limit: selectedIds.length === 0 ? 200 : undefined,
+        }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Bulk PDF export failed");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+    } catch (error: any) {
+      toast.error(error.message || "Bulk PDF export failed");
+    } finally {
+      setIsBulkPrinting(false);
+    }
   };
 
   return (
@@ -165,6 +248,26 @@ export default function InvoicesPage() {
             >
               <Link href="/dashboard/ar/fee-templates">Manage Fee Templates</Link>
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+              onClick={handleBulkPost}
+              disabled={isBulkPosting || filteredInvoices.length === 0}
+            >
+              <Play className="w-4 h-4 mr-2" />
+              {isBulkPosting ? "Bulk Posting..." : "Bulk Post Invoices"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+              onClick={handleBulkPrint}
+              disabled={isBulkPrinting || filteredInvoices.length === 0}
+            >
+              <Printer className="w-4 h-4 mr-2" />
+              {isBulkPrinting ? "Preparing PDF..." : "Bulk Print / PDF"}
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -175,7 +278,7 @@ export default function InvoicesPage() {
             <div>
               <CardTitle>Invoice List</CardTitle>
               <CardDescription>
-                All student invoices and their payment status.
+                All student invoices and their payment status. Select rows for batch posting or bulk PDF export.
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -185,10 +288,10 @@ export default function InvoicesPage() {
                   placeholder="Search invoices..."
                   className="pl-8"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
                 <SelectTrigger className="w-[180px]">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Status" />
@@ -215,9 +318,13 @@ export default function InvoicesPage() {
               No invoices found.
             </div>
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <input type="checkbox" checked={allFilteredSelected} onChange={toggleSelectAllFiltered} />
+                  </TableHead>
                   <TableHead>Invoice No.</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Student</TableHead>
@@ -229,8 +336,15 @@ export default function InvoicesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredInvoices.map((invoice) => (
+                {pagedInvoices.map((invoice) => (
                   <TableRow key={invoice.id}>
+                    <TableCell>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(invoice.id)}
+                        onChange={() => toggleSelected(invoice.id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">
                       {invoice.voucher?.number}
                     </TableCell>
@@ -258,17 +372,26 @@ export default function InvoicesPage() {
                         {invoice.voucher?.status}
                       </Badge>
                     </TableCell>
-                      <TableCell className="text-right">
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" asChild>
+                          <a href={`/api/ar/invoices/${invoice.id}/pdf`} target="_blank" rel="noreferrer">
+                            <Printer className="w-4 h-4" />
+                          </a>
+                        </Button>
                         <Button variant="ghost" size="icon" asChild>
                           <Link href={`/dashboard/vouchers/${invoice.voucherId}`}>
                             <Eye className="w-4 h-4" />
                           </Link>
                         </Button>
-                      </TableCell>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+          <TablePagination total={filteredInvoices.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+            </>
           )}
         </CardContent>
       </Card>

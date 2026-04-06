@@ -9,7 +9,7 @@ export const OrganisationType = z.enum([
   "LOCAL_AUTHORITY",
 ]);
 
-export const UserRole = z.enum(["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"]);
+export const UserRole = z.enum(["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT", "TEACHER"]);
 
 export const AccountType = z.enum([
   "ASSET",
@@ -65,11 +65,14 @@ export const createUserSchema = z.object({
   password: z.string().min(8).max(100),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
+  ecNumber: z.string().min(2).max(50).optional(),
 });
 
 export const updateUserSchema = z.object({
   firstName: z.string().min(1).max(100).optional(),
   lastName: z.string().min(1).max(100).optional(),
+  ecNumber: z.string().min(2).max(50).nullable().optional(),
+  avatarUrl: z.string().max(500000).nullable().optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -266,11 +269,43 @@ export const createStudentSchema = z.object({
   studentNumber: z.string().min(1).max(50),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
-  grade: z.string().max(20).optional(),
-  class: z.string().max(20).optional(),
+  grade: z.string().max(20),
+  class: z.string().min(1).max(20),
+  birthCertificateNumber: z.string().max(50).optional(),
+  nationalIdNumber: z.string().max(50).optional(),
+  homeAddress: z.string().max(300).optional(),
+}).superRefine((data, ctx) => {
+  const gradeValue = (data.grade || "").toLowerCase().replace(/\s+/g, "");
+  const isLowerForms = ["form1", "form2", "form3", "form4"].includes(gradeValue);
+  const isUpperForms = ["form5", "form6"].includes(gradeValue);
+
+  if (isLowerForms && !data.birthCertificateNumber?.trim()) {
+    ctx.addIssue({
+      path: ["birthCertificateNumber"],
+      code: z.ZodIssueCode.custom,
+      message: "Birth Certificate Number is required for Form 1–4",
+    });
+  }
+
+  if (isUpperForms && !data.nationalIdNumber?.trim()) {
+    ctx.addIssue({
+      path: ["nationalIdNumber"],
+      code: z.ZodIssueCode.custom,
+      message: "National ID Number is required for Form 5–6",
+    });
+  }
 });
 
-export const updateStudentSchema = createStudentSchema.partial().extend({
+export const updateStudentSchema = z.object({
+  organisationId: z.string().optional(),
+  studentNumber: z.string().min(1).max(50).optional(),
+  firstName: z.string().min(1).max(100).optional(),
+  lastName: z.string().min(1).max(100).optional(),
+  grade: z.string().max(20).optional(),
+  class: z.string().min(1).max(20).optional(),
+  birthCertificateNumber: z.string().max(50).optional(),
+  nationalIdNumber: z.string().max(50).optional(),
+  homeAddress: z.string().max(300).optional(),
   parentName: z.string().max(200).optional(),
   parentPhone: z.string().max(20).optional(),
   parentEmail: z.string().email().optional(),
@@ -294,8 +329,35 @@ export type CreateAPPaymentInput = z.infer<typeof createAPPaymentSchema>;
 export type AllocateAPPaymentInput = z.infer<typeof allocateAPPaymentSchema>;
 export type CreateSupplierInput = z.infer<typeof createSupplierSchema>;
 export type UpdateSupplierInput = z.infer<typeof updateSupplierSchema>;
+export const createGuardianSchema = z.object({
+  organisationId: z.string(),
+  fullName: z.string().min(1).max(200),
+  relationship: z.string().min(1).max(100),
+  nationalIdNumber: z.string().min(1).max(50),
+  primaryPhone: z.string().min(1).max(30),
+  secondaryPhone: z.string().max(30).optional(),
+  address: z.string().min(1).max(300),
+  email: z.string().email().optional(),
+  studentIds: z.array(z.string()).optional(),
+  isPrimaryContact: z.boolean().optional(),
+  isBillingContact: z.boolean().optional(),
+});
+
+export const updateGuardianSchema = createGuardianSchema.partial().extend({
+  isActive: z.boolean().optional(),
+});
+
+export const linkGuardianSchema = z.object({
+  guardianId: z.string(),
+  isPrimaryContact: z.boolean().optional(),
+  isBillingContact: z.boolean().optional(),
+});
+
 export type CreateStudentInput = z.infer<typeof createStudentSchema>;
 export type UpdateStudentInput = z.infer<typeof updateStudentSchema>;
+export type CreateGuardianInput = z.infer<typeof createGuardianSchema>;
+export type UpdateGuardianInput = z.infer<typeof updateGuardianSchema>;
+export type LinkGuardianInput = z.infer<typeof linkGuardianSchema>;
 
 export const addUserToOrganisationSchema = z.object({
   userId: z.string().min(1),

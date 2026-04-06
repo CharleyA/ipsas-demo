@@ -182,6 +182,7 @@ export default function ApprovalWorkflowPage() {
                     <SelectItem value="HEADMASTER">Headmaster</SelectItem>
                     <SelectItem value="CLERK">Clerk</SelectItem>
                     <SelectItem value="AUDITOR">Auditor</SelectItem>
+                    <SelectItem value="TEACHER">Teacher</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -227,6 +228,7 @@ export default function ApprovalWorkflowPage() {
                             <SelectItem value="HEADMASTER">Headmaster</SelectItem>
                             <SelectItem value="CLERK">Clerk</SelectItem>
                             <SelectItem value="AUDITOR">Auditor</SelectItem>
+                    <SelectItem value="TEACHER">Teacher</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>

@@ -4,6 +4,10 @@ import { DocumentationService } from "@/lib/services";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
+// ✅ Prevent build-time prerender (Docker build has no DB running)
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type ContentBlock =
   | { type: "heading"; level: 2 | 3; text: string }
   | { type: "paragraph"; text: string }
@@ -107,9 +111,7 @@ export default async function DocumentationPage() {
           <div className="space-y-8">
             <div className="space-y-3">
               <h2 className="text-3xl font-bold tracking-tight">{page.title}</h2>
-              {page.summary ? (
-                <p className="text-muted-foreground">{page.summary}</p>
-              ) : null}
+              {page.summary ? <p className="text-muted-foreground">{page.summary}</p> : null}
               <p className="text-xs text-muted-foreground">
                 Last updated {new Date(page.updatedAt).toLocaleDateString()}
               </p>

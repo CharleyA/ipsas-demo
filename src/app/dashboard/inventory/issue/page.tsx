@@ -36,6 +36,8 @@ export default function IssueStockPage() {
     itemId: "",
     quantity: 1,
     issuedTo: "",
+    department: "",
+    purpose: "",
     notes: "",
     movementDate: new Date().toISOString().split("T")[0],
   });
@@ -82,7 +84,18 @@ export default function IssueStockPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          issuedTo: formData.issuedTo || formData.department,
+          referenceType: "ISSUE_VOUCHER",
+          referenceId: `ISSUE-${Date.now()}`,
+          notes: [
+            formData.department ? `Department: ${formData.department}` : null,
+            formData.issuedTo ? `Requested/Received By: ${formData.issuedTo}` : null,
+            formData.purpose ? `Purpose: ${formData.purpose}` : null,
+            formData.notes || null,
+          ].filter(Boolean).join(" | "),
+        }),
       });
 
       if (!response.ok) {
@@ -201,15 +214,40 @@ export default function IssueStockPage() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="department">Department / Section</Label>
+                  <Input
+                    id="department"
+                    value={formData.department}
+                    onChange={(e) =>
+                      setFormData({ ...formData, department: e.target.value })
+                    }
+                    placeholder="e.g. Administration, Exams, ICT, Boarding"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="issuedTo">Requested / Received By</Label>
+                  <Input
+                    id="issuedTo"
+                    value={formData.issuedTo}
+                    onChange={(e) =>
+                      setFormData({ ...formData, issuedTo: e.target.value })
+                    }
+                    placeholder="Teacher, bursar, lab tech, office clerk"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="issuedTo">Issued To</Label>
+                <Label htmlFor="purpose">Purpose / Use</Label>
                 <Input
-                  id="issuedTo"
-                  value={formData.issuedTo}
+                  id="purpose"
+                  value={formData.purpose}
                   onChange={(e) =>
-                    setFormData({ ...formData, issuedTo: e.target.value })
+                    setFormData({ ...formData, purpose: e.target.value })
                   }
-                  placeholder="Department or person name"
+                  placeholder="e.g. exam printing, admin stationery, class registers"
                 />
               </div>
 

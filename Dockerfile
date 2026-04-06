@@ -47,6 +47,10 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 FROM base AS deps
 WORKDIR /app
 
+# Prisma needs schema available when postinstall runs (prisma generate)
+COPY prisma ./prisma
+# # COPY prisma.config.ts ./prisma.config.ts
+
 # Install dependencies based on the preferred package manager
 COPY package.json bun.lock* package-lock.json* pnpm-lock.yaml* ./
 RUN \
@@ -76,25 +80,42 @@ ENV NODE_ENV=production
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
+# Make prisma config available at runtime (so migrate/seed can read it)
+# COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
+
+# ✅ FIX: give nextjs a real home dir + writable npm cache/log locations
+RUN mkdir -p /home/nextjs/.npm /home/nextjs/.cache \
+  && chown -R nextjs:nodejs /home/nextjs
+ENV HOME=/home/nextjs
+ENV npm_config_cache=/home/nextjs/.npm
+# (optional) also keep Next telemetry disabled in prod containers
+ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY --from=builder /app/public ./public
 
 # Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
+RUN mkdir -p .next
+RUN chown -R nextjs:nodejs .next
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
+
+# Ensure worker runtime deps exist (Next standalone omits these)
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/ ./node_modules/
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/pg ./node_modules/pg
 
 USER nextjs
 
 EXPOSE 3000
-
 ENV PORT=3000
 
 # server.js is created by next build from the standalone output

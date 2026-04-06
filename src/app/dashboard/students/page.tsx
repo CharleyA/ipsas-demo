@@ -29,12 +29,15 @@ import { Plus, Search, Eye, FileText, Receipt, Loader2, Filter } from "lucide-re
 import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
+import { TablePagination, usePagination } from "@/components/ui/table-pagination";
 
 export default function StudentsPage() {
   const { token } = useAuth();
   const [students, setStudents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [selectedGrade, setSelectedGrade] = useState<string>("all");
   const [selectedClass, setSelectedClass] = useState<string>("all");
 
@@ -67,6 +70,7 @@ export default function StudentsPage() {
     const matchesClass = selectedClass === "all" || s.class === selectedClass;
     return matchesSearch && matchesGrade && matchesClass;
   });
+  const pagedStudents = usePagination(filteredStudents, pageSize, page);
 
   return (
     <div className="space-y-6">
@@ -101,11 +105,11 @@ export default function StudentsPage() {
                   placeholder="Search students..."
                   className="pl-8"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 />
               </div>
               
-              <Select value={selectedGrade} onValueChange={setSelectedGrade}>
+              <Select value={selectedGrade} onValueChange={(v) => { setSelectedGrade(v); setPage(1); }}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Grade" />
                 </SelectTrigger>
@@ -117,7 +121,7 @@ export default function StudentsPage() {
                 </SelectContent>
               </Select>
 
-              <Select value={selectedClass} onValueChange={setSelectedClass}>
+              <Select value={selectedClass} onValueChange={(v) => { setSelectedClass(v); setPage(1); }}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Class" />
                 </SelectTrigger>
@@ -154,6 +158,7 @@ export default function StudentsPage() {
               No students found.
             </div>
           ) : (
+            <>
             <Table>
               <TableHeader>
                   <TableRow>
@@ -166,7 +171,7 @@ export default function StudentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredStudents.map((student) => (
+                  {pagedStudents.map((student) => (
                     <TableRow key={student.id}>
                       <TableCell className="font-medium">
                         {student.studentNumber}
@@ -204,6 +209,8 @@ export default function StudentsPage() {
                 ))}
               </TableBody>
             </Table>
+          <TablePagination total={filteredStudents.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+            </>
           )}
         </CardContent>
       </Card>

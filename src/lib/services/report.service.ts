@@ -97,14 +97,17 @@ export class ReportService {
     // If it's a currency we don't have direct fields for, we'd need conversion
     // But for now, we'll support USD and Base (ZWG)
 
-    const openingBalAgg = await prisma.gLEntry.aggregate({
-      where: {
-        accountId,
-        glHeader: {
-          organisationId,
-          entryDate: { lt: startDate },
-        },
+    const openingWhere: Prisma.GLEntryWhereInput = {
+      accountId,
+      glHeader: {
+        organisationId,
+        entryDate: { lt: startDate },
+        ...(filters.voucherId ? { voucherId: filters.voucherId } : {}),
       },
+    };
+
+    const openingBalAgg = await prisma.gLEntry.aggregate({
+      where: openingWhere,
       _sum: {
         debitLc: true,
         creditLc: true,

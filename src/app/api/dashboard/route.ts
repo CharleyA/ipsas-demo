@@ -13,6 +13,15 @@ export async function GET(req: NextRequest) {
       } else if (role === "AUDITOR") {
         const metrics = await DashboardService.getAuditorMetrics(organisationId);
         return NextResponse.json(metrics);
+      } else if (role === "ACCOUNTANT") {
+        const metrics = await DashboardService.getAccountantMetrics(organisationId);
+        return NextResponse.json(metrics);
+      } else if (role === "BURSAR") {
+        const metrics = await DashboardService.getBursarMetrics(organisationId);
+        return NextResponse.json(metrics);
+      } else if (role === "CLERK") {
+        const metrics = await DashboardService.getClerkMetrics(organisationId);
+        return NextResponse.json(metrics);
       } else {
         return NextResponse.json({ message: "Welcome to IPSAS Accounting" });
       }

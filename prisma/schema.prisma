@@ -1,6 +1,7 @@
 generator client {
   provider   = "prisma-client-js"
   output     = "../node_modules/.prisma/client"
+  engineType = "library"
 }
 
 datasource db {
@@ -43,6 +44,8 @@ model Organisation {
   projects              Project[]
   statementLines        StatementLine[]
   students              Student[]
+  guardians             Guardian[]
+  studentGuardians      StudentGuardian[]
   suppliers             Supplier[]
   vouchers              Voucher[]
   purchaseOrders        PurchaseOrder[]
@@ -50,37 +53,44 @@ model Organisation {
   assetCategories       AssetCategory[]
   assets                Asset[]
   pendingAssets         PendingAsset[]
+  budgets               Budget[]
   inventoryCategories   InventoryCategory[]
-    inventoryItems        InventoryItem[]
-    inventoryMovements    InventoryMovement[]
-    feeTemplates          FeeTemplate[]
-    feeGenerationBatches  FeeGenerationBatch[]
-    notifications         Notification[]
+  inventoryItems        InventoryItem[]
+  inventoryMovements    InventoryMovement[]
+  stockRequisitions     StockRequisition[]
+  feeTemplates          FeeTemplate[]
+  feeGenerationBatches  FeeGenerationBatch[]
+  notifications         Notification[]
+  classTeacherAssignments ClassTeacherAssignment[]
 
-    @@map("organisations")
+  @@map("organisations")
 }
-
 
 model User {
-  id              String             @id @default(cuid())
-  email           String             @unique
-  passwordHash    String
-  firstName       String
-  lastName        String
-  isActive        Boolean            @default(true)
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  approvalTasks   ApprovalTask[]
-  auditLogs       AuditLog[]
-  uploadedFiles   FileAttachment[]
-  importJobs      ImportJob[]
-    organisations   OrganisationUser[]
-    createdVouchers Voucher[]          @relation("VoucherCreatedBy")
-    notifications   Notification[]
+  id                      String                   @id @default(cuid())
+  email                   String                   @unique
+  passwordHash            String
+  firstName               String
+  lastName                String
+  ecNumber                String?                  @unique
+  avatarUrl               String?
+  isActive                Boolean                  @default(true)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  approvalTasks           ApprovalTask[]
+  auditLogs               AuditLog[]
+  uploadedFiles           FileAttachment[]
+  importJobs              ImportJob[]
+  organisations           OrganisationUser[]
+  createdVouchers         Voucher[]                @relation("VoucherCreatedBy")
+  notifications           Notification[]
+  budgetsCreated          Budget[]                 @relation("BudgetCreatedBy")
+  budgetsReviewed         Budget[]                 @relation("BudgetReviewedBy")
+  budgetsApproved         Budget[]                 @relation("BudgetApprovedBy")
+  classTeacherAssignments ClassTeacherAssignment[]
 
-    @@map("users")
+  @@map("users")
 }
-
 
 model ImportJob {
   id             String              @id @default(cuid())
@@ -152,16 +162,16 @@ model Currency {
 }
 
 model OrganisationCurrency {
-  id             String       @id @default(cuid())
-  organisationId String
+  id                   String       @id @default(cuid())
+  organisationId       String
   currencyCode         String
   isBaseCurrency       Boolean      @default(false)
   isActive             Boolean      @default(true)
   defaultBankAccountId String?
   createdAt            DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  currency       Currency     @relation(fields: [currencyCode], references: [code])
-  organisation   Organisation @relation(fields: [organisationId], references: [id])
+  updatedAt            DateTime     @updatedAt
+  currency             Currency     @relation(fields: [currencyCode], references: [code])
+  organisation         Organisation @relation(fields: [organisationId], references: [id])
 
   @@unique([organisationId, currencyCode])
   @@map("organisation_currencies")
@@ -195,6 +205,7 @@ model CostCentre {
   organisation   Organisation  @relation(fields: [organisationId], references: [id])
   glEntries      GLEntry[]
   voucherLines   VoucherLine[]
+  budgetLines    BudgetLine[]
 
   @@unique([organisationId, code])
   @@map("cost_centres")
@@ -211,6 +222,7 @@ model Fund {
   organisation   Organisation  @relation(fields: [organisationId], references: [id])
   glEntries      GLEntry[]
   voucherLines   VoucherLine[]
+  budgetLines    BudgetLine[]
 
   @@unique([organisationId, code])
   @@map("funds")
@@ -269,6 +281,7 @@ model Account {
   bankAccount     BankAccount?
   glEntries       GLEntry[]
   voucherLines    VoucherLine[]
+  budgetLines     BudgetLine[]
 
   @@unique([organisationId, code])
   @@index([organisationId, type])
@@ -437,6 +450,7 @@ model FiscalPeriod {
   glHeaders           GLHeader[]
   vouchers            Voucher[]
   depreciationEntries DepreciationEntry[]
+  budgets             Budget[]
 
   @@unique([organisationId, year, period])
   @@map("fiscal_periods")
@@ -458,48 +472,110 @@ model ApprovalTask {
 }
 
 model Student {
-  id             String       @id @default(cuid())
-  organisationId String
-  studentNumber  String
-  firstName      String
-  lastName       String
-  grade          String?
-  class          String?
-  isActive       Boolean      @default(true)
-  parentName     String?
-  parentPhone    String?
-  parentEmail    String?
-  enrollmentDate DateTime?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id                     String            @id @default(cuid())
+  organisationId         String
+  studentNumber          String
+  firstName              String
+  lastName               String
+  grade                  String?
+  class                  String?
+  birthCertificateNumber String?
+  nationalIdNumber       String?
+  homeAddress            String?
+  isActive               Boolean           @default(true)
+  parentName             String?
+  parentPhone            String?
+  parentEmail            String?
+  enrollmentDate         DateTime?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
   arInvoices     ARInvoice[]
   arReceipts     ARReceipt[]
-  organisation   Organisation @relation(fields: [organisationId], references: [id])
+  organisation   Organisation      @relation(fields: [organisationId], references: [id])
   vouchers       Voucher[]
+  guardianLinks  StudentGuardian[]
 
   @@unique([organisationId, studentNumber])
   @@map("students")
 }
 
-model ARInvoice {
-  id             String          @id @default(cuid())
+model Guardian {
+  id               String            @id @default(cuid())
+  organisationId   String
+  fullName         String
+  relationship     String
+  nationalIdNumber String?
+  primaryPhone     String
+  secondaryPhone   String?
+  address          String?
+  email            String?
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  organisation   Organisation      @relation(fields: [organisationId], references: [id])
+  studentLinks   StudentGuardian[]
+
+  @@index([organisationId])
+  @@index([organisationId, fullName])
+  @@map("guardians")
+}
+
+model StudentGuardian {
+  id               String       @id @default(cuid())
+  organisationId   String
+  studentId        String
+  guardianId       String
+  isPrimaryContact Boolean      @default(false)
+  isBillingContact Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  student          Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian         Guardian     @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  organisation     Organisation @relation(fields: [organisationId], references: [id])
+
+  @@unique([studentId, guardianId])
+  @@index([organisationId, studentId])
+  @@map("student_guardians")
+}
+
+model ClassTeacherAssignment {
+  id             String       @id @default(cuid())
   organisationId String
-  voucherId      String          @unique
+  teacherUserId  String
+  grade          String?
+  className      String
+  academicYear   String
+  isPrimary      Boolean      @default(false)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  teacher        User         @relation(fields: [teacherUserId], references: [id], onDelete: Cascade)
+
+  @@index([organisationId, teacherUserId])
+  @@unique([organisationId, teacherUserId, className, academicYear])
+  @@map("class_teacher_assignments")
+}
+
+model ARInvoice {
+  id             String              @id @default(cuid())
+  organisationId String
+  voucherId      String              @unique
   studentId      String
   currencyCode   String
   term           String?
-  status         VoucherStatus   @default(DRAFT)
-  amount         Decimal         @db.Decimal(18, 4)
-  balance        Decimal         @db.Decimal(18, 4)
-  dueDate        DateTime        @db.Date
+  status         VoucherStatus       @default(DRAFT)
+  amount         Decimal             @db.Decimal(18, 4)
+  balance        Decimal             @db.Decimal(18, 4)
+  dueDate        DateTime            @db.Date
   batchId        String?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
   allocations    ARAllocation[]
   lines          ARInvoiceLine[]
-  currency       Currency        @relation(fields: [currencyCode], references: [code])
-  student        Student         @relation(fields: [studentId], references: [id])
-  voucher        Voucher         @relation(fields: [voucherId], references: [id])
+  currency       Currency            @relation(fields: [currencyCode], references: [code])
+  student        Student             @relation(fields: [studentId], references: [id])
+  voucher        Voucher             @relation(fields: [voucherId], references: [id])
   batch          FeeGenerationBatch? @relation(fields: [batchId], references: [id])
 
   @@map("ar_invoices")
@@ -769,19 +845,19 @@ model AuditLog {
 // ============================================
 
 model FeeTemplate {
-  id             String            @id @default(cuid())
+  id             String               @id @default(cuid())
   organisationId String
   name           String
   description    String?
   academicYear   Int
   term           String
   grades         String[]
-  currencyCode   String            @default("USD")
-  dueAfterDays   Int               @default(30)
-  isActive       Boolean           @default(true)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  organisation   Organisation      @relation(fields: [organisationId], references: [id])
+  currencyCode   String               @default("USD")
+  dueAfterDays   Int                  @default(30)
+  isActive       Boolean              @default(true)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  organisation   Organisation         @relation(fields: [organisationId], references: [id])
   items          FeeTemplateItem[]
   batches        FeeGenerationBatch[]
 
@@ -801,21 +877,21 @@ model FeeTemplateItem {
 }
 
 model FeeGenerationBatch {
-  id             String              @id @default(cuid())
+  id             String       @id @default(cuid())
   organisationId String
   templateId     String
   batchNumber    String
   academicYear   Int
   term           String
-  generatedDate  DateTime            @default(now())
+  generatedDate  DateTime     @default(now())
   totalStudents  Int
-  totalAmount    Decimal             @db.Decimal(18, 4)
-  status         BatchStatus         @default(DRAFT)
+  totalAmount    Decimal      @db.Decimal(18, 4)
+  status         BatchStatus  @default(DRAFT)
   createdById    String
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-  organisation   Organisation        @relation(fields: [organisationId], references: [id])
-  template       FeeTemplate         @relation(fields: [templateId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organisation   Organisation @relation(fields: [organisationId], references: [id])
+  template       FeeTemplate  @relation(fields: [templateId], references: [id])
   invoices       ARInvoice[]
 
   @@unique([organisationId, batchNumber])
@@ -862,6 +938,7 @@ enum UserRole {
   HEADMASTER
   AUDITOR
   ACCOUNTANT
+  TEACHER
 }
 
 enum AccountType {
@@ -981,22 +1058,22 @@ model PurchaseOrderLine {
 }
 
 model GoodsReceivedNote {
-  id              String         @id @default(cuid())
+  id              String        @id @default(cuid())
   organisationId  String
   grnNumber       String
   poId            String
   supplierId      String
-  receivedDate    DateTime       @db.Date
+  receivedDate    DateTime      @db.Date
   deliveryNoteRef String?
   inspectedById   String?
   inspectionNotes String?
-  status          GRNStatus      @default(PENDING_INSPECTION)
+  status          GRNStatus     @default(PENDING_INSPECTION)
   createdById     String
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  organisation    Organisation   @relation(fields: [organisationId], references: [id])
-  purchaseOrder   PurchaseOrder  @relation(fields: [poId], references: [id])
-  supplier        Supplier       @relation(fields: [supplierId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  organisation    Organisation  @relation(fields: [organisationId], references: [id])
+  purchaseOrder   PurchaseOrder @relation(fields: [poId], references: [id])
+  supplier        Supplier      @relation(fields: [supplierId], references: [id])
   lines           GRNLine[]
   apBills         APBill[]
 
@@ -1193,6 +1270,7 @@ model InventoryItem {
   movements         InventoryMovement[]
   poLines           PurchaseOrderLine[]
   apBillLines       APBillLine[]
+  requisitionLines  StockRequisitionLine[]
 
   @@unique([organisationId, code])
   @@map("inventory_items")
@@ -1238,4 +1316,111 @@ enum NotificationType {
   VOUCHER_REJECTED
   SYSTEM_ALERT
   PERIOD_CLOSED
+}
+
+// ============================
+// BUDGETING (Phase 1)
+// ============================
+model Budget {
+  id             String       @id @default(cuid())
+  organisationId String
+  fiscalPeriodId String
+  status         BudgetStatus @default(DRAFT)
+  version        Int          @default(1)
+  parentId       String?
+  createdById    String
+  reviewedById   String?
+  approvedById   String?
+  approvedAt     DateTime?
+  lockedAt       DateTime?
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  fiscalPeriod FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id])
+  createdBy    User         @relation("BudgetCreatedBy", fields: [createdById], references: [id])
+  reviewedBy   User?        @relation("BudgetReviewedBy", fields: [reviewedById], references: [id])
+  approvedBy   User?        @relation("BudgetApprovedBy", fields: [approvedById], references: [id])
+  parent       Budget?      @relation("BudgetRevisions", fields: [parentId], references: [id])
+  revisions    Budget[]     @relation("BudgetRevisions")
+  lines        BudgetLine[]
+
+  @@index([organisationId, fiscalPeriodId])
+  @@map("budgets")
+}
+
+model BudgetLine {
+  id           String   @id @default(cuid())
+  budgetId     String
+  fundId       String
+  costCentreId String
+  accountId    String
+  periodLabel  String?
+  amount       Decimal  @db.Decimal(18, 4)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  budget     Budget     @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  fund       Fund       @relation(fields: [fundId], references: [id])
+  costCentre CostCentre @relation(fields: [costCentreId], references: [id])
+  account    Account    @relation(fields: [accountId], references: [id])
+
+  @@index([budgetId])
+  @@index([fundId, costCentreId, accountId])
+  @@map("budget_lines")
+}
+
+enum BudgetStatus {
+  DRAFT
+  REVIEWED
+  APPROVED
+  LOCKED
+}
+
+model StockRequisition {
+  id             String               @id @default(cuid())
+  organisationId String
+  reqNumber      String
+  requestedById  String
+  department     String?
+  requestDate    DateTime             @db.Date
+  requiredDate   DateTime?            @db.Date
+  status         RequisitionStatus    @default(DRAFT)
+  notes          String?
+  approvedById   String?
+  approvedAt     DateTime?
+  rejectedById   String?
+  rejectedAt     DateTime?
+  rejectionNote  String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  organisation   Organisation         @relation(fields: [organisationId], references: [id])
+  lines          StockRequisitionLine[]
+
+  @@unique([organisationId, reqNumber])
+  @@map("stock_requisitions")
+}
+
+model StockRequisitionLine {
+  id              String           @id @default(cuid())
+  requisitionId   String
+  itemId          String
+  qtyRequested    Decimal          @db.Decimal(18, 4)
+  qtyIssued       Decimal          @default(0) @db.Decimal(18, 4)
+  notes           String?
+  requisition     StockRequisition @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+  item            InventoryItem    @relation(fields: [itemId], references: [id])
+
+  @@map("stock_requisition_lines")
+}
+
+enum RequisitionStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  PARTIALLY_ISSUED
+  FULLY_ISSUED
+  REJECTED
+  CANCELLED
 }

@@ -149,9 +149,11 @@ export default function VoucherDetailPage() {
                 </Link>
               </Button>
             )}
-            <Button variant="outline" size="sm">
-              <Printer className="w-4 h-4 mr-2" />
-              Print
+            <Button variant="outline" size="sm" asChild>
+              <a href={`/api/ar/invoices/${voucher.id}/pdf`} target="_blank" rel="noreferrer">
+                <Printer className="w-4 h-4 mr-2" />
+                Print / PDF
+              </a>
             </Button>
 
           {canSubmit && (

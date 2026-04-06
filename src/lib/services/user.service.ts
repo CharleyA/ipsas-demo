@@ -13,12 +13,15 @@ export class UserService {
         passwordHash,
         firstName: data.firstName,
         lastName: data.lastName,
+        ecNumber: data.ecNumber,
       },
       select: {
         id: true,
         email: true,
         firstName: true,
         lastName: true,
+        ecNumber: true,
+        avatarUrl: true,
         isActive: true,
         createdAt: true,
       },
@@ -66,6 +69,8 @@ export class UserService {
         email: true,
         firstName: true,
         lastName: true,
+        ecNumber: true,
+        avatarUrl: true,
         isActive: true,
         updatedAt: true,
       },
@@ -211,6 +216,7 @@ export class UserService {
         email: string;
         firstName: string;
         lastName: string;
+        ecNumber: string | null;
         userIsActive: boolean;
         createdAt: Date;
       }>
@@ -224,6 +230,7 @@ export class UserService {
         u.email AS "email",
         u."firstName" AS "firstName",
         u."lastName" AS "lastName",
+        u."ecNumber" AS "ecNumber",
         u."isActive" AS "userIsActive",
         u."createdAt" AS "createdAt"
       FROM organisation_users ou
@@ -236,6 +243,7 @@ export class UserService {
       email: ou.email,
       firstName: ou.firstName,
       lastName: ou.lastName,
+      ecNumber: ou.ecNumber,
       createdAt: ou.createdAt,
       role: ou.role,
       isApprover: ou.isApprover,

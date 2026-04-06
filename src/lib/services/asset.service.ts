@@ -232,16 +232,19 @@ export class AssetService {
 
   static async listByOrganisation(
     organisationId: string,
-    options?: { status?: string; categoryId?: string }
+    options?: { status?: string; categoryId?: string; location?: string }
   ) {
     return prisma.asset.findMany({
       where: {
         organisationId,
         ...(options?.status ? { status: options.status as any } : {}),
         ...(options?.categoryId ? { categoryId: options.categoryId } : {}),
+        ...(options?.location
+          ? { location: { equals: options.location, mode: "insensitive" } }
+          : {}),
       },
       include: { category: true },
-      orderBy: { assetNumber: "asc" },
+      orderBy: [{ category: { name: "asc" } }, { assetNumber: "asc" }],
     });
   }
 
@@ -261,9 +264,10 @@ export class AssetService {
     });
     if (existing) return 0;
 
-    const { category } = asset;
+    const category = asset.category;
     const depreciableAmount =
       Number(asset.acquisitionCost) - Number(asset.residualValue);
+
     let monthlyDepreciation = 0;
 
     if (category.depreciationMethod === "STRAIGHT_LINE") {
@@ -294,7 +298,7 @@ export class AssetService {
       include: { category: true },
     });
 
-    const entries: { assetId: string; amount: number }[] = [];
+    const entries: Array<{ assetId: string; amount: number }> = [];
 
     for (const asset of assets) {
       const amount = await this.calculateDepreciation(
@@ -307,12 +311,9 @@ export class AssetService {
       }
     }
 
-    if (entries.length === 0) {
-      return { processed: 0, entries: [] };
-    }
+    const result = await prisma.$transaction(async (tx) => {
+      const createdEntries = [] as any[];
 
-    const results = await prisma.$transaction(async (tx) => {
-      const created = [];
       for (const entry of entries) {
         const depEntry = await tx.depreciationEntry.create({
           data: {
@@ -331,9 +332,10 @@ export class AssetService {
           },
         });
 
-        created.push(depEntry);
+        createdEntries.push(depEntry);
       }
-      return created;
+
+      return createdEntries;
     });
 
     await AuditService.log({
@@ -342,72 +344,145 @@ export class AssetService {
       action: "RUN_DEPRECIATION",
       entityType: "DepreciationBatch",
       entityId: periodId,
-      newValues: { count: results.length, total: entries.reduce((s, e) => s + e.amount, 0) },
+      newValues: {
+        periodId,
+        depreciationDate,
+        entriesCount: result.length,
+        totalAmount: entries.reduce((sum, e) => sum + e.amount, 0),
+      },
     });
 
-    return { processed: results.length, entries: results };
+    return {
+      entriesCount: result.length,
+      totalAmount: entries.reduce((sum, e) => sum + e.amount, 0),
+    };
+  }
+
+  static async registerFromPending(
+    pendingId: string,
+    assetsData: Array<{
+      description: string;
+      serialNumber?: string;
+      location?: string;
+      custodian?: string;
+    }>,
+    actorId: string
+  ) {
+    const pending = await prisma.pendingAsset.findUnique({
+      where: { id: pendingId },
+    });
+    if (!pending) throw new Error("Pending asset not found");
+    if (pending.status !== "PENDING") throw new Error("Already processed");
+
+    const assetIds = await prisma.$transaction(async (tx) => {
+      const createdIds: string[] = [];
+
+      for (const assetData of assetsData) {
+        const assetNumber = await this.generateAssetNumber(pending.organisationId);
+        const category = await tx.assetCategory.findUnique({
+          where: { id: pending.categoryId },
+        });
+        if (!category) throw new Error("Asset category not found");
+
+        const residualValue =
+          ((Number(pending.acquisitionCost) / pending.quantity) *
+            Number(category.residualValuePercent)) /
+          100;
+
+        const costPerAsset = Number(pending.acquisitionCost) / pending.quantity;
+
+        const asset = await tx.asset.create({
+          data: {
+            organisationId: pending.organisationId,
+            categoryId: pending.categoryId,
+            assetNumber,
+            description: assetData.description,
+            serialNumber: assetData.serialNumber,
+            location: assetData.location,
+            custodian: assetData.custodian,
+            acquisitionDate: new Date(),
+            acquisitionCost: costPerAsset,
+            residualValue,
+            netBookValue: costPerAsset,
+            sourceApBillLineId: pending.apBillLineId,
+          },
+        });
+        createdIds.push(asset.id);
+      }
+
+      await tx.pendingAsset.update({
+        where: { id: pendingId },
+        data: {
+          status: "COMPLETED",
+          processedAt: new Date(),
+          assetIds: createdIds,
+        },
+      });
+
+      return createdIds;
+    });
+
+    await AuditService.log({
+      userId: actorId,
+      organisationId: pending.organisationId,
+      action: "REGISTER",
+      entityType: "PendingAsset",
+      entityId: pendingId,
+      newValues: { assetIds },
+    });
+
+    return assetIds;
   }
 }
 
 export class PendingAssetService {
   static async listByOrganisation(organisationId: string) {
     return prisma.pendingAsset.findMany({
-      where: { organisationId, status: "PENDING" },
-      include: { category: true, apBillLine: { include: { bill: true } } },
+      where: {
+        organisationId,
+        status: "PENDING",
+      },
+      include: {
+        category: true,
+        apBillLine: {
+          include: {
+            bill: {
+              select: {
+                id: true,
+                supplier: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
   }
 
   static async complete(
-    id: string,
-    data: {
-      assets: {
-        serialNumber?: string;
-        location?: string;
-        custodian?: string;
-      }[];
-    },
+    pendingId: string,
+    assetsData: Array<{
+      description: string;
+      serialNumber?: string;
+      location?: string;
+      custodian?: string;
+    }>,
     actorId: string
   ) {
-    const pending = await prisma.pendingAsset.findUnique({
-      where: { id },
-      include: { category: true, apBillLine: { include: { bill: { include: { voucher: true } } } } },
-    });
-    if (!pending) throw new Error("Pending asset not found");
+    const assetIds = await AssetService.registerFromPending(
+      pendingId,
+      assetsData,
+      actorId
+    );
 
-    const unitCost = Number(pending.acquisitionCost) / pending.quantity;
-    const assetIds: string[] = [];
-
-    await prisma.$transaction(async (tx) => {
-      for (let i = 0; i < pending.quantity; i++) {
-        const assetData = data.assets[i] || {};
-        const asset = await AssetService.create(
-          {
-            organisationId: pending.organisationId,
-            categoryId: pending.categoryId,
-            description: pending.description,
-            serialNumber: assetData.serialNumber,
-            location: assetData.location,
-            custodian: assetData.custodian,
-            acquisitionDate: pending.apBillLine.bill.voucher.date,
-            acquisitionCost: unitCost,
-            sourceApBillLineId: pending.apBillLineId,
-          },
-          actorId
-        );
-        assetIds.push(asset.id);
-      }
-
-      await tx.pendingAsset.update({
-        where: { id },
-        data: {
-          status: "COMPLETED",
-          processedAt: new Date(),
-          assetIds,
-        },
-      });
-    });
-
-    return { assetIds };
+    return {
+      success: true,
+      assetIds,
+      count: assetIds.length,
+    };
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -21,6 +21,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import {
   Plus,
   Search,
   Eye,
@@ -32,33 +40,64 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
+import { TablePagination, usePagination } from "@/components/ui/table-pagination";
+
+type AssetRegisterRow = {
+  id: string;
+  assetNumber: string;
+  description: string;
+  serialNumber?: string | null;
+  location?: string | null;
+  custodian?: string | null;
+  acquisitionDate: string;
+  acquisitionCost: string | number;
+  netBookValue: string | number;
+  status: string;
+  category?: {
+    id: string;
+    code?: string | null;
+    name?: string | null;
+    depreciationMethod?: string | null;
+    usefulLifeMonths?: number | null;
+  } | null;
+};
 
 export default function AssetsPage() {
   const { token } = useAuth();
-  const [assets, setAssets] = useState<any[]>([]);
+  const [assets, setAssets] = useState<AssetRegisterRow[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const fetchAssets = async () => {
     setIsLoading(true);
     try {
-      const [assetsRes, pendingRes] = await Promise.all([
-        fetch("/api/assets/register", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch("/api/assets/pending", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-      ]);
+      const assetsRes = await fetch("/api/assets/register", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const assetsData = await assetsRes.json();
-      const pendingData = await pendingRes.json();
       setAssets(Array.isArray(assetsData) ? assetsData : []);
-      setPendingCount(Array.isArray(pendingData) ? pendingData.length : 0);
     } catch {
       toast.error("Failed to fetch assets");
     } finally {
       setIsLoading(false);
+    }
+
+    // Pending count is supplementary — fetch independently so it can't block the main list
+    try {
+      const pendingRes = await fetch("/api/assets/pending", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (pendingRes.ok) {
+        const pendingData = await pendingRes.json();
+        setPendingCount(Array.isArray(pendingData) ? pendingData.length : 0);
+      }
+    } catch {
+      // non-critical — silently ignore
     }
   };
 
@@ -66,18 +105,60 @@ export default function AssetsPage() {
     if (token) fetchAssets();
   }, [token]);
 
-  const filteredAssets = assets.filter((a) =>
-    `${a.assetNumber} ${a.description} ${a.category?.name}`
+  const categoryOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    assets.forEach((asset) => {
+      if (asset.category?.id) {
+        seen.set(asset.category.id, asset.category.name || asset.category.code || "Uncategorised");
+      }
+    });
+
+    return Array.from(seen.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [assets]);
+
+  const locationOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        assets
+          .map((asset) => asset.location?.trim())
+          .filter((location): location is string => Boolean(location))
+      )
+    ).sort((a, b) => a.localeCompare(b));
+  }, [assets]);
+
+  const filteredAssets = assets.filter((asset) => {
+    const matchesSearch = [
+      asset.assetNumber,
+      asset.serialNumber,
+      asset.description,
+      asset.category?.name,
+      asset.category?.code,
+      asset.location,
+      asset.custodian,
+    ]
+      .filter(Boolean)
+      .join(" ")
       .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+      .includes(search.toLowerCase());
+
+    const matchesCategory =
+      categoryFilter === "all" || asset.category?.id === categoryFilter;
+    const matchesLocation =
+      locationFilter === "all" ||
+      (asset.location || "").trim().toLowerCase() === locationFilter.toLowerCase();
+
+    return matchesSearch && matchesCategory && matchesLocation;
+  });
+  const pagedAssets = usePagination(filteredAssets, pageSize, page);
 
   const totalValue = assets.reduce(
-    (sum, a) => sum + Number(a.acquisitionCost || 0),
+    (sum, asset) => sum + Number(asset.acquisitionCost || 0),
     0
   );
   const totalNBV = assets.reduce(
-    (sum, a) => sum + Number(a.netBookValue || 0),
+    (sum, asset) => sum + Number(asset.netBookValue || 0),
     0
   );
 
@@ -86,6 +167,32 @@ export default function AssetsPage() {
       style: "currency",
       currency: "USD",
     }).format(amount);
+
+  const formatDate = (date?: string | null) => {
+    if (!date) return "-";
+    return new Date(date).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const formatDepreciationMethod = (method?: string | null) => {
+    if (!method) return "-";
+    return method
+      .split("_")
+      .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
+      .join(" ");
+  };
+
+  const formatLifeSpan = (months?: number | null) => {
+    if (!months) return "-";
+    if (months % 12 === 0) {
+      const years = months / 12;
+      return `${years} year${years === 1 ? "" : "s"}`;
+    }
+    return `${months} months`;
+  };
 
   const statusColors: Record<string, string> = {
     ACTIVE: "bg-green-100 text-green-800",
@@ -178,23 +285,49 @@ export default function AssetsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <CardTitle>Asset Register</CardTitle>
               <CardDescription>
-                All fixed assets with their current values.
+                Clear register showing asset codes, numbers, names, depreciation method, category, location and custodian.
               </CardDescription>
             </div>
-            <div className="flex gap-2">
-              <div className="relative w-64">
+            <div className="flex flex-col gap-2 md:flex-row">
+              <div className="relative w-full md:w-72">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search assets..."
                   className="pl-8"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 />
               </div>
+              <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); setPage(1); }}>
+                <SelectTrigger className="w-full md:w-56">
+                  <SelectValue placeholder="Filter by category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All categories</SelectItem>
+                  {categoryOptions.map((category) => (
+                    <SelectItem key={category.value} value={category.value}>
+                      {category.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={locationFilter} onValueChange={(v) => { setLocationFilter(v); setPage(1); }}>
+                <SelectTrigger className="w-full md:w-56">
+                  <SelectValue placeholder="Filter by location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All locations</SelectItem>
+                  {locationOptions.map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button variant="outline" asChild>
                 <Link href="/dashboard/assets/depreciation">Run Depreciation</Link>
               </Button>
@@ -211,53 +344,71 @@ export default function AssetsPage() {
               No assets found.
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Asset No.</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead className="text-right">Cost</TableHead>
-                  <TableHead className="text-right">NBV</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAssets.map((asset) => (
-                  <TableRow key={asset.id}>
-                    <TableCell className="font-medium">
-                      {asset.assetNumber}
-                    </TableCell>
-                    <TableCell>{asset.description}</TableCell>
-                    <TableCell>{asset.category?.name}</TableCell>
-                    <TableCell>{asset.location || "-"}</TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(Number(asset.acquisitionCost))}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(Number(asset.netBookValue))}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="secondary"
-                        className={statusColors[asset.status] || ""}
-                      >
-                        {asset.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" asChild>
-                        <Link href={`/dashboard/assets/register/${asset.id}`}>
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                      </Button>
-                    </TableCell>
+            <>
+            <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Asset Code</TableHead>
+                    <TableHead>Asset Number</TableHead>
+                    <TableHead>Asset Name</TableHead>
+                    <TableHead>Asset Description</TableHead>
+                    <TableHead>Depreciation Type</TableHead>
+                    <TableHead>Date Available for Use</TableHead>
+                    <TableHead>Asset Life Span</TableHead>
+                    <TableHead>Asset Category</TableHead>
+                    <TableHead>Asset Location</TableHead>
+                    <TableHead>Asset Custodian</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {pagedAssets.map((asset) => (
+                    <TableRow key={asset.id}>
+                      <TableCell className="font-medium">
+                        {asset.category?.code || "-"}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {asset.assetNumber}
+                      </TableCell>
+                      <TableCell>{asset.description || "-"}</TableCell>
+                      <TableCell className="max-w-[320px] whitespace-normal">
+                        {asset.description || "-"}
+                      </TableCell>
+                      <TableCell>
+                        {formatDepreciationMethod(asset.category?.depreciationMethod)}
+                      </TableCell>
+                      <TableCell>{formatDate(asset.acquisitionDate)}</TableCell>
+                      <TableCell>
+                        {formatLifeSpan(asset.category?.usefulLifeMonths)}
+                      </TableCell>
+                      <TableCell>{asset.category?.name || "-"}</TableCell>
+                      <TableCell>{asset.location || "-"}</TableCell>
+                      <TableCell>{asset.custodian || "-"}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="secondary"
+                          className={statusColors[asset.status] || ""}
+                        >
+                          {asset.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link href={`/dashboard/assets/register/${asset.id}`}>
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          <TablePagination total={filteredAssets.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+            </>
           )}
         </CardContent>
       </Card>

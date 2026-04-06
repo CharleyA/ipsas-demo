@@ -75,6 +75,7 @@ export default function UserManagementPage() {
     email: "",
     firstName: "",
     lastName: "",
+    ecNumber: "",
     password: "",
     role: "CLERK",
   });
@@ -82,6 +83,7 @@ export default function UserManagementPage() {
   const [editUser, setEditUser] = useState({
     firstName: "",
     lastName: "",
+    ecNumber: "",
     role: "CLERK",
     isActive: true,
   });
@@ -113,6 +115,11 @@ export default function UserManagementPage() {
 
   const handleAddUser = async () => {
     try {
+      if (newUser.role === "TEACHER" && !newUser.ecNumber.trim()) {
+        toast.error("EC Number is required for Teacher accounts");
+        return;
+      }
+
       // First create the user
       const res = await fetch("/api/users", {
         method: "POST",
@@ -125,6 +132,7 @@ export default function UserManagementPage() {
           password: newUser.password,
           firstName: newUser.firstName,
           lastName: newUser.lastName,
+          ecNumber: newUser.ecNumber || undefined,
         }),
       });
 
@@ -158,6 +166,11 @@ export default function UserManagementPage() {
   const handleEditUser = async () => {
     if (!selectedUser) return;
     try {
+      if (editUser.role === "TEACHER" && !editUser.ecNumber.trim()) {
+        toast.error("EC Number is required for Teacher accounts");
+        return;
+      }
+
       const res = await fetch(`/api/users/${selectedUser.id}`, {
         method: "PATCH",
         headers: {
@@ -226,6 +239,7 @@ export default function UserManagementPage() {
     setEditUser({
       firstName: u.firstName,
       lastName: u.lastName,
+      ecNumber: u.ecNumber || "",
       role: u.role,
       isActive: u.isActive,
     });
@@ -293,6 +307,15 @@ export default function UserManagementPage() {
                 />
               </div>
               <div className="grid gap-2">
+                <Label htmlFor="ecNumber">Teacher EC Number (required for teacher role)</Label>
+                <Input
+                  id="ecNumber"
+                  value={newUser.ecNumber}
+                  onChange={(e) => setNewUser({ ...newUser, ecNumber: e.target.value })}
+                  placeholder="e.g. EC123456"
+                />
+              </div>
+              <div className="grid gap-2">
                 <Label htmlFor="password">Initial Password</Label>
                 <Input
                   id="password"
@@ -315,6 +338,7 @@ export default function UserManagementPage() {
                     <SelectItem value="BURSAR">Bursar / Manager</SelectItem>
                     <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
                     <SelectItem value="CLERK">Data Entry Clerk</SelectItem>
+                    <SelectItem value="TEACHER">Teacher</SelectItem>
                     <SelectItem value="AUDITOR">Auditor (Read-only)</SelectItem>
                   </SelectContent>
                 </Select>
@@ -453,6 +477,15 @@ export default function UserManagementPage() {
                 </div>
               </div>
               <div className="grid gap-2">
+                <Label htmlFor="edit-ecNumber">Teacher EC Number</Label>
+                <Input
+                  id="edit-ecNumber"
+                  value={editUser.ecNumber}
+                  onChange={(e) => setEditUser({ ...editUser, ecNumber: e.target.value })}
+                  placeholder="e.g. EC123456"
+                />
+              </div>
+              <div className="grid gap-2">
                 <Label htmlFor="edit-role">System Role</Label>
                 <Select 
                   value={editUser.role} 
@@ -466,6 +499,7 @@ export default function UserManagementPage() {
                     <SelectItem value="BURSAR">Bursar / Manager</SelectItem>
                     <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
                     <SelectItem value="CLERK">Data Entry Clerk</SelectItem>
+                    <SelectItem value="TEACHER">Teacher</SelectItem>
                     <SelectItem value="AUDITOR">Auditor (Read-only)</SelectItem>
                   </SelectContent>
                 </Select>

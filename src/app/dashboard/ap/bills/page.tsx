@@ -31,12 +31,15 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
 import { format } from "date-fns";
+import { TablePagination, usePagination } from "@/components/ui/table-pagination";
 
 export default function APBillsPage() {
   const { token, user } = useAuth();
   const [bills, setBills] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const fetchBills = async () => {
     setIsLoading(true);
@@ -60,6 +63,7 @@ export default function APBillsPage() {
   const filteredBills = bills.filter(b => 
     `${b.supplier?.name} ${b.voucher?.number}`.toLowerCase().includes(search.toLowerCase())
   );
+  const pagedBills = usePagination(filteredBills, pageSize, page);
 
   return (
     <div className="space-y-6">
@@ -93,7 +97,7 @@ export default function APBillsPage() {
                 placeholder="Search bills..."
                 className="pl-8"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               />
             </div>
           </div>
@@ -108,6 +112,7 @@ export default function APBillsPage() {
               No bills found.
             </div>
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -122,7 +127,7 @@ export default function APBillsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredBills.map((bill) => (
+                {pagedBills.map((bill) => (
                   <TableRow key={bill.id}>
                     <TableCell className="font-medium">
                       {bill.voucher?.number}
@@ -158,6 +163,8 @@ export default function APBillsPage() {
                 ))}
               </TableBody>
             </Table>
+          <TablePagination total={filteredBills.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+            </>
           )}
         </CardContent>
       </Card>

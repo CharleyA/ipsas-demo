@@ -7,6 +7,9 @@ import Link from "next/link";
 import { Loader2, LayoutDashboard, Plus } from "lucide-react";
 import { HeadmasterDashboard } from "@/components/dashboard/headmaster-dashboard";
 import { AuditorDashboard } from "@/components/dashboard/auditor-dashboard";
+import { AccountantDashboard } from "@/components/dashboard/accountant-dashboard";
+import { BursarDashboard } from "@/components/dashboard/bursar-dashboard";
+import { ClerkDashboard } from "@/components/dashboard/clerk-dashboard";
 
 export default function DashboardPage() {
   const { user, token } = useAuth();
@@ -51,6 +54,9 @@ export default function DashboardPage() {
 
   const isHeadmaster = user?.role === "HEADMASTER" || user?.role === "ADMIN";
   const isAuditor = user?.role === "AUDITOR";
+  const isAccountant = user?.role === "ACCOUNTANT";
+  const isBursar = user?.role === "BURSAR";
+  const isClerk = user?.role === "CLERK";
 
   return (
     <div className="space-y-6">
@@ -59,8 +65,11 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            {isHeadmaster ? "Institutional Financial Overview" : 
-             isAuditor ? "Compliance & Audit Oversight" : 
+            {isHeadmaster ? "Institutional Financial Overview" :
+             isAuditor ? "Compliance & Audit Oversight" :
+             isAccountant ? "Financial Management & Reporting" :
+             isBursar ? "Fee Billing & Receipts Overview" :
+             isClerk ? "Transaction Entry & Administration" :
              "Welcome to IPSAS Accounting"}
           </p>
         </div>
@@ -80,6 +89,12 @@ export default function DashboardPage() {
         <HeadmasterDashboard data={data} />
       ) : isAuditor && data ? (
         <AuditorDashboard data={data} />
+      ) : isAccountant && data ? (
+        <AccountantDashboard data={data} />
+      ) : isBursar && data ? (
+        <BursarDashboard data={data} />
+      ) : isClerk && data ? (
+        <ClerkDashboard data={data} />
       ) : (
         <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-xl border-2 border-dashed">
           <LayoutDashboard className="h-12 w-12 text-slate-300 mb-4" />

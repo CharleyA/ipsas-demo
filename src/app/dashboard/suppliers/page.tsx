@@ -22,12 +22,15 @@ import { Plus, Search, Eye, FileText, Receipt, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
+import { TablePagination, usePagination } from "@/components/ui/table-pagination";
 
 export default function SuppliersPage() {
   const { token } = useAuth();
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const fetchSuppliers = async () => {
     setIsLoading(true);
@@ -51,6 +54,7 @@ export default function SuppliersPage() {
   const filteredSuppliers = suppliers.filter(s => 
     `${s.name} ${s.code}`.toLowerCase().includes(search.toLowerCase())
   );
+  const pagedSuppliers = usePagination(filteredSuppliers, pageSize, page);
 
   return (
     <div className="space-y-6">
@@ -84,7 +88,7 @@ export default function SuppliersPage() {
                 placeholder="Search suppliers..."
                 className="pl-8"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               />
             </div>
           </div>
@@ -99,6 +103,7 @@ export default function SuppliersPage() {
               No suppliers found.
             </div>
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -110,7 +115,7 @@ export default function SuppliersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSuppliers.map((supplier) => (
+                {pagedSuppliers.map((supplier) => (
                   <TableRow key={supplier.id}>
                     <TableCell className="font-medium">
                       {supplier.code}
@@ -144,6 +149,8 @@ export default function SuppliersPage() {
                 ))}
               </TableBody>
             </Table>
+          <TablePagination total={filteredSuppliers.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+            </>
           )}
         </CardContent>
       </Card>

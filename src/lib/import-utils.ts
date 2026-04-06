@@ -10,7 +10,7 @@ export interface ImportTemplate {
 export const IMPORT_TEMPLATES: Record<string, ImportTemplate> = {
   students: {
     filename: 'students_import_template',
-    columns: ['studentNumber', 'firstName', 'lastName', 'grade', 'isActive'],
+    columns: ['studentNumber', 'firstName', 'lastName', 'grade', 'class', 'isActive'],
   },
   receipts: {
     filename: 'receipts_import_template',

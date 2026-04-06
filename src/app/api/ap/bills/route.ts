@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
-    const organisationId = searchParams.get("organisationId");
+    const organisationId = searchParams.get("organisationId") || session.organisationId;
     if (!organisationId) return NextResponse.json({ error: "Organisation ID required" }, { status: 400 });
 
     const bills = await prisma.aPBill.findMany({

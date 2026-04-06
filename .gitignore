@@ -38,3 +38,8 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# local secrets
+# .env # Removed by Orchids to allow .env files
+# .env.* # Removed by Orchids to allow .env files
+*.key
