@@ -101,8 +101,8 @@ export async function POST(req: NextRequest) {
 
       if (action === "approve") {
         const { sessionId } = body || {};
-        const approverRows = await prisma.$queryRawUnsafe<any[]>(`SELECT * FROM organisation_users WHERE "organisationId" = $1 AND "userId" = $2 AND "isApprover" = true AND "isActive" = true`, authReq.user.organisationId, authReq.user.userId);
-        if (!approverRows[0]) return NextResponse.json({ error: "Only approvers can approve stock take sessions" }, { status: 403 });
+        const canApprove = ["ADMIN", "BURSAR", "HEADMASTER"].includes(authReq.user.role);
+        if (!canApprove) return NextResponse.json({ error: "Only Admin, Bursar or Headmaster can approve stock take sessions" }, { status: 403 });
 
         await prisma.$executeRawUnsafe(`
           UPDATE stock_take_sessions
