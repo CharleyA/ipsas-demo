@@ -77,6 +77,13 @@ const reportCategories = [
         icon: BookOpen,
         roles: ["ADMIN", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
       },
+      {
+        title: "Consolidated Ledger",
+        description: "All posted journal entries across all accounts — filterable by type, module and currency.",
+        href: "/dashboard/reports/consolidated-ledger",
+        icon: FileText,
+        roles: ["ADMIN", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
+      },
     ],
   },
   {

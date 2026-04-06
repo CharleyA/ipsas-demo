@@ -297,6 +297,137 @@ export class ReportService {
     };
   }
 
+  static async getConsolidatedLedger(
+    organisationId: string,
+    startDate: Date,
+    endDate: Date,
+    filters: {
+      accountType?: string;
+      accountId?: string;
+      fundId?: string;
+      costCentreId?: string;
+      sourceModule?: string;
+      page?: number;
+      pageSize?: number;
+      reportingCurrency?: string;
+    } = {}
+  ) {
+    const org = await prisma.organisation.findUnique({ where: { id: organisationId } });
+    const baseCurrency = org?.baseCurrency || "ZWG";
+    const reportingCurrency = filters.reportingCurrency || baseCurrency;
+    const useFc = reportingCurrency === "USD";
+
+    const glHeaderWhere: any = {
+      organisationId,
+      entryDate: { gte: startDate, lte: endDate },
+      voucher: { status: "POSTED" },
+    };
+    if (filters.sourceModule) glHeaderWhere.voucher = { ...glHeaderWhere.voucher, type: filters.sourceModule };
+
+    const entryWhere: any = { glHeader: glHeaderWhere };
+    if (filters.accountId) entryWhere.accountId = filters.accountId;
+    if (filters.fundId) entryWhere.fundId = filters.fundId;
+    if (filters.costCentreId) entryWhere.costCentreId = filters.costCentreId;
+    if (filters.accountType) {
+      entryWhere.account = { type: filters.accountType };
+    }
+
+    const totalCount = await prisma.gLEntry.count({ where: entryWhere });
+
+    const { page = 1, pageSize = 100 } = filters;
+    const skip = (page - 1) * pageSize;
+
+    const entries = await prisma.gLEntry.findMany({
+      where: entryWhere,
+      include: {
+        account: { select: { id: true, code: true, name: true, type: true } },
+        glHeader: { include: { voucher: { select: { id: true, number: true, type: true } } } },
+        costCentre: { select: { code: true, name: true } },
+        fund: { select: { code: true, name: true } },
+      },
+      orderBy: [
+        { glHeader: { entryDate: "asc" } },
+        { glHeader: { entryNumber: "asc" } },
+        { id: "asc" },
+      ],
+      skip,
+      take: pageSize,
+    });
+
+    const rows = entries.map((e) => {
+      const dr = (useFc ? e.debitFc : e.debitLc) || new Decimal(0);
+      const cr = (useFc ? e.creditFc : e.creditLc) || new Decimal(0);
+      return {
+        id: e.id,
+        date: e.glHeader.entryDate,
+        entryNumber: e.glHeader.entryNumber,
+        voucherId: e.glHeader.voucher?.id,
+        voucherNumber: e.glHeader.voucher?.number,
+        voucherType: e.glHeader.voucher?.type,
+        accountId: e.account.id,
+        accountCode: e.account.code,
+        accountName: e.account.name,
+        accountType: e.account.type,
+        description: e.description || e.glHeader.description,
+        costCentre: e.costCentre?.name ?? null,
+        fund: e.fund?.name ?? null,
+        debit: dr,
+        credit: cr,
+        currency: reportingCurrency,
+      };
+    });
+
+    // Period totals
+    const periodAgg = await prisma.gLEntry.aggregate({
+      where: entryWhere,
+      _sum: { debitLc: true, creditLc: true, debitFc: true, creditFc: true },
+    });
+    const totalDebits = useFc ? (periodAgg._sum.debitFc || new Decimal(0)) : (periodAgg._sum.debitLc || new Decimal(0));
+    const totalCredits = useFc ? (periodAgg._sum.creditFc || new Decimal(0)) : (periodAgg._sum.creditLc || new Decimal(0));
+
+    // By-account summary
+    const accountSummary = await prisma.gLEntry.groupBy({
+      by: ["accountId"],
+      where: entryWhere,
+      _sum: { debitLc: true, creditLc: true, debitFc: true, creditFc: true },
+      orderBy: { accountId: "asc" },
+    });
+    const allAccountIds = accountSummary.map((a) => a.accountId);
+    const accountDetails = await prisma.account.findMany({
+      where: { id: { in: allAccountIds } },
+      select: { id: true, code: true, name: true, type: true },
+    });
+    const accountMap = new Map(accountDetails.map((a) => [a.id, a]));
+
+    const byAccount = accountSummary.map((a) => {
+      const acc = accountMap.get(a.accountId);
+      const dr = useFc ? (a._sum.debitFc || new Decimal(0)) : (a._sum.debitLc || new Decimal(0));
+      const cr = useFc ? (a._sum.creditFc || new Decimal(0)) : (a._sum.creditLc || new Decimal(0));
+      return {
+        accountId: a.accountId,
+        accountCode: acc?.code ?? "",
+        accountName: acc?.name ?? "",
+        accountType: acc?.type ?? "",
+        totalDebit: dr,
+        totalCredit: cr,
+        net: dr.minus(cr),
+      };
+    }).sort((a, b) => a.accountCode.localeCompare(b.accountCode));
+
+    return {
+      startDate,
+      endDate,
+      reportingCurrency,
+      entries: rows,
+      totalCount,
+      page,
+      pageSize,
+      totalPages: Math.ceil(totalCount / pageSize),
+      summary: { totalDebits, totalCredits, netMovement: totalDebits.minus(totalCredits) },
+      byAccount,
+    };
+  }
+
   static async getAuditLog(organisationId: string, filters: {
     userId?: string;
     entityType?: string;
@@ -554,12 +685,14 @@ export class ReportService {
         voucher: { status: "POSTED" },
         balance: { gt: 0 },
         createdAt: { lte: date },
-        ...(options.reportingCurrency ? { currencyCode: options.reportingCurrency } : {})
       },
-      include: { student: true }
+      include: {
+        student: true,
+        voucher: { select: { fxRate: true } },
+      },
     });
 
-    return this.calculateAgeing(invoices, date, "student", reportingCurrency);
+    return this.calculateAgeing(invoices, date, "student", reportingCurrency, baseCurrency);
   }
 
   static async getAPAgeing(organisationId: string, date: Date, options: { reportingCurrency?: string } = {}) {
@@ -572,15 +705,17 @@ export class ReportService {
         voucher: { status: "POSTED" },
         balance: { gt: 0 },
         createdAt: { lte: date },
-        ...(options.reportingCurrency ? { currencyCode: options.reportingCurrency } : {})
       },
-      include: { supplier: true }
+      include: {
+        supplier: true,
+        voucher: { select: { fxRate: true } },
+      },
     });
 
-    return this.calculateAgeing(bills, date, "supplier", reportingCurrency);
+    return this.calculateAgeing(bills, date, "supplier", reportingCurrency, baseCurrency);
   }
 
-  private static calculateAgeing(items: any[], date: Date, entityKey: string, reportingCurrency: string) {
+  private static calculateAgeing(items: any[], date: Date, entityKey: string, reportingCurrency: string, baseCurrency = "ZWG") {
     const entities = new Map<string, any>();
 
     items.forEach(item => {
@@ -599,7 +734,20 @@ export class ReportService {
       }
 
       const row = entities.get(entity.id);
-      const amount = item.balance;
+
+      // Convert balance to reporting currency if needed
+      let amount = new Decimal(item.balance);
+      const itemCurrency = item.currencyCode;
+      if (itemCurrency && itemCurrency !== reportingCurrency) {
+        const fxRate = item.voucher?.fxRate ? new Decimal(item.voucher.fxRate) : new Decimal(1);
+        if (reportingCurrency === baseCurrency && itemCurrency !== baseCurrency) {
+          // FC → LC: multiply by fxRate
+          amount = amount.mul(fxRate);
+        } else if (reportingCurrency !== baseCurrency && itemCurrency === baseCurrency) {
+          // LC → FC: divide by fxRate
+          amount = fxRate.gt(0) ? amount.div(fxRate) : amount;
+        }
+      }
       const days = Math.floor((date.getTime() - item.createdAt.getTime()) / (1000 * 60 * 60 * 24));
 
       row.total = row.total.add(amount);

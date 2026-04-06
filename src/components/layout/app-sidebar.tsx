@@ -298,6 +298,12 @@ const menuItems = [
             roles: ["ADMIN", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
           },
           {
+            title: "Consolidated Ledger",
+            href: "/dashboard/reports/consolidated-ledger",
+            icon: FileSpreadsheet,
+            roles: ["ADMIN", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
             title: "Financial Position",
             href: "/dashboard/reports/financial-position",
             icon: Scale,
