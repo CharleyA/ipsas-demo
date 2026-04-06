@@ -41,6 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TablePagination, usePagination } from "@/components/ui/table-pagination";
 
 export default function InvoicesPage() {
   const { token } = useAuth();
@@ -51,6 +52,8 @@ export default function InvoicesPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isBulkPosting, setIsBulkPosting] = useState(false);
   const [isBulkPrinting, setIsBulkPrinting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const fetchInvoices = async () => {
     setIsLoading(true);
@@ -80,6 +83,7 @@ export default function InvoicesPage() {
 
     return matchesSearch && matchesStatus;
   });
+  const pagedInvoices = usePagination(filteredInvoices, pageSize, page);
 
   const totalOutstanding = invoices.reduce(
     (sum, inv) => sum + Number(inv.balance || 0),
@@ -107,7 +111,7 @@ export default function InvoicesPage() {
     CANCELLED: "bg-red-100 text-red-800",
   };
 
-  const allFilteredIds = filteredInvoices.map((inv) => inv.id);
+  const allFilteredIds = pagedInvoices.map((inv) => inv.id);
   const allFilteredSelected =
     allFilteredIds.length > 0 && allFilteredIds.every((id) => selectedIds.includes(id));
 
@@ -284,10 +288,10 @@ export default function InvoicesPage() {
                   placeholder="Search invoices..."
                   className="pl-8"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
                 <SelectTrigger className="w-[180px]">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Status" />
@@ -314,6 +318,7 @@ export default function InvoicesPage() {
               No invoices found.
             </div>
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -331,7 +336,7 @@ export default function InvoicesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredInvoices.map((invoice) => (
+                {pagedInvoices.map((invoice) => (
                   <TableRow key={invoice.id}>
                     <TableCell>
                       <input
@@ -385,6 +390,8 @@ export default function InvoicesPage() {
                 ))}
               </TableBody>
             </Table>
+          <TablePagination total={filteredInvoices.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+            </>
           )}
         </CardContent>
       </Card>

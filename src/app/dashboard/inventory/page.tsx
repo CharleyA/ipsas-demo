@@ -32,12 +32,15 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
+import { TablePagination, usePagination } from "@/components/ui/table-pagination";
 
 export default function InventoryPage() {
   const { token } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const fetchItems = async () => {
     setIsLoading(true);
@@ -63,6 +66,7 @@ export default function InventoryPage() {
       .toLowerCase()
       .includes(search.toLowerCase())
   );
+  const pagedItems = usePagination(filteredItems, pageSize, page);
 
   const totalValue = items.reduce(
     (sum, item) => sum + Number(item.quantityOnHand) * Number(item.averageCost),
@@ -173,7 +177,7 @@ export default function InventoryPage() {
                 placeholder="Search items..."
                 className="pl-8"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               />
             </div>
           </div>
@@ -188,6 +192,7 @@ export default function InventoryPage() {
               No items found.
             </div>
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -203,7 +208,7 @@ export default function InventoryPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredItems.map((item) => {
+                {pagedItems.map((item) => {
                   const qty = Number(item.quantityOnHand);
                   const avgCost = Number(item.averageCost);
                   const value = qty * avgCost;
@@ -244,6 +249,8 @@ export default function InventoryPage() {
                 })}
               </TableBody>
             </Table>
+          <TablePagination total={filteredItems.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+            </>
           )}
         </CardContent>
       </Card>

@@ -10,12 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Eye, Loader2, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
+import { TablePagination, usePagination } from "@/components/ui/table-pagination";
 
 export default function PurchaseOrdersPage() {
   const { token } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const fetchOrders = async () => {
     setIsLoading(true);
@@ -31,6 +34,7 @@ export default function PurchaseOrdersPage() {
   const filtered = orders.filter((o) =>
     `${o.orderNumber} ${o.supplier?.name} ${o.status}`.toLowerCase().includes(search.toLowerCase())
   );
+  const pagedOrders = usePagination(filtered, pageSize, page);
 
   const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
   const fmtDate = (d: string) => d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "-";
@@ -76,7 +80,7 @@ export default function PurchaseOrdersPage() {
             <div><CardTitle>Purchase Orders</CardTitle><CardDescription>All purchase orders and their current status.</CardDescription></div>
             <div className="relative w-64">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search..." className="pl-8" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Input placeholder="Search..." className="pl-8" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
             </div>
           </div>
         </CardHeader>
@@ -90,6 +94,7 @@ export default function PurchaseOrdersPage() {
               <Button asChild className="mt-4"><Link href="/dashboard/procurement/purchase-orders/new">Create First PO</Link></Button>
             </div>
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -102,7 +107,7 @@ export default function PurchaseOrdersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((o) => (
+                {pagedOrders.map((o) => (
                   <TableRow key={o.id}>
                     <TableCell className="font-medium">{o.orderNumber}</TableCell>
                     <TableCell>{o.supplier?.name || "-"}</TableCell>
@@ -118,6 +123,8 @@ export default function PurchaseOrdersPage() {
                 ))}
               </TableBody>
             </Table>
+          <TablePagination total={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+            </>
           )}
         </CardContent>
       </Card>

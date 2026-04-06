@@ -10,12 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Eye, Loader2, Package } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
+import { TablePagination, usePagination } from "@/components/ui/table-pagination";
 
 export default function AssetRegisterPage() {
   const { token } = useAuth();
   const [assets, setAssets] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const fetchAssets = async () => {
     setIsLoading(true);
@@ -35,6 +38,7 @@ export default function AssetRegisterPage() {
   const filtered = assets.filter((a) =>
     `${a.assetNumber} ${a.description} ${a.location} ${a.custodian} ${a.category?.name}`.toLowerCase().includes(search.toLowerCase())
   );
+  const pagedAssets = usePagination(filtered, pageSize, page);
 
   const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
   const fmtDate = (d: string) => d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "-";
@@ -82,7 +86,7 @@ export default function AssetRegisterPage() {
             </div>
             <div className="relative w-64">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search assets..." className="pl-8" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Input placeholder="Search assets..." className="pl-8" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
             </div>
           </div>
         </CardHeader>
@@ -113,7 +117,7 @@ export default function AssetRegisterPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((a) => (
+                  {pagedAssets.map((a) => (
                     <TableRow key={a.id}>
                       <TableCell className="font-medium">{a.assetNumber}</TableCell>
                       <TableCell>{a.description}</TableCell>
@@ -135,6 +139,7 @@ export default function AssetRegisterPage() {
                   ))}
                 </TableBody>
               </Table>
+          <TablePagination total={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
             </div>
           )}
         </CardContent>

@@ -10,12 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Loader2, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
+import { TablePagination, usePagination } from "@/components/ui/table-pagination";
 
 export default function CashbookPage() {
   const { token } = useAuth();
   const [entries, setEntries] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const fetchEntries = async () => {
     setIsLoading(true);
@@ -39,6 +42,7 @@ export default function CashbookPage() {
   const filtered = entries.filter((e) =>
     `${e.reference} ${e.description} ${e.bankAccount?.bankName}`.toLowerCase().includes(search.toLowerCase())
   );
+  const pagedEntries = usePagination(filtered, pageSize, page);
 
   const totalReceipts = entries.filter((e) => e.entryType === "RECEIPT").reduce((s, e) => s + Number(e.amount || 0), 0);
   const totalPayments = entries.filter((e) => e.entryType === "PAYMENT").reduce((s, e) => s + Number(e.amount || 0), 0);
@@ -90,7 +94,7 @@ export default function CashbookPage() {
             </div>
             <div className="relative w-64">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search..." className="pl-8" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Input placeholder="Search..." className="pl-8" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
             </div>
           </div>
         </CardHeader>
@@ -104,6 +108,7 @@ export default function CashbookPage() {
               <Button asChild className="mt-4"><Link href="/dashboard/bank/cashbook/new">Create First Entry</Link></Button>
             </div>
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -117,7 +122,7 @@ export default function CashbookPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((e) => (
+                {pagedEntries.map((e) => (
                   <TableRow key={e.id}>
                     <TableCell>{fmtDate(e.entryDate || e.createdAt)}</TableCell>
                     <TableCell className="font-medium">{e.reference || "-"}</TableCell>
@@ -134,6 +139,8 @@ export default function CashbookPage() {
                 ))}
               </TableBody>
             </Table>
+          <TablePagination total={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+            </>
           )}
         </CardContent>
       </Card>

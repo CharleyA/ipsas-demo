@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
+import { TablePagination, usePagination } from "@/components/ui/table-pagination";
 
 type AssetRegisterRow = {
   id: string;
@@ -69,6 +70,8 @@ export default function AssetsPage() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [locationFilter, setLocationFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const fetchAssets = async () => {
     setIsLoading(true);
@@ -148,6 +151,7 @@ export default function AssetsPage() {
 
     return matchesSearch && matchesCategory && matchesLocation;
   });
+  const pagedAssets = usePagination(filteredAssets, pageSize, page);
 
   const totalValue = assets.reduce(
     (sum, asset) => sum + Number(asset.acquisitionCost || 0),
@@ -295,10 +299,10 @@ export default function AssetsPage() {
                   placeholder="Search assets..."
                   className="pl-8"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 />
               </div>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); setPage(1); }}>
                 <SelectTrigger className="w-full md:w-56">
                   <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
@@ -311,7 +315,7 @@ export default function AssetsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={locationFilter} onValueChange={setLocationFilter}>
+              <Select value={locationFilter} onValueChange={(v) => { setLocationFilter(v); setPage(1); }}>
                 <SelectTrigger className="w-full md:w-56">
                   <SelectValue placeholder="Filter by location" />
                 </SelectTrigger>
@@ -340,6 +344,7 @@ export default function AssetsPage() {
               No assets found.
             </div>
           ) : (
+            <>
             <ScrollArea className="w-full whitespace-nowrap rounded-md border">
               <Table>
                 <TableHeader>
@@ -359,7 +364,7 @@ export default function AssetsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAssets.map((asset) => (
+                  {pagedAssets.map((asset) => (
                     <TableRow key={asset.id}>
                       <TableCell className="font-medium">
                         {asset.category?.code || "-"}
@@ -402,6 +407,8 @@ export default function AssetsPage() {
               </Table>
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
+          <TablePagination total={filteredAssets.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+            </>
           )}
         </CardContent>
       </Card>

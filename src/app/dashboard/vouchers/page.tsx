@@ -28,6 +28,7 @@ import { Plus, Search, Eye, Loader2, FilterX } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
+import { TablePagination, usePagination } from "@/components/ui/table-pagination";
 
 export default function VouchersPage() {
   const { token } = useAuth();
@@ -38,6 +39,8 @@ export default function VouchersPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const fetchVouchers = async () => {
     setIsLoading(true);
@@ -67,6 +70,7 @@ export default function VouchersPage() {
   const filteredVouchers = vouchers.filter(v => 
     `${v.number} ${v.description}`.toLowerCase().includes(search.toLowerCase())
   );
+  const pagedVouchers = usePagination(filteredVouchers, pageSize, page);
 
   const resetFilters = () => {
     setStatus("ALL");
@@ -103,7 +107,7 @@ export default function VouchersPage() {
                   placeholder="Search voucher # or desc..."
                   className="pl-8"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 />
               </div>
                 <div className="flex items-center gap-2">
@@ -121,7 +125,7 @@ export default function VouchersPage() {
                     onChange={(e) => setEndDate(e.target.value)}
                   />
                 </div>
-                <Select value={type} onValueChange={setType}>
+                <Select value={type} onValueChange={(v) => { setType(v); setPage(1); }}>
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder="Type" />
                   </SelectTrigger>
@@ -134,7 +138,7 @@ export default function VouchersPage() {
                     <SelectItem value="BILL">Bill</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select value={status} onValueChange={setStatus}>
+                <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
@@ -165,6 +169,7 @@ export default function VouchersPage() {
               No vouchers found matching your criteria.
             </div>
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -177,7 +182,7 @@ export default function VouchersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredVouchers.map((voucher) => (
+                {pagedVouchers.map((voucher) => (
                   <TableRow key={voucher.id}>
                     <TableCell className="font-medium">
                       {voucher.number}
@@ -213,6 +218,8 @@ export default function VouchersPage() {
                 ))}
               </TableBody>
             </Table>
+          <TablePagination total={filteredVouchers.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+            </>
           )}
         </CardContent>
       </Card>

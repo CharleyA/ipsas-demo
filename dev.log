@@ -4475,3 +4475,63 @@ prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notificatio
 prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
 prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
  GET /api/notifications 200 in 67ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 30ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 67ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 46ms
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."organisationId", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt", "public"."notifications"."updatedAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notifications"."id" FROM "public"."notifications" WHERE ("public"."notifications"."userId" = $1 AND "public"."notifications"."isRead" = $2) OFFSET $3) AS "sub"
+ GET /api/notifications 200 in 69ms
+ ○ Compiling /_not-found/page ...
+ ✓ Compiled /_not-found/page in 766ms
+ GET /dashboard/assets/register/cmnmfgats0000b4wo2jafuc8b 404 in 797ms
+ GET /dashboard/assets/register/cmnmfgats0000b4wo2jafuc8b 404 in 64ms
+ GET /dashboard/assets/register/cmnmfgats0000b4wo2jafuc8b?_cb=1775434445383 404 in 59ms
+ GET /dashboard/assets/register/cmnmfgats0000b4wo2jafuc8b?_cb=1775434529731 404 in 32ms
+ GET /dashboard/assets/register/cmnmfgats0000b4wo2jafuc8b?_cb=1775434530262 404 in 64ms
+ GET /dashboard/assets/register/cmnmfgats0000b4wo2jafuc8b?_cb=1775434530673 404 in 60ms
+ ✓ Compiled in 200ms
+ ○ Compiling /dashboard/procurement/purchase-orders ...
+ ✓ Compiled /dashboard/procurement/purchase-orders in 1635ms
+ ⨯ ./src/app/dashboard/procurement/purchase-orders/page.tsx
+Error evaluating Node.js code
+SyntaxError: Adjacent JSX elements must be wrapped in an enclosing tag. Did you want a JSX fragment <>...</>? (125:10)
+    [at toParseError (/home/user/app/node_modules/@babel/parser/src/parse-error.ts:95:45)]
+    [at TypeScriptParserMixin.raise (/home/user/app/node_modules/@babel/parser/src/tokenizer/index.ts:1507:19)]
+    [at TypeScriptParserMixin.jsxParseElementAt (/home/user/app/node_modules/@babel/parser/src/plugins/jsx/index.ts:543:20)]
+    [at TypeScriptParserMixin.jsxParseElement (/home/user/app/node_modules/@babel/parser/src/plugins/jsx/index.ts:559:19)]
+    [at TypeScriptParserMixin.parseExprAtom (/home/user/app/node_modules/@babel/parser/src/plugins/jsx/index.ts:573:21)]
+    [at TypeScriptParserMixin.parseExprSubscripts (/home/user/app/node_modules/@babel/parser/src/parser/expression.ts:742:23)]
+    [at TypeScriptParserMixin.parseUpdate (/home/user/app/node_modules/@babel/parser/src/parser/expression.ts:721:21)]
+    [at TypeScriptParserMixin.parseMaybeUnary (/home/user/app/node_modules/@babel/parser/src/parser/expression.ts:683:23)]
+    [at TypeScriptParserMixin.parseMaybeUnary (/home/user/app/node_modules/@babel/parser/src/plugins/typescript/index.ts:3876:20)]
+    [at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/home/user/app/node_modules/@babel/parser/src/parser/expression.ts:417:14)]
+
+
+
+./src/app/dashboard/procurement/purchase-orders/page.tsx:52:6
+Parsing ecmascript source code failed
+[0m [90m 50 |[39m[0m
+[0m [90m 51 |[39m   [36mreturn[39m ([0m
+[0m[31m[1m>[22m[39m[90m 52 |[39m     [33m<[39m[33mdiv[39m className[33m=[39m[32m"space-y-6"[39m[33m>[39m[0m
+[0m [90m    |[39m      [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[0m
+[0m [90m 53 |[39m       [33m<[39m[33mdiv[39m className[33m=[39m[32m"flex items-center justify-between"[39m[33m>[39m[0m
+[0m [90m 54 |[39m         [33m<[39m[33mdiv[39m[33m>[39m[0m
+[0m [90m 55 |[39m           [33m<[39m[33mh1[39m className[33m=[39m[32m"text-3xl font-bold tracking-tight"[39m[33m>[39m[33mPurchase[39m [33mOrders[39m[33m<[39m[33m/[39m[33mh1[39m[33m>[39m[0m
+
+Unexpected token `div`. Expected jsx identifier
+
+
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 1240ms
+ GET /dashboard/procurement/purchase-orders 500 in 3053ms
+ ✓ Compiled in 1030ms
+ GET / 200 in 143ms
+ ○ Compiling /dashboard/students ...
+ ✓ Compiled /dashboard/students in 1654ms
+ GET /dashboard/students?_cb=1775434530673 200 in 1773ms
