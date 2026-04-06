@@ -59,7 +59,7 @@ export default function InventoryMovementsPage() {
             <Link href="/dashboard/inventory/issue"><ArrowUpDown className="w-4 h-4 mr-2" />Issue Stock</Link>
           </Button>
           <Button asChild>
-            <Link href="/dashboard/inventory/items/new"><Plus className="w-4 h-4 mr-2" />Receive Stock</Link>
+            <Link href="/dashboard/inventory/receipts"><Plus className="w-4 h-4 mr-2" />Receive Stock</Link>
           </Button>
         </div>
       </div>
