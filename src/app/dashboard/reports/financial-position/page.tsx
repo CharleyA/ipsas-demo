@@ -241,6 +241,19 @@ export default function FinancialPositionPage() {
             </div>
           </div>
 
+          {/* Balance equation warning */}
+          {data.summary.isBalanced === false && (
+            <div className="mb-4 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-800 print:hidden">
+              <span className="mt-0.5 text-lg">⚠️</span>
+              <div>
+                <p className="font-semibold text-sm">Balance Sheet Does Not Balance</p>
+                <p className="text-xs mt-0.5">
+                  Assets ≠ Liabilities + Net Assets. Imbalance: <strong>{reportingCurrency} {Number(data.summary.imbalance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong>. Check that all accounts are correctly mapped to statement lines.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Info Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print:grid-cols-4">
             <SummaryCard 

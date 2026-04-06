@@ -239,6 +239,12 @@ const menuItems = [
             icon: ClipboardCheck,
             roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
           },
+          {
+            title: "Stock Take",
+            href: "/dashboard/inventory/stock-take",
+            icon: ListChecks,
+            roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
+          },
         ],
       },
       {

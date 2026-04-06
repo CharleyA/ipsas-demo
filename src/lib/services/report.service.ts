@@ -15,6 +15,7 @@ export class ReportService {
       glHeader: {
         organisationId,
         entryDate: { lte: endDate },
+        voucher: { status: "POSTED" },
       },
     };
 
@@ -431,11 +432,19 @@ export class ReportService {
       const liabilities = rows.find(r => r.name.toLowerCase().includes("liabilit"))?.amount || new Decimal(0);
       const netAssets = rows.find(r => r.name.toLowerCase().includes("net asset") || r.name.toLowerCase().includes("equity"))?.amount || assets.add(liabilities);
 
+      // Balance sheet equation: Assets = Liabilities + Net Assets
+      // In debit-normal terms: assets (Dr) + liabilities (Cr) + netAssets (Cr) should sum to ~0
+      const totalAllSections = rows.reduce((acc, r) => acc.add(r.amount), new Decimal(0));
+      const imbalance = totalAllSections.abs();
+      const isBalanced = imbalance.lte(new Decimal("0.01"));
+
       summary = {
         totalAssets: assets.abs(),
         totalLiabilities: liabilities.abs(),
         netAssets: netAssets.abs(),
         equity: netAssets.abs(),
+        isBalanced,
+        imbalance,
       };
 
       chartData = {
