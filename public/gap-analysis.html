@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IPSAS School Finance System – Gap Analysis & Implementation Roadmap</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 10.5pt;
+    color: #1a202c;
+    background: #ffffff;
+    line-height: 1.55;
+  }
+
+  /* ── Cover Page ── */
+  .cover {
+    page-break-after: always;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(145deg, #0f2044 0%, #1a3a6e 55%, #1e4d94 100%);
+    color: #ffffff;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover-accent {
+    position: absolute;
+    top: 0; right: 0;
+    width: 340px; height: 340px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+    transform: translate(120px, -120px);
+  }
+  .cover-accent2 {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 420px; height: 420px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 50%;
+    transform: translate(-160px, 160px);
+  }
+  .cover-header {
+    padding: 48px 64px 0 64px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .cover-logo {
+    width: 44px; height: 44px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .cover-org {
+    font-size: 11pt;
+    font-weight: 600;
+    opacity: 0.85;
+    letter-spacing: 0.5px;
+  }
+  .cover-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 48px 64px;
+  }
+  .cover-tag {
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 20px;
+  }
+  .cover-title {
+    font-size: 32pt;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    max-width: 580px;
+  }
+  .cover-subtitle {
+    font-size: 14pt;
+    font-weight: 400;
+    opacity: 0.7;
+    max-width: 500px;
+    margin-bottom: 52px;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 48px;
+  }
+  .cover-meta-item label {
+    font-size: 8.5pt;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .cover-meta-item span {
+    font-size: 11pt;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+  }
+  .cover-footer {
+    padding: 32px 64px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9pt;
+    opacity: 0.5;
+  }
+
+  /* ── Page layout ── */
+  .page {
+    page-break-before: auto;
+    padding: 52px 64px;
+    max-width: 100%;
+  }
+  .page-break { page-break-before: always; }
+
+  /* ── Section headers ── */
+  .section-label {
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin-bottom: 8px;
+  }
+  h1.section-title {
+    font-size: 20pt;
+    font-weight: 800;
+    color: #0f2044;
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+  .section-desc {
+    font-size: 10.5pt;
+    color: #4b5563;
+    margin-bottom: 32px;
+    max-width: 640px;
+  }
+  h2.sub-title {
+    font-size: 14pt;
+    font-weight: 700;
+    color: #1a202c;
+    margin: 28px 0 14px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  h3.item-title {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 4px;
+  }
+
+  /* ── Divider ── */
+  .divider { height: 1px; background: #e5e7eb; margin: 24px 0; }
+
+  /* ── Executive summary cards ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .summary-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 18px 20px;
+    text-align: center;
+  }
+  .summary-card .num {
+    font-size: 28pt;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .summary-card .lbl {
+    font-size: 8.5pt;
+    color: #6b7280;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .num-green  { color: #16a34a; }
+  .num-yellow { color: #d97706; }
+  .num-red    { color: #dc2626; }
+  .num-blue   { color: #2563eb; }
+
+  /* ── Status badge ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 99px;
+    font-size: 8.5pt;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .badge-green  { background: #dcfce7; color: #15803d; }
+  .badge-yellow { background: #fef9c3; color: #b45309; }
+  .badge-red    { background: #fee2e2; color: #b91c1c; }
+  .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+  .badge-gray   { background: #f3f4f6; color: #374151; }
+  .badge-purple { background: #f3e8ff; color: #7c3aed; }
+
+  /* ── Priority badge ── */
+  .priority {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 4px;
+    font-size: 8pt;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .p-critical { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+  .p-high     { background: #fff7ed; color: #9a3412; border: 1px solid #fdba74; }
+  .p-medium   { background: #fefce8; color: #854d0e; border: 1px solid #fde047; }
+  .p-low      { background: #f0fdf4; color: #166534; border: 1px solid #86efac; }
+
+  /* ── Implementation table ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+    margin-bottom: 24px;
+  }
+  thead tr { background: #0f2044; color: #fff; }
+  thead th {
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 8.5pt;
+    letter-spacing: 0.3px;
+  }
+  tbody tr { border-bottom: 1px solid #e5e7eb; }
+  tbody tr:nth-child(even) { background: #f9fafb; }
+  tbody td { padding: 9px 12px; vertical-align: top; }
+  tbody td.mono { font-family: 'Courier New', monospace; font-size: 8.5pt; color: #374151; }
+
+  /* ── Gap item card ── */
+  .gap-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    margin-bottom: 18px;
+    overflow: hidden;
+  }
+  .gap-card-header {
+    padding: 14px 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .gap-card-num {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    background: #0f2044;
+    color: #fff;
+    font-size: 12pt;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .gap-card-meta { flex: 1; }
+  .gap-card-title {
+    font-size: 11.5pt;
+    font-weight: 700;
+    color: #0f2044;
+    margin-bottom: 4px;
+  }
+  .gap-card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .gap-card-body { padding: 14px 18px; }
+  .gap-card-body p { margin-bottom: 8px; color: #374151; }
+  .gap-card-body strong { color: #1a202c; }
+
+  .detail-row {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-size: 9.5pt;
+  }
+  .detail-row .label { font-weight: 700; color: #6b7280; }
+  .detail-row .value { color: #374151; }
+  .detail-row .value code {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 8pt;
+    color: #d63131;
+  }
+
+  /* ── Working items table ── */
+  .working-table td:first-child { font-weight: 600; }
+  .check { color: #16a34a; font-weight: 700; font-size: 12pt; }
+  .warn  { color: #d97706; font-weight: 700; font-size: 12pt; }
+
+  /* ── Roadmap timeline ── */
+  .timeline { margin-bottom: 24px; }
+  .timeline-row {
+    display: flex;
+    gap: 0;
+    margin-bottom: 0;
+  }
+  .timeline-phase {
+    flex: 1;
+    padding: 14px 16px;
+    border: 1px solid #e5e7eb;
+    border-right: none;
+    position: relative;
+  }
+  .timeline-phase:last-child { border-right: 1px solid #e5e7eb; border-radius: 0 8px 8px 0; }
+  .timeline-phase:first-child { border-radius: 8px 0 0 8px; }
+  .timeline-phase-label {
+    font-size: 8pt;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .timeline-phase-title {
+    font-size: 10pt;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .timeline-phase ul {
+    list-style: none;
+    padding: 0;
+  }
+  .timeline-phase ul li {
+    font-size: 8.5pt;
+    color: #374151;
+    padding: 2px 0;
+    display: flex;
+    gap: 5px;
+    align-items: baseline;
+  }
+  .timeline-phase ul li::before {
+    content: "→";
+    color: #9ca3af;
+    font-size: 9pt;
+    flex-shrink: 0;
+  }
+  .phase-1 { background: #fef2f2; border-color: #fca5a5; }
+  .phase-1 .timeline-phase-label { color: #dc2626; }
+  .phase-2 { background: #fff7ed; border-color: #fdba74; }
+  .phase-2 .timeline-phase-label { color: #ea580c; }
+  .phase-3 { background: #fefce8; border-color: #fde047; }
+  .phase-3 .timeline-phase-label { color: #ca8a04; }
+  .phase-4 { background: #f0fdf4; border-color: #86efac; }
+  .phase-4 .timeline-phase-label { color: #16a34a; }
+
+  /* ── Code block ── */
+  .code-block {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-family: 'Courier New', monospace;
+    font-size: 8.5pt;
+    line-height: 1.6;
+    margin: 10px 0;
+    overflow: hidden;
+  }
+  .code-comment { color: #64748b; }
+  .code-keyword { color: #93c5fd; }
+  .code-string  { color: #86efac; }
+  .code-type    { color: #fda4af; }
+
+  /* ── Footer ── */
+  @page { margin: 0; size: A4; }
+
+  .page-footer {
+    position: fixed;
+    bottom: 28px;
+    left: 64px;
+    right: 64px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 8pt;
+    color: #9ca3af;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 10px;
+  }
+
+  /* ── Info box ── */
+  .info-box {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-left: 4px solid #3b82f6;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 9.5pt;
+    color: #1e40af;
+  }
+  .warn-box {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 9.5pt;
+    color: #92400e;
+  }
+  .success-box {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-left: 4px solid #22c55e;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 9.5pt;
+    color: #14532d;
+  }
+
+  ul.clean { list-style: none; padding: 0; }
+  ul.clean li { padding: 3px 0; display: flex; gap: 8px; }
+  ul.clean li::before { content: "•"; color: #3b82f6; font-weight: 700; }
+
+  ul.checklist { list-style: none; padding: 0; }
+  ul.checklist li { padding: 3px 0; display: flex; gap: 8px; font-size: 9.5pt; }
+  ul.checklist li.done::before { content: "✓"; color: #16a34a; font-weight: 800; }
+  ul.checklist li.gap::before  { content: "✗"; color: #dc2626; font-weight: 800; }
+  ul.checklist li.warn::before { content: "△"; color: #d97706; font-weight: 800; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ COVER PAGE ══════════════ -->
+<div class="cover">
+  <div class="cover-accent"></div>
+  <div class="cover-accent2"></div>
+
+  <div class="cover-header">
+    <div class="cover-logo">📊</div>
+    <div class="cover-org">IPSAS School Finance System</div>
+  </div>
+
+  <div class="cover-body">
+    <div class="cover-tag">Internal Technical Document</div>
+    <div class="cover-title">Gap Analysis &amp;<br/>Implementation Roadmap</div>
+    <div class="cover-subtitle">
+      A comprehensive review of the current system state against IPSAS compliance requirements, with prioritised fixes and a phased implementation plan.
+    </div>
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <label>Date</label>
+        <span>April 2026</span>
+      </div>
+      <div class="cover-meta-item">
+        <label>System</label>
+        <span>IPSAS Finance v2</span>
+      </div>
+      <div class="cover-meta-item">
+        <label>Stack</label>
+        <span>Next.js 15 · Prisma · PostgreSQL</span>
+      </div>
+      <div class="cover-meta-item">
+        <label>Status</label>
+        <span>Active Development</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cover-footer">
+    <span>Confidential – Internal Use Only</span>
+    <span>CharleyA / ipsas-demo</span>
+  </div>
+</div>
+
+<!-- ══════════════ PAGE 1 – EXECUTIVE SUMMARY ══════════════ -->
+<div class="page">
+  <div class="section-label">Section 1</div>
+  <h1 class="section-title">Executive Summary</h1>
+  <p class="section-desc">
+    This document presents a dual-source gap analysis: a manual review of the attached PDF specification and an independent code inspection of the live repository. The findings are reconciled, deduplicated, and prioritised into a phased implementation plan.
+  </p>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="num num-green">15</div>
+      <div class="lbl">Features Complete</div>
+    </div>
+    <div class="summary-card">
+      <div class="num num-yellow">5</div>
+      <div class="lbl">Partially Done</div>
+    </div>
+    <div class="summary-card">
+      <div class="num num-red">8</div>
+      <div class="lbl">Gaps Identified</div>
+    </div>
+    <div class="summary-card">
+      <div class="num num-blue">4</div>
+      <div class="lbl">Critical / High Priority</div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>Methodology:</strong> The PDF specification (13 pages) was compared against a full code inspection of 47 API routes, 6 service files, the Prisma schema (38 models), and all dashboard pages. Each claim in the PDF was verified against actual running code, not assumptions.
+  </div>
+
+  <h2 class="sub-title">Key Findings at a Glance</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Domain</th>
+        <th>PDF Assessment</th>
+        <th>Code Reality</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Financial Statements (FP, FPerf, CF)</strong></td>
+        <td>Partially reliable; needs validation</td>
+        <td>Logic is sound; relies on StatementLine seed completeness</td>
+        <td><span class="badge badge-yellow">Conditional</span></td>
+      </tr>
+      <tr>
+        <td><strong>Trial Balance</strong></td>
+        <td>Present</td>
+        <td>Missing POSTED-only filter — includes draft vouchers</td>
+        <td><span class="badge badge-red">Bug</span></td>
+      </tr>
+      <tr>
+        <td><strong>General Ledger</strong></td>
+        <td>Needs consolidated view</td>
+        <td>Per-account only; no cross-account consolidated view</td>
+        <td><span class="badge badge-yellow">Partial</span></td>
+      </tr>
+      <tr>
+        <td><strong>Budget vs Actuals</strong></td>
+        <td>Missing</td>
+        <td>Implemented &amp; fixed (debitLc/glHeader)</td>
+        <td><span class="badge badge-green">Done</span></td>
+      </tr>
+      <tr>
+        <td><strong>Departmental Expenditure</strong></td>
+        <td>Missing</td>
+        <td>Implemented &amp; fixed</td>
+        <td><span class="badge badge-green">Done</span></td>
+      </tr>
+      <tr>
+        <td><strong>AR / AP Ageing</strong></td>
+        <td>Present</td>
+        <td>Currency filter excludes cross-currency invoices in totals</td>
+        <td><span class="badge badge-yellow">Partial</span></td>
+      </tr>
+      <tr>
+        <td><strong>Stock Take</strong></td>
+        <td>Missing UX; DB tables absent</td>
+        <td>Schema, API &amp; full UX rebuilt this session</td>
+        <td><span class="badge badge-green">Done</span></td>
+      </tr>
+      <tr>
+        <td><strong>Inventory Variance Report</strong></td>
+        <td>Required</td>
+        <td>No dedicated page or API exists</td>
+        <td><span class="badge badge-red">Missing</span></td>
+      </tr>
+      <tr>
+        <td><strong>Stock Requisition → Issue → Movement</strong></td>
+        <td>Workflow present</td>
+        <td>Issue action does not create InventoryMovement record</td>
+        <td><span class="badge badge-red">Bug</span></td>
+      </tr>
+      <tr>
+        <td><strong>Voucher Reject Route</strong></td>
+        <td>Missing</td>
+        <td>Added this session</td>
+        <td><span class="badge badge-green">Done</span></td>
+      </tr>
+      <tr>
+        <td><strong>Exceptions &amp; Audit Report</strong></td>
+        <td>Required</td>
+        <td>Full ExceptionReportService with 7 sections</td>
+        <td><span class="badge badge-green">Done</span></td>
+      </tr>
+      <tr>
+        <td><strong>Multi-Currency Integrity</strong></td>
+        <td>Needs discipline</td>
+        <td>debitLc/creditLc vs debitFc/creditFc correctly handled in reports</td>
+        <td><span class="badge badge-yellow">Partial</span></td>
+      </tr>
+      <tr>
+        <td><strong>Demo Data Realism</strong></td>
+        <td>Needs enrichment</td>
+        <td>Minimal seed — flat charts, limited transactions</td>
+        <td><span class="badge badge-yellow">Thin</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════ PAGE 2 – WHAT IS WORKING ══════════════ -->
+<div class="page page-break">
+  <div class="section-label">Section 2</div>
+  <h1 class="section-title">Confirmed Working Features</h1>
+  <p class="section-desc">
+    Features below were verified against source code. Each is production-ready or requires only minor data-seeding to activate.
+  </p>
+
+  <h2 class="sub-title">Financial Reporting</h2>
+  <table class="working-table">
+    <thead>
+      <tr><th>Feature</th><th>Key File(s)</th><th>Notes</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Financial Position (Balance Sheet)</td>
+        <td class="mono">report.service.ts:518</td>
+        <td>StatementLine tree + account hierarchy + currency switching</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Financial Performance (Income Statement)</td>
+        <td class="mono">report.service.ts:522</td>
+        <td>Revenue/Expense summary, surplus calculation, margin %</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Cash Flow Statement</td>
+        <td class="mono">report.service.ts:526</td>
+        <td>Operating/Investing/Financing via CF-100/200/300 codes</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Trial Balance</td>
+        <td class="mono">report.service.ts:8</td>
+        <td>groupBy accountId; debitLc/creditLc — <em>missing POSTED filter</em></td>
+        <td><span class="warn">△</span></td>
+      </tr>
+      <tr>
+        <td>General Ledger (per account)</td>
+        <td class="mono">report.service.ts:72</td>
+        <td>Paginated, opening balance, running balance, charts, Lc/Fc</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Budget vs Actuals</td>
+        <td class="mono">api/reports/budget-vs-actuals</td>
+        <td>Fixed: glHeader relation + debitLc/creditLc; chart by account type</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Departmental Expenditure</td>
+        <td class="mono">api/reports/departmental-expenditure</td>
+        <td>Cost centre grouping; fund dimension; top-8 chart</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>AR Ageing</td>
+        <td class="mono">report.service.ts:530</td>
+        <td>Buckets: Current / 31–60 / 61–90 / 91–120 / 121+ days</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>AP Ageing</td>
+        <td class="mono">report.service.ts:548</td>
+        <td>Same bucket logic for supplier bills</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Exceptions &amp; Audit Report</td>
+        <td class="mono">exception-report.service.ts</td>
+        <td>7 sections: backdated, reopened, missing attachments, journals, overrides, reversals</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Audit Log</td>
+        <td class="mono">report.service.ts:299</td>
+        <td>Full filter by user, entity, action, date range</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="sub-title">Accounting Workflows</h2>
+  <table class="working-table">
+    <thead>
+      <tr><th>Feature</th><th>Key File(s)</th><th>Notes</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Manual Journals (GL Vouchers)</td>
+        <td class="mono">api/vouchers</td>
+        <td>Create, submit, approve, post, reject lifecycle complete</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>AR Invoice → Post → GL</td>
+        <td class="mono">api/ar/invoices</td>
+        <td>Voucher created on post; debitFc/creditFc written for USD</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>AR Receipt / Payment</td>
+        <td class="mono">api/ar/receipts</td>
+        <td>Balance deducted from invoice on allocation</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>AP Bill → Post → GL</td>
+        <td class="mono">api/ap/bills</td>
+        <td>Supplier payable posted to GL on approve/post</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>AP Payment</td>
+        <td class="mono">api/ap/payments</td>
+        <td>Clears supplier bill balance</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Bulk Invoice Generation</td>
+        <td class="mono">api/ar/invoices/bulk-generate</td>
+        <td>Fee templates → batch invoice for all students</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Procurement (PO → GRN → AP Bill)</td>
+        <td class="mono">api/procurement</td>
+        <td>3-way matching implemented</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Fixed Asset Register</td>
+        <td class="mono">api/assets</td>
+        <td>Categories, depreciation run, pending from GRN</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="sub-title">Inventory &amp; Stock</h2>
+  <table class="working-table">
+    <thead>
+      <tr><th>Feature</th><th>Key File(s)</th><th>Notes</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Inventory Items &amp; Categories</td>
+        <td class="mono">api/inventory/items</td>
+        <td>Full CRUD; linked to GL account</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Inventory Receipts</td>
+        <td class="mono">dashboard/inventory/receipts</td>
+        <td>GRN-linked receipts increase stock balance</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+      <tr>
+        <td>Stock Requisitions</td>
+        <td class="mono">api/inventory/requisitions</td>
+        <td>Draft → Submit → Approve flow; issue step present</td>
+        <td><span class="warn">△</span></td>
+      </tr>
+      <tr>
+        <td>Stock Take (Session + Count)</td>
+        <td class="mono">api/inventory/stock-take</td>
+        <td>Rebuilt this session — DRAFT→COUNTED→APPROVED→POSTED</td>
+        <td><span class="check">✓</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════ PAGE 3 – GAP DETAILS ══════════════ -->
+<div class="page page-break">
+  <div class="section-label">Section 3</div>
+  <h1 class="section-title">Detailed Gap Analysis</h1>
+  <p class="section-desc">
+    Each gap below is documented with its root cause, affected files, risk level, and recommended fix. Items are ordered by priority.
+  </p>
+
+  <!-- GAP 1 -->
+  <div class="gap-card">
+    <div class="gap-card-header">
+      <div class="gap-card-num">1</div>
+      <div class="gap-card-meta">
+        <div class="gap-card-title">Trial Balance Includes Unposted Vouchers</div>
+        <div class="gap-card-tags">
+          <span class="priority p-critical">Critical</span>
+          <span class="badge badge-red">Data Integrity</span>
+          <span class="badge badge-gray">5-Minute Fix</span>
+        </div>
+      </div>
+    </div>
+    <div class="gap-card-body">
+      <p>
+        The <code>getTrialBalance()</code> method queries <strong>all GL entries</strong> without filtering for <code>voucher.status = "POSTED"</code>. This means draft, pending, and rejected vouchers inflate the Trial Balance figures, leading to financial misstatement.
+      </p>
+      <div class="detail-row">
+        <span class="label">Affected File</span>
+        <span class="value"><code>src/lib/services/report.service.ts</code> — lines 14–31</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Root Cause</span>
+        <span class="value">The <code>glHeader</code> where clause only filters by <code>organisationId</code> and <code>entryDate</code>. No <code>voucher: &#123; status: "POSTED" &#125;</code> condition present.</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Risk</span>
+        <span class="value">Trial Balance will not match Financial Statements (which use the same GLEntry table correctly in getFinancialStatement). Auditors will immediately notice the discrepancy.</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Fix</span>
+        <span class="value">Add <code>voucher: &#123; status: "POSTED" &#125;</code> to the <code>glHeader</code> filter in <code>getTrialBalance()</code>. One line change.</span>
+      </div>
+      <div class="warn-box">
+        <strong>Note:</strong> This is also missing from <code>getTrialBalance()</code> but correctly present in <code>getFinancialStatement()</code> — confirming this is an oversight, not an architectural decision.
+      </div>
+    </div>
+  </div>
+
+  <!-- GAP 2 -->
+  <div class="gap-card">
+    <div class="gap-card-header">
+      <div class="gap-card-num">2</div>
+      <div class="gap-card-meta">
+        <div class="gap-card-title">Financial Statements Silently Return Zero if Statement Lines Not Seeded</div>
+        <div class="gap-card-tags">
+          <span class="priority p-high">High</span>
+          <span class="badge badge-yellow">Reliability</span>
+          <span class="badge badge-blue">Setup Dependency</span>
+        </div>
+      </div>
+    </div>
+    <div class="gap-card-body">
+      <p>
+        <code>getFinancialStatement()</code> relies entirely on the <code>StatementLine</code> and <code>AccountStatementMap</code> tables being correctly seeded. If a new organisation is created without running the COA seed, all three financial statements (Financial Position, Financial Performance, Cash Flow) return empty rows with zero totals — no error, no warning.
+      </p>
+      <div class="detail-row">
+        <span class="label">Affected Files</span>
+        <span class="value"><code>report.service.ts:326–515</code>, all three financial statement pages</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Root Cause</span>
+        <span class="value">Architecture is correct — tree-based statement lines are powerful. But there is no validation or warning when the seed is absent.</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Risk</span>
+        <span class="value">A user in a demo or new environment sees all-zero reports and assumes the system is broken or that no transactions exist.</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Fix</span>
+        <span class="value">Add a <code>_meta.mappedAccountCount</code> field to the response. If 0, the API returns HTTP 200 with a <code>warning: "No statement lines configured"</code> message. The UI surfaces this with a setup prompt.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAP 3 -->
+  <div class="gap-card">
+    <div class="gap-card-header">
+      <div class="gap-card-num">3</div>
+      <div class="gap-card-meta">
+        <div class="gap-card-title">Stock Requisition Issue Does Not Create Inventory Movement</div>
+        <div class="gap-card-tags">
+          <span class="priority p-high">High</span>
+          <span class="badge badge-red">Data Integrity</span>
+          <span class="badge badge-gray">Inventory</span>
+        </div>
+      </div>
+    </div>
+    <div class="gap-card-body">
+      <p>
+        When a stock requisition is fulfilled (status → <code>FULLY_ISSUED</code>), the system updates <code>qtyIssued</code> on the requisition lines but <strong>does not</strong> call <code>InventoryMovementService</code> to decrement the item's on-hand quantity. The stock balance never decreases, making the inventory count permanently incorrect.
+      </p>
+      <div class="detail-row">
+        <span class="label">Affected File</span>
+        <span class="value"><code>src/app/api/inventory/requisitions/[id]/route.ts</code> — issue action handler</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Root Cause</span>
+        <span class="value">The issue workflow was implemented at the requisition level without wiring up the downstream inventory ledger write. Two separate concerns were not connected.</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Risk</span>
+        <span class="value">Inventory reports, stock take variances, and reorder calculations are all based on stale quantity data. The stock take will always show large positive variances because the system quantity is never decremented.</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Fix</span>
+        <span class="value">After updating <code>qtyIssued</code>, call <code>prisma.inventoryMovement.create(&#123; type: "ISSUE", quantity: -qty, ... &#125;)</code> for each requisition line. Update the item's <code>quantity</code> field accordingly.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAP 4 -->
+  <div class="gap-card">
+    <div class="gap-card-header">
+      <div class="gap-card-num">4</div>
+      <div class="gap-card-meta">
+        <div class="gap-card-title">Inventory Variance Report — Page and API Missing</div>
+        <div class="gap-card-tags">
+          <span class="priority p-medium">Medium</span>
+          <span class="badge badge-yellow">Feature Gap</span>
+          <span class="badge badge-gray">2–3 Hours</span>
+        </div>
+      </div>
+    </div>
+    <div class="gap-card-body">
+      <p>
+        Stock takes record variances (physical qty vs system qty) but there is no dedicated report to view these variances across sessions, items, or time periods. The variance data sits in <code>stock_take_lines</code> but is inaccessible from the UI without opening each session individually.
+      </p>
+      <div class="detail-row">
+        <span class="label">Missing Files</span>
+        <span class="value"><code>src/app/dashboard/inventory/variance-report/page.tsx</code>, <code>src/app/api/inventory/variance-report/route.ts</code></span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Required Data</span>
+        <span class="value">Join <code>StockTakeLine → InventoryItem → StockTakeSession</code>; filter where <code>variance ≠ 0</code>; calculate cost impact using item's average cost.</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">PDF Requirement</span>
+        <span class="value">The attached spec explicitly lists "Variance Report" and "Value of Variance" as required outputs from the stock governance module.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAP 5 -->
+  <div class="gap-card">
+    <div class="gap-card-header">
+      <div class="gap-card-num">5</div>
+      <div class="gap-card-meta">
+        <div class="gap-card-title">AR/AP Ageing: Multi-Currency FX Not Converted</div>
+        <div class="gap-card-tags">
+          <span class="priority p-medium">Medium</span>
+          <span class="badge badge-yellow">Multi-Currency</span>
+          <span class="badge badge-gray">3–4 Hours</span>
+        </div>
+      </div>
+    </div>
+    <div class="gap-card-body">
+      <p>
+        <code>getARAgeing()</code> and <code>getAPAgeing()</code> pass <code>currencyCode: options.reportingCurrency</code> directly into the Prisma <code>where</code> clause. This excludes invoices in other currencies from the totals entirely. A request for ZWG totals will silently omit all USD invoices.
+      </p>
+      <div class="detail-row">
+        <span class="label">Affected File</span>
+        <span class="value"><code>report.service.ts:530–564</code></span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Correct Behaviour</span>
+        <span class="value">All invoices should appear regardless of currency. If the reporting currency differs from the invoice currency, the balance should be converted using the voucher's <code>fxRate</code>.</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Fix</span>
+        <span class="value">Remove the <code>currencyCode</code> filter from the <code>where</code> clause. Include the invoice's <code>currencyCode</code> and <code>voucher.fxRate</code> in the query. In <code>calculateAgeing()</code>, multiply <code>balance</code> by <code>fxRate</code> when currencies differ.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAP 6 -->
+  <div class="gap-card">
+    <div class="gap-card-header">
+      <div class="gap-card-num">6</div>
+      <div class="gap-card-meta">
+        <div class="gap-card-title">Consolidated General Ledger (All Accounts) Missing</div>
+        <div class="gap-card-tags">
+          <span class="priority p-medium">Medium</span>
+          <span class="badge badge-purple">Feature Gap</span>
+          <span class="badge badge-gray">2–3 Hours</span>
+        </div>
+      </div>
+    </div>
+    <div class="gap-card-body">
+      <p>
+        The current General Ledger report is account-specific: users must select an account before viewing entries. The PDF specification requires a consolidated view showing all accounts' movements in a date range, filterable by source module, account type, fund, and cost centre — similar to a full journal listing.
+      </p>
+      <div class="detail-row">
+        <span class="label">Current Behaviour</span>
+        <span class="value"><code>GET /api/reports/general-ledger?accountId=xxx</code> — requires a specific account ID</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Required Behaviour</span>
+        <span class="value"><code>GET /api/reports/general-ledger</code> (no accountId) — returns all entries across all accounts, paginated, with filter params</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Fix</span>
+        <span class="value">Make <code>accountId</code> optional in <code>getGeneralLedger()</code>. When absent, omit the <code>accountId</code> filter and group/sort by account + date. Add <code>sourceModule</code> and <code>accountType</code> filter params.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAP 7 -->
+  <div class="gap-card">
+    <div class="gap-card-header">
+      <div class="gap-card-num">7</div>
+      <div class="gap-card-meta">
+        <div class="gap-card-title">Stock Take Not Linked in Sidebar Navigation</div>
+        <div class="gap-card-tags">
+          <span class="priority p-low">Low</span>
+          <span class="badge badge-gray">Navigation</span>
+          <span class="badge badge-gray">5-Minute Fix</span>
+        </div>
+      </div>
+    </div>
+    <div class="gap-card-body">
+      <p>
+        The Stock Take page exists at <code>/dashboard/inventory/stock-take</code> but there is no sidebar link pointing to it. Users can only reach it by typing the URL directly or navigating from the Inventory overview page — if that link exists.
+      </p>
+      <div class="detail-row">
+        <span class="label">Affected File</span>
+        <span class="value"><code>src/components/layout/app-sidebar.tsx</code> — Inventory sub-section</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Fix</span>
+        <span class="value">Add <code>&#123; title: "Stock Take", href: "/dashboard/inventory/stock-take", icon: ClipboardCheck &#125;</code> to the Inventory links array.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAP 8 -->
+  <div class="gap-card">
+    <div class="gap-card-header">
+      <div class="gap-card-num">8</div>
+      <div class="gap-card-meta">
+        <div class="gap-card-title">Demo Data Too Thin for Meaningful Report Previews</div>
+        <div class="gap-card-tags">
+          <span class="priority p-low">Low</span>
+          <span class="badge badge-gray">Demo Quality</span>
+          <span class="badge badge-gray">3–4 Hours</span>
+        </div>
+      </div>
+    </div>
+    <div class="gap-card-body">
+      <p>
+        The current seed file produces minimal data: a few invoices, one or two suppliers, and no historical GL entries. All charts appear flat or empty, which weakens the demo story. The PDF specification notes the need for realistic school-context data.
+      </p>
+      <div class="detail-row">
+        <span class="label">Affected File</span>
+        <span class="value"><code>prisma/seed.ts</code></span>
+      </div>
+      <div class="detail-row">
+        <span class="label">What's Needed</span>
+        <span class="value">24 months of monthly journal entries (salary, utilities, school fees), 20+ inventory movements, 5+ suppliers with bill/payment history, 50+ student fee invoices across 3 terms</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PAGE 4 – IMPLEMENTATION ROADMAP ══════════════ -->
+<div class="page page-break">
+  <div class="section-label">Section 4</div>
+  <h1 class="section-title">Implementation Roadmap</h1>
+  <p class="section-desc">
+    Gaps are grouped into four phases based on urgency, data integrity risk, and interdependencies. Each phase is independently deployable.
+  </p>
+
+  <div class="timeline">
+    <div class="timeline-row">
+      <div class="timeline-phase phase-1">
+        <div class="timeline-phase-label">Phase 1 — Immediate</div>
+        <div class="timeline-phase-title">Data Integrity Fixes</div>
+        <ul>
+          <li>Fix Trial Balance POSTED filter</li>
+          <li>Add Stock Take sidebar link</li>
+          <li>Add balance sheet equation check</li>
+        </ul>
+      </div>
+      <div class="timeline-phase phase-2">
+        <div class="timeline-phase-label">Phase 2 — This Week</div>
+        <div class="timeline-phase-title">Stock Integrity</div>
+        <ul>
+          <li>Requisition issue → InventoryMovement</li>
+          <li>Inventory Variance Report page + API</li>
+          <li>Statement line setup warning in UI</li>
+        </ul>
+      </div>
+      <div class="timeline-phase phase-3">
+        <div class="timeline-phase-label">Phase 3 — Next Week</div>
+        <div class="timeline-phase-title">Reporting Completeness</div>
+        <ul>
+          <li>Consolidated GL (all accounts view)</li>
+          <li>AR/AP Ageing FX conversion</li>
+          <li>Supplier &amp; Student Statement reports</li>
+        </ul>
+      </div>
+      <div class="timeline-phase phase-4">
+        <div class="timeline-phase-label">Phase 4 — Polish</div>
+        <div class="timeline-phase-title">Demo Readiness</div>
+        <ul>
+          <li>Rich seed data (24-month history)</li>
+          <li>Multi-currency demo transactions</li>
+          <li>Onboarding wizard for new orgs</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sub-title">Phase 1 — Detailed Tasks (Immediate)</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Task</th>
+        <th>File</th>
+        <th>Change</th>
+        <th>Effort</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1.1</td>
+        <td>Trial Balance POSTED filter</td>
+        <td class="mono">report.service.ts:14</td>
+        <td>Add <code>voucher: &#123; status: "POSTED" &#125;</code> to glHeader where</td>
+        <td>5 min</td>
+      </tr>
+      <tr>
+        <td>1.2</td>
+        <td>Stock Take sidebar link</td>
+        <td class="mono">app-sidebar.tsx</td>
+        <td>Add ClipboardCheck link to Inventory section</td>
+        <td>5 min</td>
+      </tr>
+      <tr>
+        <td>1.3</td>
+        <td>Balance sheet equation check</td>
+        <td class="mono">report.service.ts:429–438</td>
+        <td>Compute <code>isBalanced = |assets - liab - netAssets| &lt; 0.01</code></td>
+        <td>20 min</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="sub-title">Phase 2 — Detailed Tasks (This Week)</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Task</th>
+        <th>File</th>
+        <th>Change</th>
+        <th>Effort</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>2.1</td>
+        <td>Requisition issue → movement</td>
+        <td class="mono">api/inventory/requisitions/[id]/route.ts</td>
+        <td>After qtyIssued update, create InventoryMovement ISSUE record; decrement item.quantity</td>
+        <td>2 hrs</td>
+      </tr>
+      <tr>
+        <td>2.2</td>
+        <td>Variance Report API</td>
+        <td class="mono">api/inventory/variance-report/route.ts (new)</td>
+        <td>Query stock_take_lines where variance≠0; join item+session; calculate cost impact</td>
+        <td>1 hr</td>
+      </tr>
+      <tr>
+        <td>2.3</td>
+        <td>Variance Report UI</td>
+        <td class="mono">dashboard/inventory/variance-report/page.tsx (new)</td>
+        <td>Table: Item / Session / Date / System Qty / Physical Qty / Variance / Value Impact</td>
+        <td>1.5 hrs</td>
+      </tr>
+      <tr>
+        <td>2.4</td>
+        <td>Statement line warning</td>
+        <td class="mono">report.service.ts:326 + financial-position page</td>
+        <td>If mappedAccountCount=0, add warning field to response; show setup banner in UI</td>
+        <td>1 hr</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="sub-title">Phase 3 — Detailed Tasks (Next Week)</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Task</th>
+        <th>File</th>
+        <th>Change</th>
+        <th>Effort</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>3.1</td>
+        <td>Consolidated GL (all accounts)</td>
+        <td class="mono">report.service.ts:72 + general-ledger route</td>
+        <td>Make accountId optional; when absent, fetch all entries with account grouping</td>
+        <td>2 hrs</td>
+      </tr>
+      <tr>
+        <td>3.2</td>
+        <td>AR/AP Ageing FX conversion</td>
+        <td class="mono">report.service.ts:530–564</td>
+        <td>Remove currencyCode filter; include fxRate; convert balance in calculateAgeing()</td>
+        <td>3 hrs</td>
+      </tr>
+      <tr>
+        <td>3.3</td>
+        <td>Supplier Statement report</td>
+        <td class="mono">api/reports/supplier-statement/route.ts (new)</td>
+        <td>Per-supplier: bills, payments, running balance, date range filter</td>
+        <td>2 hrs</td>
+      </tr>
+      <tr>
+        <td>3.4</td>
+        <td>Student Statement report</td>
+        <td class="mono">api/reports/student-statement/route.ts (new)</td>
+        <td>Per-student: invoices, receipts, running balance, term filter</td>
+        <td>2 hrs</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="sub-title">Phase 4 — Demo Data Enrichment</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Task</th>
+        <th>Detail</th>
+        <th>Effort</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>4.1</td>
+        <td>Historical GL journals (24 months)</td>
+        <td>Monthly: salaries, utilities, school fees, maintenance — across all account types</td>
+        <td>2 hrs</td>
+      </tr>
+      <tr>
+        <td>4.2</td>
+        <td>Inventory movement history</td>
+        <td>20+ receipts and issues across 10 items over 12 months</td>
+        <td>1 hr</td>
+      </tr>
+      <tr>
+        <td>4.3</td>
+        <td>Multi-currency transactions</td>
+        <td>5 USD invoices + 5 USD bills with FX rates to demonstrate currency switching</td>
+        <td>1 hr</td>
+      </tr>
+      <tr>
+        <td>4.4</td>
+        <td>Richer supplier/student data</td>
+        <td>8 suppliers (cleaning, catering, IT, maintenance), 50 students across 3 classes</td>
+        <td>1 hr</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════ PAGE 5 – TECHNICAL NOTES ══════════════ -->
+<div class="page page-break">
+  <div class="section-label">Section 5</div>
+  <h1 class="section-title">Technical Architecture Notes</h1>
+  <p class="section-desc">
+    Key architectural patterns and invariants that must be respected when implementing the fixes above.
+  </p>
+
+  <h2 class="sub-title">GLEntry Field Naming Convention</h2>
+  <p style="margin-bottom:10px; color:#374151;">
+    This is the most common source of bugs in the codebase. All GL entries use a four-field currency model:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Field</th><th>Meaning</th><th>When to Use</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono">debitLc / creditLc</td>
+        <td>Local (base) currency amount — e.g. ZWG</td>
+        <td>Default for all domestic reports. Use for Trial Balance, Budget vs Actuals, Departmental Expenditure</td>
+      </tr>
+      <tr>
+        <td class="mono">debitFc / creditFc</td>
+        <td>Foreign currency amount — e.g. USD</td>
+        <td>Use when <code>reportingCurrency === "USD"</code> or for USD bank account GL reports</td>
+      </tr>
+      <tr>
+        <td class="mono">fxRate</td>
+        <td>Exchange rate at posting time (LC per 1 FC)</td>
+        <td>Use when converting between currencies in ageing reports</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="warn-box">
+    <strong>Never use <code>debit</code> or <code>credit</code></strong> — these fields do not exist on the <code>GLEntry</code> model. Using them will cause a TypeScript error or silent <code>undefined</code> values in JavaScript contexts.
+  </div>
+
+  <h2 class="sub-title">GLEntry Filtering Pattern</h2>
+  <p style="margin-bottom:10px; color:#374151;">
+    GLEntry does not have a direct <code>organisationId</code> field. All organisation scoping must go through the <code>glHeader</code> relation:
+  </p>
+
+  <div class="code-block">
+<span class="code-comment">// ✓ Correct pattern</span>
+<span class="code-keyword">const</span> entries = <span class="code-keyword">await</span> prisma.gLEntry.findMany({
+  where: {
+    glHeader: {
+      organisationId,
+      entryDate: { gte: startDate, lte: endDate },
+      voucher: { status: <span class="code-string">"POSTED"</span> }   <span class="code-comment">// Always include this!</span>
+    }
+  }
+});
+
+<span class="code-comment">// ✗ Wrong — organisationId does not exist directly on GLEntry</span>
+<span class="code-keyword">const</span> entries = <span class="code-keyword">await</span> prisma.gLEntry.findMany({
+  where: { organisationId }  <span class="code-comment">// TypeScript error or runtime failure</span>
+});
+  </div>
+
+  <h2 class="sub-title">Auth Patterns</h2>
+  <table>
+    <thead>
+      <tr><th>Pattern</th><th>Usage</th><th>Returns</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono">withAuth(req, handler, roles[])</td>
+        <td>Older routes; role-gated middleware</td>
+        <td>Injects <code>authReq.user.&#123; userId, organisationId, role &#125;</code></td>
+      </tr>
+      <tr>
+        <td class="mono">verifyAuth(req)</td>
+        <td>Newer report routes</td>
+        <td>Returns <code>&#123; userId, organisationId, role &#125;</code> or null</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="sub-title">StockTakeStatus Lifecycle</h2>
+  <div style="display:flex; gap:12px; align-items:center; margin:14px 0; font-size:10pt;">
+    <span class="badge badge-gray">DRAFT</span>
+    <span style="color:#9ca3af">→</span>
+    <span class="badge badge-blue">COUNTED</span>
+    <span style="color:#9ca3af">→</span>
+    <span class="badge badge-yellow">APPROVED</span>
+    <span style="color:#9ca3af">→</span>
+    <span class="badge badge-green">POSTED</span>
+  </div>
+  <ul class="clean" style="font-size:9.5pt; color:#374151;">
+    <li><strong>DRAFT:</strong> Session created, lines added, physical counts entered. Editable.</li>
+    <li><strong>COUNTED:</strong> Counts saved, variances calculated. Locked from editing.</li>
+    <li><strong>APPROVED:</strong> Approved by ADMIN/BURSAR/HEADMASTER. Ready to post.</li>
+    <li><strong>POSTED:</strong> Variance adjustments written to InventoryMovement. Immutable.</li>
+  </ul>
+
+  <h2 class="sub-title">Multi-Currency Rule Summary</h2>
+  <ul class="checklist">
+    <li class="done">GL reports use <code>useFc = reportingCurrency === "USD"</code> flag to pick Lc vs Fc fields</li>
+    <li class="done">Financial statements correctly pass <code>reportingCurrency</code> through the service chain</li>
+    <li class="done">Budget vs Actuals always uses <code>debitLc</code> (local currency base)</li>
+    <li class="warn">AR/AP Ageing excludes foreign-currency invoices from totals when currency filter is applied</li>
+    <li class="gap">Consolidated GL does not exist yet — multi-currency support to be added alongside it</li>
+    <li class="gap">No FX rate conversion utility function exists — each service handles it ad-hoc</li>
+  </ul>
+
+  <h2 class="sub-title">Prisma Migration Notes</h2>
+  <div class="info-box">
+    This project uses <strong><code>prisma db push</code></strong> (schema push) rather than migrations. This means there is no migration history file. For destructive operations (dropping columns, renaming), <code>prisma db push --force-reset</code> is required with the <code>PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=true</code> environment variable set. Always re-seed after a force reset.
+  </div>
+
+  <div class="divider"></div>
+
+  <h2 class="sub-title">Seed Credentials (Demo Environment)</h2>
+  <table>
+    <thead>
+      <tr><th>Role</th><th>Email</th><th>Password</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Admin</td><td class="mono">admin@school.ac.zw</td><td class="mono">Admin@123</td></tr>
+      <tr><td>Bursar</td><td class="mono">bursar@school.ac.zw</td><td class="mono">Bursar@123</td></tr>
+      <tr><td>Teacher</td><td class="mono">teacher@school.ac.zw</td><td class="mono">Teacher@123</td></tr>
+    </tbody>
+  </table>
+
+  <div class="divider"></div>
+
+  <p style="font-size:8.5pt; color:#9ca3af; text-align:center; margin-top:24px;">
+    IPSAS School Finance System — Gap Analysis &amp; Implementation Roadmap — April 2026 — Confidential
+  </p>
+</div>
+
+</body>
+</html>
