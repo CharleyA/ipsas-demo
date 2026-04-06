@@ -33,8 +33,12 @@ import {
   Play,
   Tag,
   CalendarDays,
-  PlusCircle,
   Inbox,
+  BarChart3,
+  BarChart2,
+  TrendingUp,
+  Scale,
+  Coins,
 } from "lucide-react";
 
 
@@ -108,14 +112,8 @@ const menuItems = [
       {
         title: "Budgets",
         href: "/dashboard/budgets",
-        icon: BookOpen,
+        icon: BarChart2,
         roles: ["ADMIN", "BURSAR", "ACCOUNTANT", "HEADMASTER"],
-      },
-      {
-        title: "New Budget",
-        href: "/dashboard/budgets",
-        icon: PlusCircle,
-        roles: ["ADMIN", "BURSAR", "ACCOUNTANT"],
       },
       {
         title: "Fiscal Periods",
@@ -256,28 +254,93 @@ const menuItems = [
       },
       {
         title: "Reporting",
-      items: [
-        {
-          title: "Financial Reports",
-          href: "/dashboard/reports",
-          icon: PieChart,
-          roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
-        },
-        {
-          title: "Audit Log",
-          href: "/dashboard/reports/audit-log",
-          icon: History,
-          roles: ["ADMIN", "AUDITOR", "ACCOUNTANT"],
-        },
-        {
-          title: "Exceptions Report",
-          href: "/dashboard/reports/exceptions",
-          icon: AlertTriangle,
-          roles: ["ADMIN", "AUDITOR", "HEADMASTER", "BURSAR", "ACCOUNTANT"],
-        },
-
-      ],
-    },
+        items: [
+          {
+            title: "Reports Hub",
+            href: "/dashboard/reports",
+            icon: PieChart,
+            roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "Trial Balance",
+            href: "/dashboard/reports/trial-balance",
+            icon: BarChart3,
+            roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "General Ledger",
+            href: "/dashboard/reports/general-ledger",
+            icon: BookOpen,
+            roles: ["ADMIN", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "Financial Position",
+            href: "/dashboard/reports/financial-position",
+            icon: Scale,
+            roles: ["ADMIN", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "Financial Performance",
+            href: "/dashboard/reports/financial-performance",
+            icon: TrendingUp,
+            roles: ["ADMIN", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "Cash Flow",
+            href: "/dashboard/reports/cash-flow",
+            icon: Coins,
+            roles: ["ADMIN", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "Budget vs Actuals",
+            href: "/dashboard/reports/budget-vs-actuals",
+            icon: BarChart2,
+            roles: ["ADMIN", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "Departmental Expenditure",
+            href: "/dashboard/reports/departmental-expenditure",
+            icon: Building2,
+            roles: ["ADMIN", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "AR Ageing",
+            href: "/dashboard/reports/ar-ageing",
+            icon: Users,
+            roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "Student Statement",
+            href: "/dashboard/reports/student-statement",
+            icon: FileText,
+            roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "AP Ageing",
+            href: "/dashboard/reports/ap-ageing",
+            icon: Building2,
+            roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "Supplier Statement",
+            href: "/dashboard/reports/supplier-statement",
+            icon: FileText,
+            roles: ["ADMIN", "CLERK", "BURSAR", "HEADMASTER", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "Audit Log",
+            href: "/dashboard/reports/audit-log",
+            icon: History,
+            roles: ["ADMIN", "AUDITOR", "ACCOUNTANT"],
+          },
+          {
+            title: "Exceptions Report",
+            href: "/dashboard/reports/exceptions",
+            icon: AlertTriangle,
+            roles: ["ADMIN", "AUDITOR", "HEADMASTER", "BURSAR", "ACCOUNTANT"],
+          },
+        ],
+      },
     {
       title: "Tools",
       items: [
