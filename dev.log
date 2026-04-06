@@ -5019,3 +5019,4 @@ prisma:query SELECT COUNT(*) AS "_count$_all" FROM (SELECT "public"."notificatio
  ✓ Compiled middleware in 1ms
  ✓ Compiled middleware in 1ms
  ✓ Compiled middleware in 0ms
+[?25h
