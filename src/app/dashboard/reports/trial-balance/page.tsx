@@ -18,17 +18,18 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Loader2, 
+import {
+  Loader2,
   Search,
   ArrowLeft,
-  Filter,
   TrendingUp,
   TrendingDown,
   Scale,
   PieChart as PieChartIcon,
-  BarChart as BarChartIcon
+  BarChart as BarChartIcon,
+  BadgeDollarSign
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -66,6 +67,7 @@ export default function TrialBalancePage() {
   const [funds, setFunds] = useState<any[]>([]);
   const [costCentres, setCostCentres] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [reportingCurrency, setReportingCurrency] = useState("ZWG");
 
   const fetchDimensions = async () => {
     try {
@@ -83,7 +85,7 @@ export default function TrialBalancePage() {
   const fetchReport = async () => {
     setIsLoading(true);
     try {
-      let url = `/api/reports/trial-balance?date=${date}`;
+      let url = `/api/reports/trial-balance?date=${date}&reportingCurrency=${reportingCurrency}`;
       if (fundId !== "all") url += `&fundId=${fundId}`;
       if (costCentreId !== "all") url += `&costCentreId=${costCentreId}`;
       
@@ -104,7 +106,7 @@ export default function TrialBalancePage() {
       fetchReport();
       fetchDimensions();
     }
-  }, [token, date, fundId, costCentreId]);
+  }, [token, date, fundId, costCentreId, reportingCurrency]);
 
   const filteredRows = useMemo(() => {
     return data?.rows?.filter((r: any) => 
@@ -151,20 +153,27 @@ export default function TrialBalancePage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Trial Balance</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight">Trial Balance</h1>
+              <Badge variant="outline" className="text-sm font-semibold border-2 border-primary/30 text-primary bg-primary/5">
+                <BadgeDollarSign className="w-3.5 h-3.5 mr-1.5" />
+                {reportingCurrency} Basis
+              </Badge>
+            </div>
             <p className="text-muted-foreground">
               Institutional performance summary as of {new Date(date).toLocaleDateString()}
             </p>
           </div>
         </div>
-        <ReportToolbar 
-          reportName="Trial Balance" 
-          endpoint="/api/reports/trial-balance" 
-          filters={{ 
-            date, 
-            fundId: fundId === "all" ? undefined : fundId, 
-            costCentreId: costCentreId === "all" ? undefined : costCentreId 
-          }} 
+        <ReportToolbar
+          reportName="Trial Balance"
+          endpoint="/api/reports/trial-balance"
+          filters={{
+            date,
+            reportingCurrency,
+            fundId: fundId === "all" ? undefined : fundId,
+            costCentreId: costCentreId === "all" ? undefined : costCentreId
+          }}
         />
       </div>
 
@@ -179,7 +188,7 @@ export default function TrialBalancePage() {
             <div className="text-2xl font-bold text-blue-700">
               {data?.totals ? parseFloat(data.totals.debit).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "—"}
             </div>
-            <p className="text-xs text-blue-600/70 mt-1">ZWG Currency</p>
+            <p className="text-xs text-blue-600/70 mt-1">{reportingCurrency} Basis</p>
           </CardContent>
         </Card>
         
@@ -192,7 +201,7 @@ export default function TrialBalancePage() {
             <div className="text-2xl font-bold text-indigo-700">
               {data?.totals ? parseFloat(data.totals.credit).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "—"}
             </div>
-            <p className="text-xs text-indigo-600/70 mt-1">ZWG Currency</p>
+            <p className="text-xs text-indigo-600/70 mt-1">{reportingCurrency} Basis</p>
           </CardContent>
         </Card>
 
@@ -323,6 +332,19 @@ export default function TrialBalancePage() {
                 </Select>
               </div>
 
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground">Reporting Currency</label>
+                <Select value={reportingCurrency} onValueChange={setReportingCurrency}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ZWG">ZWG (Base)</SelectItem>
+                    <SelectItem value="USD">USD (Foreign)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
                 <label className="text-xs font-medium text-muted-foreground">Search Accounts</label>
                 <div className="relative">
@@ -350,8 +372,8 @@ export default function TrialBalancePage() {
                   <TableRow className="bg-slate-50">
                     <TableHead className="w-[150px]">Code</TableHead>
                     <TableHead>Account Name</TableHead>
-                    <TableHead className="text-right w-[180px]">Debit (ZWG)</TableHead>
-                    <TableHead className="text-right w-[180px]">Credit (ZWG)</TableHead>
+                    <TableHead className="text-right w-[180px]">Debit ({reportingCurrency})</TableHead>
+                    <TableHead className="text-right w-[180px]">Credit ({reportingCurrency})</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

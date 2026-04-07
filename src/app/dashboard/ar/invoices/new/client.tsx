@@ -40,6 +40,8 @@ export default function NewARInvoiceForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [students, setStudents] = useState<any[]>([]);
   const [currencies, setCurrencies] = useState<any[]>([]);
+  const [fxRate, setFxRate] = useState<number>(1);
+  const [fxRateSource, setFxRateSource] = useState<string>("");
 
   const studentId = searchParams.get("studentId") || "";
 
@@ -62,6 +64,31 @@ export default function NewARInvoiceForm() {
     control: form.control,
     name: "lines",
   });
+
+  // Fetch FX rate when currency changes
+  const selectedCurrency = form.watch("currencyCode");
+  useEffect(() => {
+    if (selectedCurrency === "ZWG" || !token) {
+      setFxRate(1);
+      setFxRateSource(selectedCurrency === "ZWG" ? "Base Currency" : "");
+      return;
+    }
+    if (selectedCurrency === "USD") {
+      fetch(`/api/currencies/exchange-rates?from=${selectedCurrency}&to=ZWG&limit=1`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(r => r.json())
+        .then(rates => {
+          if (rates && rates.length > 0) {
+            setFxRate(parseFloat(rates[0].rate));
+            setFxRateSource(rates[0].source || "System Rate");
+          } else {
+            setFxRateSource("Manual Entry Required");
+          }
+        })
+        .catch(() => setFxRateSource("Error fetching rate"));
+    }
+  }, [selectedCurrency, token]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -90,11 +117,11 @@ export default function NewARInvoiceForm() {
     try {
       const response = await fetch("/api/ar/invoices", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, fxRate }),
       });
 
       const data = await response.json();
@@ -234,6 +261,51 @@ export default function NewARInvoiceForm() {
               </div>
             </CardContent>
           </Card>
+
+          {selectedCurrency !== "ZWG" && (
+            <Card className="border-amber-200 bg-amber-50/40">
+              <CardHeader>
+                <CardTitle className="text-base text-amber-900">Foreign Currency — FX Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">FX Rate ({selectedCurrency} → ZWG)</label>
+                      {fxRateSource && (
+                        <span className="text-[10px] bg-amber-200/60 text-amber-800 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
+                          {fxRateSource}
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      min="0"
+                      value={fxRate}
+                      onChange={(e) => {
+                        setFxRate(parseFloat(e.target.value) || 1);
+                        setFxRateSource("Manual Override");
+                      }}
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Rate used to convert invoice amounts to base currency (ZWG) for GL reporting.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Base Currency Equivalent (ZWG)</label>
+                    <div className="rounded-md border bg-muted/40 px-3 py-2 text-lg font-bold text-muted-foreground">
+                      ZWG {(totalAmount * fxRate).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedCurrency} {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} × {fxRate} rate
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">

@@ -34,6 +34,8 @@ export default function NewBillPage() {
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [currencies, setCurrencies] = useState<any[]>([]);
+  const [fxRate, setFxRate] = useState<number>(1);
+  const [fxRateSource, setFxRateSource] = useState<string>("");
   
   const [formData, setFormData] = useState({
     supplierId: searchParams.get("supplierId") || "",
@@ -44,6 +46,32 @@ export default function NewBillPage() {
     ],
     description: "",
   });
+
+  // Fetch FX rate when currency changes
+  useEffect(() => {
+    const selectedCurrency = formData.currencyCode;
+    if (selectedCurrency === "ZWG" || !token) {
+      setFxRate(1);
+      setFxRateSource(selectedCurrency === "ZWG" ? "Base Currency" : "");
+      return;
+    }
+    if (selectedCurrency === "USD") {
+      // Fetch latest USD/ZWG rate
+      fetch(`/api/currencies/exchange-rates?from=${selectedCurrency}&to=ZWG&limit=1`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(r => r.json())
+        .then(rates => {
+          if (rates && rates.length > 0) {
+            setFxRate(parseFloat(rates[0].rate));
+            setFxRateSource(rates[0].source || "System Rate");
+          } else {
+            setFxRateSource("Manual Entry Required");
+          }
+        })
+        .catch(() => setFxRateSource("Error fetching rate"));
+    }
+  }, [formData.currencyCode, token]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -109,6 +137,7 @@ export default function NewBillPage() {
           ...formData,
           organisationId: user?.organisationId,
           dueDate: new Date(formData.dueDate).toISOString(),
+          fxRate,
         }),
       });
 
@@ -195,6 +224,43 @@ export default function NewBillPage() {
                   />
                 </div>
               </div>
+
+              {formData.currencyCode !== "ZWG" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 p-4 rounded-lg bg-amber-50/60 border border-amber-100">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>FX Rate ({formData.currencyCode} → ZWG)</Label>
+                      {fxRateSource && (
+                        <span className="text-[10px] bg-amber-200/60 text-amber-800 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
+                          {fxRateSource}
+                        </span>
+                      )}
+                    </div>
+                    <Input
+                      type="number"
+                      step="0.0001"
+                      min="0"
+                      value={fxRate}
+                      onChange={(e) => {
+                        setFxRate(parseFloat(e.target.value) || 1);
+                        setFxRateSource("Manual Override");
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Rate used to convert bill amounts to base currency (ZWG) for GL reporting.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Base Currency Equivalent (ZWG)</Label>
+                    <div className="rounded-md border bg-muted/40 px-3 py-2 text-lg font-bold text-muted-foreground">
+                      ZWG {(totalAmount * fxRate).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {formData.currencyCode} {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} × {fxRate} rate
+                    </p>
+                  </div>
+                </div>
+              )}
 
 
             <div className="space-y-4">

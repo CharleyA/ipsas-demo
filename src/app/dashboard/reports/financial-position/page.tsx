@@ -10,8 +10,8 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Loader2, 
+import {
+  Loader2,
   ArrowLeft,
   TrendingUp,
   Wallet,
@@ -25,8 +25,10 @@ import {
   Building2,
   Calendar,
   Layers,
-  Activity
+  Activity,
+  BadgeDollarSign
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -156,7 +158,13 @@ export default function FinancialPositionPage() {
               <span className="text-slate-300">/</span>
               <span className="text-xs font-medium text-slate-400">Financial Reports</span>
             </div>
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Statement of Financial Position</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Statement of Financial Position</h1>
+              <Badge variant="outline" className="text-sm font-semibold border-2 border-indigo-300 text-indigo-700 bg-indigo-50">
+                <BadgeDollarSign className="w-3.5 h-3.5 mr-1.5" />
+                {reportingCurrency} Basis
+              </Badge>
+            </div>
           </div>
         </div>
         

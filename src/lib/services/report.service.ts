@@ -5,7 +5,12 @@ import { subDays, startOfDay, endOfDay } from "date-fns";
 const { Decimal } = Prisma;
 
 export class ReportService {
-  static async getTrialBalance(organisationId: string, endDate: Date, filters: { fundId?: string; costCentreId?: string } = {}) {
+  static async getTrialBalance(organisationId: string, endDate: Date, filters: { fundId?: string; costCentreId?: string; reportingCurrency?: string } = {}) {
+    const org = await prisma.organisation.findUnique({ where: { id: organisationId } });
+    const baseCurrency = org?.baseCurrency || "ZWG";
+    const reportingCurrency = filters.reportingCurrency || baseCurrency;
+    const useFc = reportingCurrency === "USD";
+
     const accounts = await prisma.account.findMany({
       where: { organisationId },
       orderBy: { code: "asc" },
@@ -28,6 +33,8 @@ export class ReportService {
       _sum: {
         debitLc: true,
         creditLc: true,
+        debitFc: true,
+        creditFc: true,
       },
     });
 
@@ -35,8 +42,8 @@ export class ReportService {
       balances.map((b) => [
         b.accountId,
         {
-          debit: b._sum.debitLc || new Decimal(0),
-          credit: b._sum.creditLc || new Decimal(0),
+          debit: useFc ? (b._sum.debitFc || new Decimal(0)) : (b._sum.debitLc || new Decimal(0)),
+          credit: useFc ? (b._sum.creditFc || new Decimal(0)) : (b._sum.creditLc || new Decimal(0)),
         },
       ])
     );
@@ -46,9 +53,9 @@ export class ReportService {
         debit: new Decimal(0),
         credit: new Decimal(0),
       };
-      
+
       const net = bal.debit.minus(bal.credit);
-      
+
       return {
         id: acc.id,
         code: acc.code,
@@ -62,6 +69,8 @@ export class ReportService {
 
     return {
       asOf: endDate,
+      reportingCurrency,
+      baseCurrency,
       rows,
       totals: {
         debit: rows.reduce((acc, r) => acc.add(r.debit), new Decimal(0)),

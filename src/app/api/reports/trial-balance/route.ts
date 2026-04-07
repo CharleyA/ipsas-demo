@@ -13,12 +13,14 @@ export async function GET(req: NextRequest) {
     const dateStr = searchParams.get("date");
     const fundId = searchParams.get("fundId") || undefined;
     const costCentreId = searchParams.get("costCentreId") || undefined;
+    const reportingCurrency = searchParams.get("reportingCurrency") || undefined;
     const exportFormat = (searchParams.get("format") || "json") as ExportFormat;
     const date = dateStr ? new Date(dateStr) : new Date();
 
     const report = await ReportService.getTrialBalance(authReq.user.organisationId, date, {
       fundId,
       costCentreId,
+      reportingCurrency,
     });
 
     if (exportFormat === "json") {
@@ -40,7 +42,7 @@ export async function GET(req: NextRequest) {
 
     const content = await ReportExporter.export(exportFormat, report.rows, columns, "Trial Balance", {
       title: "Trial Balance",
-      subtitle: `As at ${format(date, "MMMM d, yyyy")}`,
+      subtitle: `As at ${format(date, "MMMM d, yyyy")} — ${report.reportingCurrency} Basis`,
       organisationName: org?.name || "Organisation",
       orientation: "portrait",
     });
