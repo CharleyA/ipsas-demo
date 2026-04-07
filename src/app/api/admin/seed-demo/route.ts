@@ -7,6 +7,7 @@ import { APService } from "@/lib/services/ap.service";
 import { VoucherService } from "@/lib/services/voucher.service";
 import { AccountService } from "@/lib/services/account.service";
 import { FiscalPeriodService } from "@/lib/services/fiscal-period.service";
+import { StatementService } from "@/lib/services/statement.service";
 
 export async function POST(req: NextRequest) {
   try {
@@ -126,7 +127,10 @@ export async function POST(req: NextRequest) {
         });
     }
 
-    // 2. Create Funds
+    // 2. Seed Statement Structure (IPSAS Financial Statements)
+    await StatementService.seedStatementStructure(organisationId, actorId);
+
+    // 3. Create Funds
     const fundData = [
       { code: "GF", name: "General Fund" },
       { code: "CF", name: "Capital Fund" },
@@ -292,14 +296,84 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ 
+    // 9. Create Suppliers and AP Bills
+    const supplierData = [
+      { code: "SUP-ZESA", name: "ZESA Holdings" },
+      { code: "SUP-COH", name: "City of Harare" },
+      { code: "SUP-STAT", name: "Stationery Depot Ltd" },
+      { code: "SUP-CLEAN", name: "CleanServe Janitorial" },
+      { code: "SUP-TECH", name: "TechFix IT Solutions" },
+    ];
+    let billsCreated = 0;
+    for (const sd of supplierData) {
+      let supplier = await prisma.supplier.findFirst({ where: { organisationId, code: sd.code } });
+      if (!supplier) {
+        supplier = await prisma.supplier.create({
+          data: { organisationId, code: sd.code, name: sd.name }
+        });
+      }
+      const isUtility = sd.name.includes("ZESA") || sd.name.includes("City");
+      const currencyCode = isUtility ? "ZWG" : "USD";
+      const amount = currencyCode === "USD" ? 120 : 3000;
+      try {
+        const bill = await APService.createBill({
+          organisationId,
+          supplierId: supplier.id,
+          currencyCode,
+          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+          description: isUtility ? `Monthly Utility: ${sd.name}` : "Monthly Supplies",
+          fundId: generalFund.id,
+          lines: [{
+            accountId: isUtility ? utilityExpenseAcc.id : expenseAcc.id,
+            description: isUtility ? "Consumption Charges" : "General Supplies",
+            quantity: 1,
+            unitPrice: amount,
+            amount
+          }]
+        }, actorId);
+        await VoucherService.submit(bill.voucherId, actorId);
+        await VoucherService.approve(bill.voucherId, actorId);
+        await VoucherService.post(bill.voucherId, actorId);
+        billsCreated++;
+      } catch (e) {
+        console.error(`Failed to create bill for ${sd.name}:`, e);
+      }
+    }
+
+    // 10. Grant Journal
+    try {
+      const grantRevenueAccFresh = await prisma.account.findFirst({ where: { organisationId, code: "4200" } });
+      const grantFundFresh = await prisma.fund.findFirst({ where: { organisationId, code: "RF" } });
+      const libraryProjectFresh = await prisma.project.findFirst({ where: { organisationId, code: "LIB-2025" } });
+      if (grantRevenueAccFresh && grantFundFresh && libraryProjectFresh) {
+        const grantVoucher = await VoucherService.create({
+          organisationId,
+          type: "JOURNAL",
+          periodId: period.id,
+          date: new Date(),
+          description: "UNESCO Library Grant Funding (USD)",
+          lines: [
+            { lineNumber: 1, accountId: bankAcc.id, description: "Grant Funding Received", currencyCode: "USD", amountFc: 5000, fxRate: 25, amountLc: 125000, debit: 5000, fundId: grantFundFresh.id, projectId: libraryProjectFresh.id },
+            { lineNumber: 2, accountId: grantRevenueAccFresh.id, description: "UNESCO Grant Revenue", currencyCode: "USD", amountFc: 5000, fxRate: 25, amountLc: 125000, credit: 5000, fundId: grantFundFresh.id, projectId: libraryProjectFresh.id }
+          ]
+        }, actorId);
+        await VoucherService.submit(grantVoucher.id, actorId);
+        await VoucherService.approve(grantVoucher.id, actorId);
+        await VoucherService.post(grantVoucher.id, actorId);
+      }
+    } catch (e) {
+      console.error("Failed to create grant journal:", e);
+    }
+
+    return NextResponse.json({
       message: "Demo data generated successfully",
       summary: {
         students: students.length,
         feeTemplate: template.name,
         batchNumber: batchResult.batch.batchNumber,
         invoicesGenerated: batchResult.results.successful,
-        receiptsCreated: receiptsCreated
+        receiptsCreated: receiptsCreated,
+        billsCreated
       }
     });
 

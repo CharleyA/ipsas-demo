@@ -249,6 +249,24 @@ export class BankService {
     };
   }
 
+  static async listCashbookEntries(organisationId: string) {
+    return prisma.voucher.findMany({
+      where: { organisationId, type: "CASHBOOK" },
+      include: {
+        glHeader: {
+          include: {
+            entries: {
+              include: { account: { select: { code: true, name: true } } },
+              take: 2,
+            },
+          },
+        },
+      },
+      orderBy: { date: "desc" },
+      take: 500,
+    });
+  }
+
   static async createCashbookEntry(data: any, actorId: string) {
     const org = await prisma.organisation.findUnique({
       where: { id: data.organisationId },

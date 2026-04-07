@@ -7,9 +7,9 @@ import { AccountService } from "../src/lib/services/account.service";
 import { FiscalPeriodService } from "../src/lib/services/fiscal-period.service";
 
 async function main() {
-    const organisationId = "org-demo";
     const adminUser = await prisma.user.findFirst({
-        where: { email: "admin@school.ac.zw" }
+        where: { email: "admin@school.ac.zw" },
+        include: { organisations: { take: 1 } }
     });
 
     if (!adminUser) {
@@ -20,8 +20,8 @@ async function main() {
     const actorId = adminUser.id;
 
     // 1. Ensure Organisation has required accounts
-    let org = await prisma.organisation.findUnique({
-      where: { id: organisationId },
+    let org = await prisma.organisation.findFirst({
+      where: { users: { some: { userId: adminUser.id } } },
       include: { chartOfAccounts: true }
     });
 
@@ -29,6 +29,8 @@ async function main() {
         console.error("Organisation not found");
         return;
     }
+
+    const organisationId = org.id;
 
     const getAccount = async (code: string, name: string, type: any) => {
       let acc = org?.chartOfAccounts.find(a => a.code === code);
@@ -188,11 +190,12 @@ async function main() {
     const grantVoucher = await VoucherService.create({
       organisationId,
       type: "JOURNAL",
+      periodId: period.id,
       date: new Date(),
       description: "UNESCO Library Grant Funding (USD)",
-      status: "DRAFT",
       lines: [
         {
+          lineNumber: 1,
           accountId: bankAcc.id,
           description: "Grant Funding Received",
           currencyCode: "USD",
@@ -204,6 +207,7 @@ async function main() {
           projectId: libraryProject.id
         },
         {
+          lineNumber: 2,
           accountId: grantRevenueAcc.id,
           description: "Unesco Grant Revenue",
           currencyCode: "USD",

@@ -681,12 +681,16 @@ export class ReportService {
 
     const baseCurrency = org?.baseCurrency || "ZWG";
 
+    // Use end-of-day so invoices created today are included
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
     const invoices = await prisma.aRInvoice.findMany({
       where: {
         organisationId,
         voucher: { status: "POSTED" },
         balance: { gt: 0 },
-        createdAt: { lte: date },
+        createdAt: { lte: endOfDay },
       },
       include: {
         student: true,
@@ -723,12 +727,16 @@ export class ReportService {
 
     const baseCurrencyAP = org?.baseCurrency || "ZWG";
 
+    // Use end-of-day so bills created today are included
+    const endOfDayAP = new Date(date);
+    endOfDayAP.setHours(23, 59, 59, 999);
+
     const bills = await prisma.aPBill.findMany({
       where: {
         organisationId,
         voucher: { status: "POSTED" },
         balance: { gt: 0 },
-        createdAt: { lte: date },
+        createdAt: { lte: endOfDayAP },
       },
       include: {
         supplier: true,
