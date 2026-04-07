@@ -469,6 +469,8 @@ export class ReportService {
     const baseCurrency = org?.baseCurrency || "ZWG";
     const reportingCurrency = options.reportingCurrency || baseCurrency;
     const useFc = reportingCurrency === "USD";
+    const statementSupportsDirectFc = type === ReportType.CASH_FLOW;
+    const isUnsupportedFxStatement = useFc && !statementSupportsDirectFc;
 
     // 1. Get all statement lines for the report
     const lines = await prisma.statementLine.findMany({
@@ -524,14 +526,25 @@ export class ReportService {
       balances.map((b) => {
         const dr = useFc ? (b._sum.debitFc || new Decimal(0)) : (b._sum.debitLc || new Decimal(0));
         const cr = useFc ? (b._sum.creditFc || new Decimal(0)) : (b._sum.creditLc || new Decimal(0));
-        
+
         // For Cash Flow, Receipts (Credit) should be positive, Payments (Debit) negative
-        // So we use Credit - Debit
+        // So we use Credit - Debit. Other statements use debit minus credit.
         const balance = type === ReportType.CASH_FLOW ? cr.minus(dr) : dr.minus(cr);
-        
+
         return [b.accountId, balance];
       })
     );
+
+    const sumMappedAccounts = (line: any) => {
+      let amount = new Decimal(0);
+      line.accountMaps.forEach((m: any) => {
+        const descendants = getDescendants(m.accountId);
+        descendants.forEach(dId => {
+          amount = amount.add(balanceMap.get(dId) || new Decimal(0));
+        });
+      });
+      return amount;
+    };
 
     // 3. Recursive function to build tree and calculate totals
     const buildTree = (parentId: string | null = null): any[] => {
@@ -539,15 +552,7 @@ export class ReportService {
         .filter(l => l.parentId === parentId)
         .map(line => {
           const children = buildTree(line.id);
-          let amount = new Decimal(0);
-
-          // Sum mapped accounts and their descendants
-          line.accountMaps.forEach(m => {
-            const descendants = getDescendants(m.accountId);
-            descendants.forEach(dId => {
-              amount = amount.add(balanceMap.get(dId) || new Decimal(0));
-            });
-          });
+          let amount = sumMappedAccounts(line);
 
           // Sum children
           children.forEach(c => {
@@ -570,31 +575,53 @@ export class ReportService {
     let summary: any = {};
     let chartData: any = {};
 
-    if (type === ReportType.FINANCIAL_POSITION) {
-      const assets = rows.find(r => r.name.toLowerCase().includes("asset"))?.amount || new Decimal(0);
-      const liabilities = rows.find(r => r.name.toLowerCase().includes("liabilit"))?.amount || new Decimal(0);
-      const netAssets = rows.find(r => r.name.toLowerCase().includes("net asset") || r.name.toLowerCase().includes("equity"))?.amount || assets.add(liabilities);
+    const findRowByCode = (nodes: any[], code: string): any | undefined => {
+      for (const node of nodes) {
+        if (node.code === code) return node;
+        const childMatch = node.children?.length ? findRowByCode(node.children, code) : undefined;
+        if (childMatch) return childMatch;
+      }
+      return undefined;
+    };
 
-      // Balance sheet equation: Assets = Liabilities + Net Assets
-      // In debit-normal terms: assets (Dr) + liabilities (Cr) + netAssets (Cr) should sum to ~0
-      const totalAllSections = rows.reduce((acc, r) => acc.add(r.amount), new Decimal(0));
-      const imbalance = totalAllSections.abs();
+    if (type === ReportType.FINANCIAL_POSITION) {
+      const assetsRow = findRowByCode(rows, "FP-ASSETS");
+      const liabilitiesRow = findRowByCode(rows, "FP-LIABILITIES");
+      const netAssetsRow = findRowByCode(rows, "FP-NET-ASSETS");
+      const ppeRow = findRowByCode(rows, "FP-PPE");
+      const reservesRow = findRowByCode(rows, "FP-RESERVES");
+      const accSurplusRow = findRowByCode(rows, "FP-ACC-SURPLUS");
+
+      const assets = assetsRow?.amount || new Decimal(0);
+      const liabilities = liabilitiesRow?.amount || new Decimal(0);
+      const mappedNetAssets = netAssetsRow?.amount || new Decimal(0);
+
+      // Balance-sheet equation using debit-minus-credit convention:
+      // assets + liabilities + equity ~= 0
+      const derivedNetAssets = assets.add(liabilities).neg();
+      const imbalance = assets.add(liabilities).add(mappedNetAssets).abs();
       const isBalanced = imbalance.lte(new Decimal("0.01"));
+      const netAssets = isBalanced ? mappedNetAssets : derivedNetAssets;
 
       summary = {
         totalAssets: assets.abs(),
         totalLiabilities: liabilities.abs(),
         netAssets: netAssets.abs(),
         equity: netAssets.abs(),
+        accumulatedSurplus: accSurplusRow?.amount?.abs?.() || new Decimal(0),
+        reserves: reservesRow?.amount?.abs?.() || new Decimal(0),
+        ppe: ppeRow?.amount?.abs?.() || new Decimal(0),
         isBalanced,
         imbalance,
+        derivedNetAssets: !isBalanced ? derivedNetAssets.abs() : undefined,
       };
 
       chartData = {
-        composition: rows.map(r => ({
-          name: r.name,
-          value: Number(r.amount.abs())
-        })).filter(r => r.value > 0)
+        composition: [
+          { name: assetsRow?.name || "Assets", value: Number(assets.abs()) },
+          { name: liabilitiesRow?.name || "Liabilities", value: Number(liabilities.abs()) },
+          { name: netAssetsRow?.name || "Net Assets/Equity", value: Number(netAssets.abs()) },
+        ].filter(r => r.value > 0)
       };
     } else if (type === ReportType.FINANCIAL_PERFORMANCE) {
       const revenue = rows.find(r => r.name.toLowerCase().includes("revenue"))?.amount || new Decimal(0);
@@ -668,6 +695,10 @@ export class ReportService {
         mappedAccountCount,
         statementLineCount: lines.length,
         isConfigured: lines.length > 0 && mappedAccountCount > 0,
+        currencyMode: useFc ? "fc-direct" : "base-lc",
+        currencyWarning: isUnsupportedFxStatement
+          ? `Direct ${reportingCurrency} statement translation is not yet accounting-safe for this report. Falling back to stored foreign-currency columns can misstate locally-posted balances.`
+          : undefined,
       },
     };
   }

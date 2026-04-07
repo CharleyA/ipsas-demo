@@ -94,23 +94,30 @@ export class StatementService {
       // Map accounts
       for (const line of struct.lines) {
         if (line.accountCodes || line.accountTypes) {
-          const accounts = await prisma.account.findMany({
-            where: {
-              organisationId,
-              OR: [
-                { code: { in: line.accountCodes || [] } },
-                { code: { startsWith: line.accountCodes?.[0] ? `${line.accountCodes[0]}.` : undefined } }, // Map currency sub-accounts
-                { type: { in: (line.accountTypes as any[]) || [] } },
-              ],
-            },
-          });
+          let accounts: any[] = [];
+
+          if (line.accountCodes && line.accountCodes.length > 0) {
+            const codePredicates = line.accountCodes.flatMap((code) => [
+              { code },
+              { code: { startsWith: `${code}.` } },
+            ]);
+
+            accounts = await prisma.account.findMany({
+              where: {
+                organisationId,
+                OR: codePredicates,
+              },
+            });
+          } else if (line.accountTypes && line.accountTypes.length > 0) {
+            accounts = await prisma.account.findMany({
+              where: {
+                organisationId,
+                type: { in: (line.accountTypes as any[]) || [] },
+              },
+            });
+          }
 
           for (const acc of accounts) {
-            // Only map leaf accounts or specific codes to avoid double counting if parents are mapped
-            // But here we want to map specific accounts to specific lines.
-            
-            // For IPSAS, we usually map the most granular accounts.
-            // But let's check if already mapped
             const existingMap = await prisma.accountStatementMap.findUnique({
               where: {
                 accountId_statementLineId: {

@@ -7,6 +7,12 @@ function cuidLike() {
   return `stk_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function jsonSafe<T>(value: T): T {
+  return JSON.parse(
+    JSON.stringify(value, (_, v) => (typeof v === "bigint" ? Number(v) : v))
+  );
+}
+
 export async function GET(req: NextRequest) {
   return withAuth(req, async (authReq) => {
     const { searchParams } = new URL(req.url);
@@ -31,7 +37,7 @@ export async function GET(req: NextRequest) {
         ORDER BY i.code ASC
       `, sessionId);
 
-      return NextResponse.json({ session, lines });
+      return NextResponse.json(jsonSafe({ session, lines }));
     }
 
     const sessions = await prisma.$queryRawUnsafe<any[]>(`
@@ -50,7 +56,7 @@ export async function GET(req: NextRequest) {
       orderBy: [{ code: "asc" }],
     });
 
-    return NextResponse.json({ sessions, items });
+    return NextResponse.json(jsonSafe({ sessions, items }));
   });
 }
 
