@@ -1,5 +1,6 @@
 import prisma from "@/lib/db";
-import { Decimal, MatchingStatus } from "@prisma/client";
+import { MatchingStatus } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/client";
 import { AuditService } from "./audit.service";
 import { VoucherService } from "./voucher.service";
 

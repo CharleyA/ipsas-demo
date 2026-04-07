@@ -57,12 +57,12 @@ export default function NewVoucherPage() {
 
   const voucherType = (searchParams.get("type") as any) || "JOURNAL";
 
-  const form = useForm<CreateVoucherInput>({
-    resolver: zodResolver(createVoucherSchema),
+  const form = useForm({
+    resolver: zodResolver(createVoucherSchema) as any,
     defaultValues: {
       organisationId: user?.organisationId || "",
       type: voucherType,
-      date: new Date().toISOString().split("T")[0],
+      date: new Date(),
       description: "",
       reference: "",
       periodId: "",
@@ -108,10 +108,10 @@ export default function NewVoucherPage() {
     if (token && user?.organisationId) fetchMasterData();
   }, [token, user?.organisationId]);
 
-  async function onSubmit(values: CreateVoucherInput) {
+  async function onSubmit(values: any) {
     // Validate balance
-    const totalDebit = values.lines.reduce((sum, l) => sum + (Number(l.debit) || 0), 0);
-    const totalCredit = values.lines.reduce((sum, l) => sum + (Number(l.credit) || 0), 0);
+    const totalDebit = values.lines.reduce((sum: number, l: any) => sum + (Number(l.debit) || 0), 0);
+    const totalCredit = values.lines.reduce((sum: number, l: any) => sum + (Number(l.credit) || 0), 0);
 
     if (Math.abs(totalDebit - totalCredit) > 0.01) {
       toast.error(`Out of balance by ${(totalDebit - totalCredit).toFixed(2)}. Debits must equal credits.`);
@@ -173,7 +173,12 @@ export default function NewVoucherPage() {
                     <FormItem>
                       <FormLabel>Voucher Date</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input
+                          type="date"
+                          {...field}
+                          value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : (field.value ? String(field.value) : '')}
+                          onChange={(e) => field.onChange(e.target.value)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -352,7 +357,7 @@ export default function NewVoucherPage() {
                     <div className="col-span-2">
                       <FormField
                         control={form.control}
-                        name={`lines.${index}.description`}
+                        name={`lines.${index}.description` as any}
                         render={({ field }) => (
                           <FormItem>
                             <FormControl>

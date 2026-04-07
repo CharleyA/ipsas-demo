@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const result = await BankService.matchRow(
       validated.rowId,
       validated.voucherId,
-      user.id
+      user.userId
     );
 
     return NextResponse.json(result);

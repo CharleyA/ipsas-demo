@@ -7,7 +7,6 @@ import { APService } from "@/lib/services/ap.service";
 import { VoucherService } from "@/lib/services/voucher.service";
 import { AccountService } from "@/lib/services/account.service";
 import { FiscalPeriodService } from "@/lib/services/fiscal-period.service";
-import { Decimal } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
   try {
@@ -266,7 +265,7 @@ export async function POST(req: NextRequest) {
             bankAccountId: bankAcc.id,
             amount: amount,
             currencyCode: "USD",
-            date: new Date().toISOString(),
+            date: new Date(),
             paymentMethod: i % 2 === 0 ? "Bank Transfer" : "Cash",
             reference: `DEMO-REC-${Date.now()}-${i}-${Math.random().toString(36).substring(7).toUpperCase()}`
           }, actorId);

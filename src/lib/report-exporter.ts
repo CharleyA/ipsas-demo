@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import * as ExcelJS from "exceljs";
 import Papa from "papaparse";
-import { generatePDF, type PDFGenerationOptions } from "./pdf";
+import { generatePDF, generatePDFFromHTML, type PDFGenerationOptions } from "./pdf";
 import { Prisma } from "@prisma/client";
 
 export type ExportFormat = "json" | "csv" | "xlsx" | "pdf";
@@ -27,7 +27,7 @@ export class ReportExporter {
   ): Promise<Buffer | string | any> {
     switch (format) {
       case "csv":
-        return this.generateCSV(data, columns);
+        return this.generateCSV(data, columns, reportName, pdfOptions);
       case "xlsx":
         return this.generateExcel(data, columns, reportName);
       case "pdf":
@@ -45,8 +45,9 @@ export class ReportExporter {
     return value;
   }
 
-  static formatCurrency(amount: number | string | null | undefined, decimals = 2): string {
-    const num = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
+  static formatCurrency(amount: number | string | null | undefined | { toNumber: () => number }, decimals = 2): string {
+    const raw = amount && typeof amount === 'object' && 'toNumber' in amount ? amount.toNumber() : amount;
+    const num = typeof raw === 'string' ? parseFloat(raw) : (raw || 0);
     return num.toLocaleString('en-US', {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
@@ -151,9 +152,9 @@ export class ReportExporter {
     });
 
     // Freeze header
-    worksheet.views = [{ state: 'frozen', xSplit: 0, ySplit: headerRowIndex, activePane: 'bottomLeft', selType: 'row' }];
+    worksheet.views = [{ state: 'frozen', xSplit: 0, ySplit: headerRowIndex }];
 
-    return (await workbook.xlsx.writeBuffer()) as Buffer;
+    return Buffer.from(await workbook.xlsx.writeBuffer());
   }
 
   private static async generatePDF(

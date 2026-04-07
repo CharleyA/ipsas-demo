@@ -220,7 +220,6 @@ export async function POST(
                 fxRate: fxRate,
                 amountLc: amountLc,
                 debit: amount,
-                credit: null,
               },
               {
                 lineNumber: 2,
@@ -230,7 +229,6 @@ export async function POST(
                 amountFc: amount,
                 fxRate: fxRate,
                 amountLc: amountLc,
-                debit: null,
                 credit: amount,
               }
             ]
@@ -432,7 +430,7 @@ export async function POST(
         status: ImportStatus.COMPLETED,
         processedCount,
         errorCount,
-        previewData: null,
+        previewData: Prisma.JsonNull,
       },
     });
 

@@ -245,12 +245,18 @@ export default function FinancialPositionPage() {
           {data._meta && !data._meta.isConfigured && (
             <div className="mb-4 flex items-start gap-3 rounded-lg border border-blue-300 bg-blue-50 px-4 py-3 text-blue-800 print:hidden">
               <span className="mt-0.5 text-lg">⚙️</span>
-              <div>
+              <div className="flex-1">
                 <p className="font-semibold text-sm">Statement Lines Not Configured</p>
                 <p className="text-xs mt-0.5">
-                  No accounts are mapped to Financial Position statement lines. Run the COA seed or configure statement lines under <strong>Control Panel → Financial Statements</strong> to populate this report.
+                  No accounts are mapped to Financial Position statement lines. Run the COA seed or configure statement lines under Control Panel.
                 </p>
               </div>
+              <Link href="/dashboard/admin/accounting-mappings">
+                <Button variant="outline" size="sm" className="text-blue-700 border-blue-300 hover:bg-blue-100 shrink-0">
+                  Configure Now
+                  <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                </Button>
+              </Link>
             </div>
           )}
 

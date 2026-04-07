@@ -158,7 +158,7 @@ export const createVoucherSchema = z.object({
   organisationId: z.string(),
   type: z.enum(["JOURNAL", "RECEIPT", "PAYMENT", "INVOICE", "BILL", "CASHBOOK", "AR_INVOICE", "AR_RECEIPT", "AP_BILL", "AP_PAYMENT"]),
   periodId: z.string(),
-  date: z.coerce.date(),
+  date: z.union([z.string(), z.date()]).transform(v => new Date(v)),
   description: z.string().min(1).max(500),
   reference: z.string().max(100).optional(),
   studentId: z.string().optional(),
@@ -180,7 +180,7 @@ export const createARInvoiceSchema = z.object({
   term: z.string().optional(),
   fundId: z.string().optional(),
   projectId: z.string().optional(),
-  dueDate: z.coerce.date(),
+  dueDate: z.union([z.string(), z.date()]).transform(v => new Date(v)),
   lines: z.array(arInvoiceLineSchema).min(1),
   description: z.string().optional(),
 });
@@ -192,7 +192,7 @@ export const createARReceiptSchema = z.object({
   amount: z.number().positive(),
   paymentMethod: z.string().optional(),
   reference: z.string().optional(),
-  date: z.coerce.date(),
+  date: z.union([z.string(), z.date()]).transform(v => new Date(v)),
   bankAccountId: z.string(), // The bank/cash account to DR
 });
 
@@ -240,7 +240,7 @@ export const createAPBillSchema = z.object({
   currencyCode: z.string().length(3),
   fundId: z.string().optional(),
   projectId: z.string().optional(),
-  dueDate: z.coerce.date(),
+  dueDate: z.union([z.string(), z.date()]).transform(v => new Date(v)),
   lines: z.array(apBillLineSchema).min(1),
   description: z.string().optional(),
 });
@@ -252,7 +252,7 @@ export const createAPPaymentSchema = z.object({
   amount: z.number().positive(),
   paymentMethod: z.string().optional(),
   reference: z.string().optional(),
-  date: z.coerce.date(),
+  date: z.union([z.string(), z.date()]).transform(v => new Date(v)),
   bankAccountId: z.string(),
 });
 
@@ -411,7 +411,7 @@ export const createCashbookEntrySchema = z.object({
   organisationId: z.string(),
   bankAccountId: z.string(),
   type: z.enum(["RECEIPT", "PAYMENT"]),
-  date: z.coerce.date(),
+  date: z.union([z.string(), z.date()]).transform(v => new Date(v)),
   description: z.string(),
   reference: z.string().optional(),
   amount: z.number().positive(),

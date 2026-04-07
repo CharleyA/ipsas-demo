@@ -42,8 +42,8 @@ export default function NewARReceiptPage() {
 
   const studentId = searchParams.get("studentId") || "";
 
-  const form = useForm<CreateARReceiptInput>({
-    resolver: zodResolver(createARReceiptSchema),
+  const form = useForm({
+    resolver: zodResolver(createARReceiptSchema) as any,
     defaultValues: {
       organisationId: user?.organisationId || "",
       studentId: studentId,
@@ -75,7 +75,7 @@ export default function NewARReceiptPage() {
     if (token) fetchData();
   }, [token]);
 
-  async function onSubmit(values: CreateARReceiptInput) {
+  async function onSubmit(values: any) {
     setIsLoading(true);
     try {
       const response = await fetch("/api/ar/receipts", {

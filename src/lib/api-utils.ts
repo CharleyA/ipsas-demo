@@ -16,7 +16,7 @@ export function handleApiError(error: unknown) {
   console.error("API Error:", error);
 
   if (error instanceof ZodError) {
-    return errorResponse("Validation failed", 400, error.errors);
+    return errorResponse("Validation failed", 400, error.issues);
   }
 
   if (error instanceof Error) {

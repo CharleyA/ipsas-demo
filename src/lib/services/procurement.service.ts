@@ -276,8 +276,8 @@ export class GRNService {
       if (po) {
         const allReceived = po.lines.every(
           (line) =>
-            Number(line.qtyReceived) + 
-            data.lines.find((l) => l.poLineId === line.id)?.qtyAccepted || 0 >=
+            (Number(line.qtyReceived) +
+            (data.lines.find((l) => l.poLineId === line.id)?.qtyAccepted ?? 0)) >=
             Number(line.quantity)
         );
 

@@ -22,6 +22,7 @@ export async function PATCH(
         userId: id,
         organisationId,
         role,
+        isApprover: body.isApprover ?? false,
       }, actorId);
     }
 

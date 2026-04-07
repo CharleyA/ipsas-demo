@@ -56,7 +56,7 @@ export default function CashbookEntryPage() {
   const [counterpartyType, setCounterpartyType] = useState("OTHER");
 
   const form = useForm<CreateCashbookEntryInput>({
-    resolver: zodResolver(createCashbookEntrySchema),
+    resolver: zodResolver(createCashbookEntrySchema) as any,
     defaultValues: {
       organisationId: user?.organisationId,
       type: "RECEIPT",
@@ -134,7 +134,7 @@ export default function CashbookEntryPage() {
     fetchData();
   }, [token, user?.organisationId]);
 
-  const onSubmit = async (data: CreateCashbookEntryInput) => {
+  const onSubmit = async (data: any) => {
     setIsLoading(true);
     try {
       const response = await fetch("/api/bank/cashbook", {

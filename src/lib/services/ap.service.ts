@@ -1,5 +1,5 @@
 import prisma from "@/lib/db";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client/runtime/client";
 import { 
   CreateAPBillInput, 
   CreateAPPaymentInput, 
@@ -48,7 +48,7 @@ export class APService {
 
     return await prisma.$transaction(async (tx) => {
       // 1. Create Voucher (AP_BILL)
-      const voucherLines = [
+      const voucherLines: Array<{ lineNumber: number; accountId: string; description: string; currencyCode: string; amountFc: number; fxRate: number; amountLc: number; credit?: number; debit?: number; fundId?: string; projectId?: string }> = [
         // CR Trade Payables
         {
           lineNumber: data.lines.length + 1,
@@ -74,8 +74,7 @@ export class APService {
           amountFc: line.amount,
           fxRate: fxRate,
           amountLc: line.amount * fxRate,
-          debitFc: line.amount,
-          debitLc: line.amount * fxRate,
+          debit: line.amount,
           fundId: data.fundId,
           projectId: data.projectId,
         });

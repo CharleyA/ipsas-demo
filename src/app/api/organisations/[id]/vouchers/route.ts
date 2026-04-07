@@ -12,13 +12,10 @@ export async function GET(
     const searchParams = request.nextUrl.searchParams;
     
     const options = {
-      status: searchParams.get("status") ?? undefined,
-      fiscalPeriodId: searchParams.get("fiscalPeriodId") ?? undefined,
-      voucherTypeId: searchParams.get("voucherTypeId") ?? undefined,
-      startDate: searchParams.get("startDate") ? new Date(searchParams.get("startDate")!) : undefined,
-      endDate: searchParams.get("endDate") ? new Date(searchParams.get("endDate")!) : undefined,
-      limit: searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : undefined,
-      offset: searchParams.get("offset") ? parseInt(searchParams.get("offset")!) : undefined,
+      status: (searchParams.get("status") ?? undefined) as any,
+      type: (searchParams.get("type") ?? undefined) as any,
+      startDate: searchParams.get("startDate") ?? undefined,
+      endDate: searchParams.get("endDate") ?? undefined,
     };
     
     const vouchers = await VoucherService.listByOrganisation(organisationId, options);

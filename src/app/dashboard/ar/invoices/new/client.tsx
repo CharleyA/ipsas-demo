@@ -43,8 +43,8 @@ export default function NewARInvoiceForm() {
 
   const studentId = searchParams.get("studentId") || "";
 
-  const form = useForm<CreateARInvoiceInput>({
-    resolver: zodResolver(createARInvoiceSchema),
+  const form = useForm({
+    resolver: zodResolver(createARInvoiceSchema) as any,
     defaultValues: {
       organisationId: user?.organisationId || "",
       studentId: studentId,
@@ -85,7 +85,7 @@ export default function NewARInvoiceForm() {
     if (token && user?.organisationId) fetchData();
   }, [token, user?.organisationId]);
 
-  async function onSubmit(values: CreateARInvoiceInput) {
+  async function onSubmit(values: any) {
     setIsLoading(true);
     try {
       const response = await fetch("/api/ar/invoices", {
@@ -208,10 +208,10 @@ export default function NewARInvoiceForm() {
                           <Input 
                             type="date" 
                             {...field} 
-                            value={field.value instanceof Date 
-                              ? field.value.toISOString().split('T')[0] 
-                              : (typeof field.value === 'string' ? field.value.split('T')[0] : '')
-                            } 
+                            value={field.value && typeof field.value === 'object' && 'toISOString' in field.value
+                              ? (field.value as Date).toISOString().split('T')[0]
+                              : (field.value ? String(field.value).split('T')[0] : '')
+                            }
                           />
                         </FormControl>
                         <FormMessage />

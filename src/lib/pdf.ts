@@ -16,6 +16,7 @@ export interface PDFGenerationOptions {
   generatedAt?: Date;
   orientation?: 'portrait' | 'landscape';
   summaryData?: { label: string; value: string | number }[];
+  currency?: string;
 }
 
 export async function generatePDF(
@@ -72,7 +73,7 @@ export async function generatePDF(
       theme: 'grid',
       styles: { fontSize: 9, cellPadding: 2 },
       columnStyles: {
-        0: { fontStyle: 'bold', fillColor: [240, 240, 240], width: 40 },
+        0: { fontStyle: 'bold', fillColor: [240, 240, 240], cellWidth: 40 },
         1: { halign: 'right' }
       },
       margin: { left: pageWidth - 100 }, // Align to the right side

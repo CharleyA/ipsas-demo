@@ -233,9 +233,9 @@ export default function AccountsPage() {
       EQUITY: 0
     };
     accounts.forEach(a => {
-      const type = a.type as keyof typeof counts;
-      if (counts[type] !== undefined) counts[type]++;
-      else if (type === 'NET_ASSETS_EQUITY') counts.EQUITY++;
+      const type = a.type as string;
+      if (type === 'NET_ASSETS_EQUITY') counts.EQUITY++;
+      else if ((type as keyof typeof counts) in counts) counts[type as keyof typeof counts]++;
     });
     return counts;
   }, [accounts]);

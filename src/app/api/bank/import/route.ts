@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       validated.bankAccountId,
       validated.filename,
       validated.rows.map(r => ({ ...r, date: new Date(r.date) })),
-      user.id
+      user.userId
     );
 
     return NextResponse.json(bankImport);

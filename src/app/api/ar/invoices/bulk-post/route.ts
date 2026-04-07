@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
           if (refreshed?.status === "SUBMITTED") {
             await prisma.approvalTask.updateMany({
               where: { voucherId, userId: authReq.user.userId, status: "PENDING" },
-              data: { status: "APPROVED", actedAt: new Date() },
+              data: { status: "APPROVED" },
             });
             await prisma.voucher.update({ where: { id: voucherId }, data: { status: "APPROVED" } });
           }

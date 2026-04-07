@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const validated = createCashbookEntrySchema.parse(body);
 
-    const voucher = await BankService.createCashbookEntry(validated, user.id);
+    const voucher = await BankService.createCashbookEntry(validated, user.userId);
 
     return NextResponse.json(voucher);
   } catch (error: any) {

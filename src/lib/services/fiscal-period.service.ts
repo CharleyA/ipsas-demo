@@ -1,9 +1,9 @@
 import prisma from "@/lib/db";
-import type { CreateFiscalPeriodInput } from "@/lib/validations/schemas";
+import type { CreateAccountingPeriodInput } from "@/lib/validations/schemas";
 import { AuditService } from "./audit.service";
 
 export class FiscalPeriodService {
-  static async create(data: CreateFiscalPeriodInput, actorId: string) {
+  static async create(data: CreateAccountingPeriodInput, actorId: string) {
     const period = await prisma.fiscalPeriod.create({
       data: {
         organisationId: data.organisationId,
@@ -69,7 +69,7 @@ export class FiscalPeriodService {
 
     const unpostedVouchers = await prisma.voucher.count({
       where: {
-        fiscalPeriodId: id,
+        periodId: id,
         status: { in: ["DRAFT", "SUBMITTED", "APPROVED"] },
       },
     });

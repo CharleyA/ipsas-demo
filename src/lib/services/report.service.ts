@@ -694,11 +694,25 @@ export class ReportService {
       },
     });
 
-    // Attach fxRate from the first GL entry for FX conversion
-    const invoicesWithFx = invoices.map((inv: any) => ({
-      ...inv,
-      voucher: { fxRate: inv.voucher?.glHeader?.entries?.[0]?.fxRate ?? 1 },
-    }));
+    // Build a cache of exchange rates for currencies used (fallback when voucher fxRate is null)
+    const currenciesUsed = [...new Set(invoices.map((inv: any) => inv.currencyCode).filter(Boolean))];
+    const fxCache: Record<string, number> = {};
+    for (const cc of currenciesUsed) {
+      if (cc !== baseCurrency) {
+        const rate = await prisma.exchangeRate.findFirst({
+          where: { fromCurrencyCode: cc, toCurrencyCode: baseCurrency },
+          orderBy: { effectiveDate: "desc" },
+        });
+        if (rate) fxCache[cc] = Number(rate.rate);
+      }
+    }
+
+    // Attach fxRate from the first GL entry for FX conversion, or fallback to ExchangeRate table
+    const invoicesWithFx = invoices.map((inv: any) => {
+      const glRate = inv.voucher?.glHeader?.entries?.[0]?.fxRate;
+      const rate = (glRate && Number(glRate) > 0) ? Number(glRate) : (fxCache[inv.currencyCode] ?? 1);
+      return { ...inv, voucher: { fxRate: rate } };
+    });
 
     return this.calculateAgeing(invoicesWithFx, date, "student", reportingCurrency, baseCurrency);
   }
@@ -722,10 +736,24 @@ export class ReportService {
       },
     });
 
-    const billsWithFx = bills.map((bill: any) => ({
-      ...bill,
-      voucher: { fxRate: bill.voucher?.glHeader?.entries?.[0]?.fxRate ?? 1 },
-    }));
+    // Build a cache of exchange rates for currencies used (fallback when voucher fxRate is null)
+    const currenciesUsedAP = [...new Set(bills.map((b: any) => b.currencyCode).filter(Boolean))];
+    const fxCacheAP: Record<string, number> = {};
+    for (const cc of currenciesUsedAP) {
+      if (cc !== baseCurrencyAP) {
+        const rate = await prisma.exchangeRate.findFirst({
+          where: { fromCurrencyCode: cc, toCurrencyCode: baseCurrencyAP },
+          orderBy: { effectiveDate: "desc" },
+        });
+        if (rate) fxCacheAP[cc] = Number(rate.rate);
+      }
+    }
+
+    const billsWithFx = bills.map((bill: any) => {
+      const glRate = bill.voucher?.glHeader?.entries?.[0]?.fxRate;
+      const rate = (glRate && Number(glRate) > 0) ? Number(glRate) : (fxCacheAP[bill.currencyCode] ?? 1);
+      return { ...bill, voucher: { fxRate: rate } };
+    });
 
     return this.calculateAgeing(billsWithFx, date, "supplier", reportingCurrency, baseCurrencyAP);
   }

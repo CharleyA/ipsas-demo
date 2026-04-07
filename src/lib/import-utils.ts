@@ -49,7 +49,7 @@ export async function generateXLSXTemplate(type: string): Promise<Buffer> {
   // Make header bold
   worksheet.getRow(1).font = { bold: true };
 
-  return (await workbook.xlsx.writeBuffer()) as Buffer;
+  return Buffer.from(await workbook.xlsx.writeBuffer());
 }
 
 export async function parseImportFile(file: File): Promise<any[]> {

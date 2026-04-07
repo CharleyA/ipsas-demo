@@ -259,7 +259,7 @@ export class FeeGenerationService {
             studentId: student.id,
             currencyCode: template.currencyCode,
             term: `${template.academicYear} ${template.term}`,
-            dueDate: dueDate.toISOString(),
+            dueDate: dueDate,
             description: `School Fees - ${template.name} - ${student.firstName} ${student.lastName}`,
             lines: invoiceLines,
           },

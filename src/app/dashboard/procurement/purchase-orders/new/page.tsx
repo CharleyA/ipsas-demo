@@ -78,7 +78,7 @@ export default function NewPurchaseOrderPage() {
   const [rateSource, setRateSource] = useState<string>("");
 
   const form = useForm<CreatePOInput>({
-    resolver: zodResolver(createPOSchema),
+    resolver: zodResolver(createPOSchema) as any,
     defaultValues: {
       orderDate: new Date(),
       currencyCode: "USD",
@@ -184,7 +184,7 @@ export default function NewPurchaseOrderPage() {
     fetchData();
   }, [token, user?.organisationId]);
 
-  const onSubmit = async (data: CreatePOInput) => {
+  const onSubmit = async (data: any) => {
     setIsLoading(true);
     try {
       const response = await fetch("/api/procurement/purchase-orders", {

@@ -1,5 +1,4 @@
 
-import { Decimal } from "@prisma/client";
 import prisma from "../src/lib/db";
 import { ARService } from "../src/lib/services/ar.service";
 import { APService } from "../src/lib/services/ap.service";
@@ -143,7 +142,7 @@ async function main() {
         organisationId,
         studentId: studentIds[i],
         currencyCode,
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         description: `Term 1 School Fees (${currencyCode})`,
         fundId: generalFund.id,
         lines: [
@@ -167,7 +166,7 @@ async function main() {
         organisationId,
         supplierId: supplierIds[i],
         currencyCode,
-        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
         description: isUtility ? `Monthly Utility: ${supplier?.name}` : "Monthly Supplies",
         fundId: generalFund.id,
         lines: [
@@ -189,7 +188,7 @@ async function main() {
     const grantVoucher = await VoucherService.create({
       organisationId,
       type: "JOURNAL",
-      date: new Date().toISOString(),
+      date: new Date(),
       description: "UNESCO Library Grant Funding (USD)",
       status: "DRAFT",
       lines: [
@@ -197,8 +196,10 @@ async function main() {
           accountId: bankAcc.id,
           description: "Grant Funding Received",
           currencyCode: "USD",
-          debitFc: new Decimal(5000),
-          fxRate: new Decimal(25),
+          amountFc: 5000,
+          fxRate: 25,
+          amountLc: 5000 * 25,
+          debit: 5000,
           fundId: grantFund.id,
           projectId: libraryProject.id
         },
@@ -206,8 +207,10 @@ async function main() {
           accountId: grantRevenueAcc.id,
           description: "Unesco Grant Revenue",
           currencyCode: "USD",
-          creditFc: new Decimal(5000),
-          fxRate: new Decimal(25),
+          amountFc: 5000,
+          fxRate: 25,
+          amountLc: 5000 * 25,
+          credit: 5000,
           fundId: grantFund.id,
           projectId: libraryProject.id
         }
