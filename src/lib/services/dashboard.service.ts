@@ -218,7 +218,7 @@ export class DashboardService {
         ORDER BY 1 DESC
         LIMIT 6;`;
 
-    const trend = (incomeExpenseTrend || []).map((row: any) => ({
+    const trend = (Array.isArray(incomeExpenseTrend) ? incomeExpenseTrend : []).map((row: any) => ({
       month: row.month,
       income: Number(row.income || 0),
       expense: Number(row.expense || 0),
@@ -256,9 +256,9 @@ export class DashboardService {
     const now = new Date();
     const monthStart = startOfMonth(now);
 
-    // Receipts this month
+    // Receipts this month (ARReceipt has no receiptDate; filter via voucher.date)
     const receiptsThisMonth = await prisma.aRReceipt.aggregate({
-      where: { organisationId, receiptDate: { gte: monthStart } },
+      where: { organisationId, voucher: { date: { gte: monthStart } } },
       _sum: { amount: true },
       _count: { id: true },
     });
@@ -280,7 +280,10 @@ export class DashboardService {
     // Recent receipts
     const recentReceipts = await prisma.aRReceipt.findMany({
       where: { organisationId },
-      include: { student: { select: { firstName: true, lastName: true, admissionNumber: true } } },
+      include: {
+        student: { select: { firstName: true, lastName: true, studentNumber: true } },
+        voucher: { select: { number: true, date: true, status: true } },
+      },
       orderBy: { createdAt: "desc" },
       take: 5,
     });
@@ -291,26 +294,26 @@ export class DashboardService {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
       const [rec, inv] = await Promise.all([
-        prisma.aRReceipt.aggregate({ where: { organisationId, receiptDate: { gte: d, lt: end } }, _sum: { amount: true } }),
-        prisma.aRInvoice.aggregate({ where: { organisationId, invoiceDate: { gte: d, lt: end } }, _sum: { totalAmount: true } }),
+        prisma.aRReceipt.aggregate({ where: { organisationId, voucher: { date: { gte: d, lt: end } } }, _sum: { amount: true } }),
+        prisma.aRInvoice.aggregate({ where: { organisationId, voucher: { date: { gte: d, lt: end } } }, _sum: { amount: true } }),
       ]);
-      months.push({ month: d.toISOString(), receipts: Number(rec._sum.amount || 0), invoiced: Number(inv._sum.totalAmount || 0) });
+      months.push({ month: d.toISOString(), receipts: Number(rec._sum.amount || 0), invoiced: Number(inv._sum.amount || 0) });
     }
 
     return {
-      receiptsThisMonth: Number(receiptsThisMonth._sum.amount || 0),
-      receiptsCountThisMonth: receiptsThisMonth._count.id,
+      receiptsThisMonth: Number(receiptsThisMonth._sum?.amount || 0),
+      receiptsCountThisMonth: receiptsThisMonth._count?.id ?? 0,
       outstandingBalance: Number(arBalance._sum.balance || 0),
       outstandingCount: arBalance._count.id,
       invoicesByStatus: invoicesByStatus.map((s) => ({ status: s.status, count: s._count.id })),
       recentReceipts: recentReceipts.map((r) => ({
         id: r.id,
-        receiptNumber: r.receiptNumber,
+        receiptNumber: r.voucher?.number || r.id,
         student: r.student ? `${r.student.firstName} ${r.student.lastName}` : "Unknown",
-        admissionNumber: r.student?.admissionNumber || "-",
+        admissionNumber: r.student?.studentNumber || "-",
         amount: Number(r.amount),
-        date: r.receiptDate,
-        status: r.status,
+        date: r.voucher?.date || r.createdAt,
+        status: r.voucher?.status || "-",
       })),
       monthlyTrend: months,
     };
@@ -319,9 +322,9 @@ export class DashboardService {
   static async getClerkMetrics(organisationId: string) {
     const now = new Date();
 
-    // Pending approvals
+    // Pending approvals (via voucher since ApprovalTask has no organisationId)
     const pendingApprovals = await prisma.approvalTask.count({
-      where: { organisationId, status: "PENDING" },
+      where: { status: "PENDING", voucher: { organisationId } },
     });
 
     // Recent vouchers
@@ -355,7 +358,7 @@ export class DashboardService {
         reference: v.reference,
         description: v.description,
         status: v.status,
-        date: v.voucherDate,
+        date: v.date,
         createdBy: v.createdBy ? `${v.createdBy.firstName} ${v.createdBy.lastName}` : "Unknown",
       })),
     };

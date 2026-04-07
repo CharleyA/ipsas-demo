@@ -1,5 +1,5 @@
 import prisma from "@/lib/db";
-import { Decimal } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
 import { 
   CreateAPBillInput, 
   CreateAPPaymentInput, 
@@ -74,7 +74,8 @@ export class APService {
           amountFc: line.amount,
           fxRate: fxRate,
           amountLc: line.amount * fxRate,
-          debit: line.amount,
+          debitFc: line.amount,
+          debitLc: line.amount * fxRate,
           fundId: data.fundId,
           projectId: data.projectId,
         });

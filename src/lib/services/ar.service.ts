@@ -1,5 +1,5 @@
 import prisma from "@/lib/db";
-import { Decimal } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
 import { 
   CreateARInvoiceInput, 
   CreateARReceiptInput, 

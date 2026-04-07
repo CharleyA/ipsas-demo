@@ -679,6 +679,8 @@ export class ReportService {
     const org = await prisma.organisation.findUnique({ where: { id: organisationId } });
     const reportingCurrency = options.reportingCurrency || org?.baseCurrency || "ZWG";
 
+    const baseCurrency = org?.baseCurrency || "ZWG";
+
     const invoices = await prisma.aRInvoice.findMany({
       where: {
         organisationId,
@@ -688,16 +690,24 @@ export class ReportService {
       },
       include: {
         student: true,
-        voucher: { select: { fxRate: true } },
+        voucher: { select: { glHeader: { select: { entries: { select: { fxRate: true }, take: 1 } } } } },
       },
     });
 
-    return this.calculateAgeing(invoices, date, "student", reportingCurrency, baseCurrency);
+    // Attach fxRate from the first GL entry for FX conversion
+    const invoicesWithFx = invoices.map((inv: any) => ({
+      ...inv,
+      voucher: { fxRate: inv.voucher?.glHeader?.entries?.[0]?.fxRate ?? 1 },
+    }));
+
+    return this.calculateAgeing(invoicesWithFx, date, "student", reportingCurrency, baseCurrency);
   }
 
   static async getAPAgeing(organisationId: string, date: Date, options: { reportingCurrency?: string } = {}) {
     const org = await prisma.organisation.findUnique({ where: { id: organisationId } });
     const reportingCurrency = options.reportingCurrency || org?.baseCurrency || "ZWG";
+
+    const baseCurrencyAP = org?.baseCurrency || "ZWG";
 
     const bills = await prisma.aPBill.findMany({
       where: {
@@ -708,11 +718,16 @@ export class ReportService {
       },
       include: {
         supplier: true,
-        voucher: { select: { fxRate: true } },
+        voucher: { select: { glHeader: { select: { entries: { select: { fxRate: true }, take: 1 } } } } },
       },
     });
 
-    return this.calculateAgeing(bills, date, "supplier", reportingCurrency, baseCurrency);
+    const billsWithFx = bills.map((bill: any) => ({
+      ...bill,
+      voucher: { fxRate: bill.voucher?.glHeader?.entries?.[0]?.fxRate ?? 1 },
+    }));
+
+    return this.calculateAgeing(billsWithFx, date, "supplier", reportingCurrency, baseCurrencyAP);
   }
 
   private static calculateAgeing(items: any[], date: Date, entityKey: string, reportingCurrency: string, baseCurrency = "ZWG") {

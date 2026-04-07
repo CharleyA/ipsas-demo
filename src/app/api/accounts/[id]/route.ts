@@ -59,7 +59,7 @@ export async function DELETE(
       const { id } = await params;
       // Check for transactions
       const [glEntries, voucherLines, children] = await Promise.all([
-        prisma.glEntry.count({ where: { accountId: id } }),
+        prisma.gLEntry.count({ where: { accountId: id } }),
         prisma.voucherLine.count({ where: { accountId: id } }),
         prisma.account.count({ where: { parentId: id } }),
       ]);

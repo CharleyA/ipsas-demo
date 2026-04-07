@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
       ? await prisma.classTeacherAssignment.findMany({
           where: {
             organisationId: authReq.user.organisationId,
-            teacherUserId: authReq.user.id,
+            teacherUserId: authReq.user.userId,
             isActive: true,
           },
           select: { className: true },

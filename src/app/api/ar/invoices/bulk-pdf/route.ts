@@ -25,7 +25,6 @@ export async function POST(req: NextRequest) {
         include: {
           student: true,
           voucher: true,
-          organisation: true,
         },
         orderBy: { createdAt: "asc" },
         take: invoiceIds.length ? undefined : limit,
@@ -34,6 +33,10 @@ export async function POST(req: NextRequest) {
       if (invoices.length === 0) {
         return NextResponse.json({ error: "No invoices found for PDF export" }, { status: 404 });
       }
+
+      const org = await prisma.organisation.findUnique({
+        where: { id: authReq.user.organisationId },
+      });
 
       const doc = new jsPDF({ unit: "mm", format: "a4" });
 
@@ -44,7 +47,7 @@ export async function POST(req: NextRequest) {
 
         doc.setFont("helvetica", "bold");
         doc.setFontSize(16);
-        doc.text(invoice.organisation?.name || "School Invoice", width / 2, y, { align: "center" });
+        doc.text(org?.name || "School Invoice", width / 2, y, { align: "center" });
         y += 8;
         doc.setFontSize(14);
         doc.text("Student Invoice", width / 2, y, { align: "center" });

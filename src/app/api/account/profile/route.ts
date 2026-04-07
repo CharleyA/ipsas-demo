@@ -15,7 +15,7 @@ export async function PATCH(req: NextRequest) {
       const body = await req.json();
       const validated = accountProfileSchema.parse(body);
 
-      const updated = await UserService.update(authReq.user.id, validated, authReq.user.id);
+      const updated = await UserService.update(authReq.user.userId, validated, authReq.user.userId);
       return NextResponse.json({ success: true, user: updated });
     } catch (error: any) {
       return NextResponse.json({ error: error.message || "Failed to update profile" }, { status: 400 });

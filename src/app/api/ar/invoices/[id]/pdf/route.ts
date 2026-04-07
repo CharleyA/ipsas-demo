@@ -20,7 +20,6 @@ export async function GET(
         student: true,
         voucher: true,
         lines: true,
-        organisation: true,
       },
     });
 
@@ -32,13 +31,15 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const org = await prisma.organisation.findUnique({ where: { id: invoice.organisationId } });
+
     const doc = new jsPDF({ unit: "mm", format: "a4" });
     const width = doc.internal.pageSize.getWidth();
     let y = 15;
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text(invoice.organisation?.name || "School Invoice", width / 2, y, { align: "center" });
+    doc.text(org?.name || "School Invoice", width / 2, y, { align: "center" });
     y += 8;
 
     doc.setFontSize(14);

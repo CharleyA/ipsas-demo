@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
       }
 
-      await UserService.changePassword(authReq.user.id, newPassword, authReq.user.id);
+      await UserService.changePassword(authReq.user.userId, newPassword, authReq.user.userId);
       return NextResponse.json({ success: true, message: "Password changed successfully" });
     } catch (error: any) {
       const message = error?.errors?.[0]?.message || error?.message || "Failed to change password";
