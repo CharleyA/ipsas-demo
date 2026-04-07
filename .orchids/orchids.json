@@ -3,7 +3,7 @@
   "createdAt": 1767830614645,
   "version": "1.0",
   "startupCommands": [
-    "bun install; bun dev"
+    "npm install; npm run dev"
   ],
   "templateId": "nextjs",
   "vercelProjectId": "prj_qe2LCu5YVJZXaHHkJsqbZW3CI8ft",
