@@ -77,7 +77,7 @@ export default function NewARInvoiceForm() {
         const stuData = await stuRes.json();
         const curData = await curRes.json();
         setStudents(Array.isArray(stuData) ? stuData : []);
-        setCurrencies(Array.isArray(curData) ? curData : []);
+        setCurrencies(Array.isArray(curData) ? curData : (curData?.data ?? []));
       } catch (error) {
         console.error("Failed to fetch data", error);
       }

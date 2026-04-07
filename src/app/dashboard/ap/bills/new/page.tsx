@@ -56,7 +56,7 @@ export default function NewBillPage() {
         const [supData, accData, curData] = await Promise.all([supRes.json(), accRes.json(), curRes.json()]);
         setSuppliers(supData);
         setAccounts(accData.filter((a: any) => a.type === "EXPENSE" || a.type === "ASSET"));
-        setCurrencies(curData);
+        setCurrencies(Array.isArray(curData) ? curData : (curData?.data ?? []));
       } catch (error) {
         toast.error("Failed to load form data");
       }

@@ -125,7 +125,8 @@ export default function CashbookEntryPage() {
         setSuppliers(await suppliersRes.json());
         setCostCentres(await ccRes.json());
         setFunds(await fundsRes.json());
-        setCurrencies(await currRes.json());
+        const currRaw = await currRes.json();
+        setCurrencies(Array.isArray(currRaw) ? currRaw : (currRaw?.data ?? []));
       } catch (error) {
         toast.error("Failed to load form data");
       }
