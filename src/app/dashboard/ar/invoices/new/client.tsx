@@ -78,8 +78,9 @@ export default function NewARInvoiceForm() {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(r => r.json())
-        .then(rates => {
-          if (rates && rates.length > 0) {
+        .then(res => {
+          const rates = Array.isArray(res) ? res : (res?.data ?? []);
+          if (rates.length > 0) {
             setFxRate(parseFloat(rates[0].rate));
             setFxRateSource(rates[0].source || "System Rate");
           } else {
