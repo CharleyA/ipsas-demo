@@ -173,7 +173,6 @@ export default function PODetailPage() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" asChild>
@@ -206,7 +205,6 @@ export default function PODetailPage() {
         </div>
       </div>
 
-      {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: "Order Date", value: fmtDate(po.orderDate), icon: Calendar },
@@ -223,7 +221,6 @@ export default function PODetailPage() {
         ))}
       </div>
 
-      {/* Lines */}
       <Card>
         <CardHeader><CardTitle>Order Lines</CardTitle></CardHeader>
         <CardContent>
@@ -233,6 +230,7 @@ export default function PODetailPage() {
                 <TableHead>#</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>Inventory Link</TableHead>
                 <TableHead className="text-right">Qty Ordered</TableHead>
                 <TableHead className="text-right">Qty Received</TableHead>
                 <TableHead className="text-right">Unit Price</TableHead>
@@ -242,11 +240,26 @@ export default function PODetailPage() {
             <TableBody>
               {po.lines?.map((l: any, i: number) => {
                 const remaining = Number(l.quantity) - Number(l.qtyReceived || 0);
+                const brokenInventoryLink = l.itemType === "INVENTORY" && !l.inventoryItemId;
                 return (
-                  <TableRow key={l.id}>
+                  <TableRow key={l.id} className={brokenInventoryLink ? "bg-red-50" : ""}>
                     <TableCell>{i + 1}</TableCell>
                     <TableCell>{l.description}</TableCell>
                     <TableCell><Badge variant="outline" className="text-xs">{l.itemType}</Badge></TableCell>
+                    <TableCell>
+                      {l.itemType === "INVENTORY" ? (
+                        l.inventoryItem ? (
+                          <div>
+                            <div className="font-medium">{l.inventoryItem.name}</div>
+                            <div className="text-xs text-muted-foreground">{l.inventoryItem.code}</div>
+                          </div>
+                        ) : (
+                          <Badge variant="destructive">Missing inventory link</Badge>
+                        )
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right font-mono">{Number(l.quantity).toFixed(2)}</TableCell>
                     <TableCell className="text-right font-mono">
                       <span className={remaining > 0 ? "text-orange-600" : "text-green-600"}>
@@ -259,7 +272,7 @@ export default function PODetailPage() {
                 );
               })}
               <TableRow className="font-bold bg-muted/30">
-                <TableCell colSpan={6} className="text-right">Total</TableCell>
+                <TableCell colSpan={7} className="text-right">Total</TableCell>
                 <TableCell className="text-right font-mono">${fmt(Number(po.totalAmount))}</TableCell>
               </TableRow>
             </TableBody>
@@ -267,7 +280,6 @@ export default function PODetailPage() {
         </CardContent>
       </Card>
 
-      {/* GRNs */}
       {grns.length > 0 && (
         <Card>
           <CardHeader>
@@ -312,7 +324,6 @@ export default function PODetailPage() {
         </Card>
       )}
 
-      {/* Receive Goods Dialog */}
       <Dialog open={receiveOpen} onOpenChange={setReceiveOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>

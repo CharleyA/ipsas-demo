@@ -50,6 +50,22 @@ const purchaseOrderLineSchema = z.object({
   accountId: z.string().min(1, "Account is required"),
   quantity: z.number().positive("Quantity must be positive"),
   unitPrice: z.number().nonnegative("Price cannot be negative"),
+}).superRefine((line, ctx) => {
+  if (line.itemType === "INVENTORY" && !line.inventoryItemId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["inventoryItemId"],
+      message: "Inventory item is required for inventory lines",
+    });
+  }
+
+  if (line.itemType === "CAPITAL_ITEM" && !line.assetCategoryId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["assetCategoryId"],
+      message: "Asset category is required for asset lines",
+    });
+  }
 });
 
 const createPOSchema = z.object({
@@ -95,7 +111,6 @@ export default function NewPurchaseOrderPage() {
     },
   });
 
-  // Handle hydration for date
   useEffect(() => {
     form.setValue("orderDate", new Date());
   }, [form]);
@@ -105,7 +120,6 @@ export default function NewPurchaseOrderPage() {
     name: "lines",
   });
 
-  // Fetch exchange rate when currency changes
   const selectedCurrency = form.watch("currencyCode");
   useEffect(() => {
     if (selectedCurrency === "USD") {
@@ -156,7 +170,7 @@ export default function NewPurchaseOrderPage() {
           const data = await suppliersRes.json();
           if (Array.isArray(data)) setSuppliers(data);
         }
-        
+
         if (accountsRes.ok) {
           const data = await accountsRes.json();
           if (Array.isArray(data)) setAccounts(data);
@@ -400,135 +414,213 @@ export default function NewPurchaseOrderPage() {
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              {fields.map((field, index) => (
-                <div
-                  key={field.id}
-                  className="grid gap-4 md:grid-cols-12 items-start border-b pb-4 last:border-0"
-                >
-                  <div className="md:col-span-3">
-                    <FormField
-                      control={form.control}
-                      name={`lines.${index}.description`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className={cn(index > 0 && "sr-only")}>Description</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Item description" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+              {fields.map((field, index) => {
+                const lineType = form.watch(`lines.${index}.itemType`);
 
-                  <div className="md:col-span-2">
-                    <FormField
-                      control={form.control}
-                      name={`lines.${index}.itemType`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className={cn(index > 0 && "sr-only")}>Type</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                return (
+                  <div
+                    key={field.id}
+                    className="grid gap-4 md:grid-cols-12 items-start border-b pb-4 last:border-0"
+                  >
+                    <div className="md:col-span-3">
+                      <FormField
+                        control={form.control}
+                        name={`lines.${index}.description`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className={cn(index > 0 && "sr-only")}>Description</FormLabel>
                             <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
+                              <Input placeholder="Item description" {...field} />
                             </FormControl>
-                            <SelectContent>
-                              <SelectItem value="DIRECT_EXPENSE">Expense</SelectItem>
-                              <SelectItem value="INVENTORY">Inventory</SelectItem>
-                              <SelectItem value="CAPITAL_ITEM">Asset</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
-                  <div className="md:col-span-3">
-                    <FormField
-                      control={form.control}
-                      name={`lines.${index}.accountId`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className={cn(index > 0 && "sr-only")}>GL Account</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Account" />
-                              </SelectTrigger>
-                            </FormControl>
+                    <div className="md:col-span-2">
+                      <FormField
+                        control={form.control}
+                        name={`lines.${index}.itemType`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className={cn(index > 0 && "sr-only")}>Type</FormLabel>
+                            <Select
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                if (value !== "INVENTORY") {
+                                  form.setValue(`lines.${index}.inventoryItemId`, undefined, { shouldValidate: true, shouldDirty: true });
+                                }
+                                if (value !== "CAPITAL_ITEM") {
+                                  form.setValue(`lines.${index}.assetCategoryId`, undefined, { shouldValidate: true, shouldDirty: true });
+                                }
+                              }}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
                               <SelectContent>
-                                {Array.isArray(accounts) && accounts.map((acc) => (
-                                  <SelectItem key={acc.id} value={acc.id}>
-                                    {acc.code} - {acc.name}
-                                  </SelectItem>
-                                ))}
+                                <SelectItem value="DIRECT_EXPENSE">Expense</SelectItem>
+                                <SelectItem value="INVENTORY">Inventory</SelectItem>
+                                <SelectItem value="CAPITAL_ITEM">Asset</SelectItem>
                               </SelectContent>
                             </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
-                  <div className="md:col-span-1">
-                    <FormField
-                      control={form.control}
-                      name={`lines.${index}.quantity`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className={cn(index > 0 && "sr-only")}>Qty</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min="1"
-                              {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+                    <div className="md:col-span-3 space-y-4">
+                      {lineType === "INVENTORY" && (
+                        <FormField
+                          control={form.control}
+                          name={`lines.${index}.inventoryItemId`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className={cn(index > 0 && "sr-only")}>Inventory Item</FormLabel>
+                              <Select
+                                onValueChange={(value) => {
+                                  field.onChange(value);
+                                  const selectedItem = inventoryItems.find((item) => item.id === value);
+                                  if (selectedItem) {
+                                    form.setValue(`lines.${index}.description`, selectedItem.name, { shouldValidate: true, shouldDirty: true });
+                                  }
+                                }}
+                                value={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select inventory item" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {Array.isArray(inventoryItems) && inventoryItems.map((item) => (
+                                    <SelectItem key={item.id} value={item.id}>
+                                      {item.code} - {item.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       )}
-                    />
-                  </div>
 
-                  <div className="md:col-span-2">
-                    <FormField
-                      control={form.control}
-                      name={`lines.${index}.unitPrice`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className={cn(index > 0 && "sr-only")}>Unit Price</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+                      {lineType === "CAPITAL_ITEM" && (
+                        <FormField
+                          control={form.control}
+                          name={`lines.${index}.assetCategoryId`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className={cn(index > 0 && "sr-only")}>Asset Category</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select asset category" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {Array.isArray(assetCategories) && assetCategories.map((category) => (
+                                    <SelectItem key={category.id} value={category.id}>
+                                      {category.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       )}
-                    />
-                  </div>
 
-                  <div className="md:col-span-1 pt-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive"
-                      onClick={() => remove(index)}
-                      disabled={fields.length === 1}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                      <FormField
+                        control={form.control}
+                        name={`lines.${index}.accountId`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className={cn(index > 0 && "sr-only")}>GL Account</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Account" />
+                                </SelectTrigger>
+                              </FormControl>
+                                <SelectContent>
+                                  {Array.isArray(accounts) && accounts.map((acc) => (
+                                    <SelectItem key={acc.id} value={acc.id}>
+                                      {acc.code} - {acc.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="md:col-span-1">
+                      <FormField
+                        control={form.control}
+                        name={`lines.${index}.quantity`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className={cn(index > 0 && "sr-only")}>Qty</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min="1"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <FormField
+                        control={form.control}
+                        name={`lines.${index}.unitPrice`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className={cn(index > 0 && "sr-only")}>Unit Price</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="md:col-span-1 pt-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive"
+                        onClick={() => remove(index)}
+                        disabled={fields.length === 1}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               <div className="flex justify-end pt-4 border-t">
                 <div className="text-right">

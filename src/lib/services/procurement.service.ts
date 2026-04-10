@@ -36,6 +36,16 @@ export class PurchaseOrderService {
     },
     actorId: string
   ) {
+    for (const [index, line] of data.lines.entries()) {
+      if (line.itemType === "INVENTORY" && !line.inventoryItemId) {
+        throw new Error(`Line ${index + 1}: inventory item is required for inventory purchase lines`);
+      }
+
+      if (line.itemType === "CAPITAL_ITEM" && !line.assetCategoryId) {
+        throw new Error(`Line ${index + 1}: asset category is required for capital item lines`);
+      }
+    }
+
     const poNumber = await this.generatePONumber(data.organisationId);
 
     const totalAmount = data.lines.reduce(
@@ -191,6 +201,20 @@ export class GRNService {
     const grnNumber = await this.generateGRNNumber(data.organisationId);
 
     const grn = await prisma.$transaction(async (tx) => {
+      for (const line of data.lines) {
+        const poLine = await tx.purchaseOrderLine.findUnique({
+          where: { id: line.poLineId },
+        });
+
+        if (!poLine) {
+          throw new Error(`Purchase order line not found: ${line.poLineId}`);
+        }
+
+        if (poLine.itemType === "INVENTORY" && Number(line.qtyAccepted) > 0 && !poLine.inventoryItemId) {
+          throw new Error(`PO line \"${poLine.description}\" is marked as INVENTORY but is not linked to an inventory item`);
+        }
+      }
+
       const grn = await tx.goodsReceivedNote.create({
         data: {
           organisationId: data.organisationId,
