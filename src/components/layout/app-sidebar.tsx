@@ -170,7 +170,7 @@ const menuItems = [
     ],
   },
   {
-    title: "Procurement",
+    title: "Stock Purchasing",
     items: [
       {
         title: "Purchase Orders",
@@ -184,12 +184,52 @@ const menuItems = [
         icon: PackageCheck,
         roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
       },
+    ],
+  },
+  {
+    title: "Inventory & Stores",
+    items: [
+      {
+        title: "Inventory",
+        href: "/dashboard/inventory",
+        icon: Boxes,
+        roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
+      },
       {
         title: "Stock Requisitions",
         href: "/dashboard/inventory/requisitions",
         icon: ClipboardList,
         roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
       },
+      {
+        title: "Issue Stock",
+        href: "/dashboard/inventory/issue",
+        icon: Truck,
+        roles: ["ADMIN", "CLERK", "BURSAR", "ACCOUNTANT"],
+      },
+      {
+        title: "Stock Movements",
+        href: "/dashboard/inventory/movements",
+        icon: ClipboardCheck,
+        roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
+      },
+      {
+        title: "Stock Take",
+        href: "/dashboard/inventory/stock-take",
+        icon: ListChecks,
+        roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
+      },
+      {
+        title: "Variance Report",
+        href: "/dashboard/inventory/variance-report",
+        icon: AlertTriangle,
+        roles: ["ADMIN", "BURSAR", "AUDITOR", "ACCOUNTANT"],
+      },
+    ],
+  },
+  {
+    title: "Fixed Assets",
+    items: [
       {
         title: "Fixed Assets",
         href: "/dashboard/assets",
@@ -219,36 +259,6 @@ const menuItems = [
         href: "/dashboard/assets/depreciation",
         icon: Play,
         roles: ["ADMIN", "BURSAR", "ACCOUNTANT"],
-      },
-      {
-        title: "Inventory",
-        href: "/dashboard/inventory",
-        icon: Boxes,
-        roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
-      },
-      {
-        title: "Issue Stock",
-        href: "/dashboard/inventory/issue",
-        icon: Truck,
-        roles: ["ADMIN", "CLERK", "BURSAR", "ACCOUNTANT"],
-      },
-      {
-        title: "Stock Movements",
-        href: "/dashboard/inventory/movements",
-        icon: ClipboardCheck,
-        roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
-      },
-      {
-        title: "Stock Take",
-        href: "/dashboard/inventory/stock-take",
-        icon: ListChecks,
-        roles: ["ADMIN", "CLERK", "BURSAR", "AUDITOR", "ACCOUNTANT"],
-      },
-      {
-        title: "Variance Report",
-        href: "/dashboard/inventory/variance-report",
-        icon: AlertTriangle,
-        roles: ["ADMIN", "BURSAR", "AUDITOR", "ACCOUNTANT"],
       },
     ],
   },
