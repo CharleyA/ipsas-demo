@@ -70,6 +70,8 @@ COPY . .
 RUN npx prisma generate
 
 # Build the Next.js application
+# Limit Node heap during Docker builds to avoid host OOM/SIGKILL on smaller VPS nodes.
+ENV NODE_OPTIONS=--max-old-space-size=2048
 RUN npm run build
 
 # Production image, copy all the files and run next
