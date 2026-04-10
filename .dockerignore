@@ -1,0 +1,39 @@
+# Dependencies / package manager state that should not be copied from host
+node_modules
+.npm
+.pnpm-store
+
+# Next/TS build outputs
+.next
+out
+coverage
+*.tsbuildinfo
+
+# Git / editor noise
+.git
+.gitignore
+.vscode
+.idea
+
+# Local env / secrets should not enter image build context
+.env
+.env.*
+!.env.example
+
+# Logs / tmp / scratch files
+*.log
+tmp
+*.tmp
+tmp_*
+verify_*.js
+test-*.js
+
+# Docs / reports / ad-hoc exports not needed for runtime image
+*.pdf
+*.html
+IMPLEMENTATION_PLAN_*
+IPSAS_Core_System_Update_Report_*
+
+# OS noise
+.DS_Store
+Thumbs.db
