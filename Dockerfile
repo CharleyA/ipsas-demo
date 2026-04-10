@@ -66,8 +66,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma client
-RUN npx prisma generate
+# Prisma client is already generated during npm ci/postinstall in the deps stage.
+# Running it again here is redundant and has been causing builder-stage failures on the VPS.
 
 # Build the Next.js application
 # Limit Node heap during Docker builds to avoid host OOM/SIGKILL on smaller VPS nodes.
